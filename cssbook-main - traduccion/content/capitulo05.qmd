@@ -1,0 +1,562 @@
+# Del fichero al marco de datos y viceversa {#sec-chap-filetodata}
+
+```{python}
+#| echo: false
+import warnings; warnings.filterwarnings('ignore')
+```
+
+**Resumen.**
+  Este capítulo te enseñará los conceptos básicos del manejo de archivos, como los diferentes formatos y codificaciones de 
+archivos. Presentará los archivos csv, json, de texto plano y binarios. Discutiremos diferentes enfoques para organizar los 
+datos en archivos, y cómo escribir marcos de datos y leerlos desde estos archivos. Por último, se ofrecerá orientación para 
+recuperar conjuntos de datos de ejemplo.
+
+**Palabras clave.** Formatos de archivo, codificaciones, lectura y escritura de archivos, marcos de datos, conjuntos de datos
+
+**Objetivos:**
+
+- Aprender a manejar diferentes codificaciones y dialectos
+- Elegir un formato de archivo con conocimiento de causa
+- Saber cómo acceder a los conjuntos de datos existentes
+
+::: {.callout-note icon=false collapse=true}
+## Paquetes utilizados en este capítulo
+
+Este capítulo se basa principalmente en la funcionalidad de 'pandas' (Python) y 'tidyverse' (R) para leer y escribir 
+archivos. También utiliza haven para leer datos de otras herramientas como SPSS. Por último, muestra cómo utilizar 
+datos existentes de paquetes como 'sotu' (R) y 'nltk' y 'scikit-learn' (Python). Si es necesario, puedes instalar estos 
+paquetes con el código que aparece a continuación (consulte la Sección [-@sec-installing] para obtener más detalles):
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter05install-python}
+#| eval: false
+!pip3 install pandas nltk scikit-learn
+```
+## Código R
+```{r chapter05install-r}
+#| eval: false
+install.packages(c("sotu", "haven", "tidyverse", 
+                   "glue", "jsonlite"))
+```
+:::
+ Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter05library-python}
+import json
+import urllib
+import pandas as pd
+import nltk
+from nltk.corpus import state_union
+
+nltk.download("punkt")
+from sklearn.datasets import fetch_20newsgroups
+
+```
+## Código R
+```{r chapter05library-r}
+library(tidyverse)
+library(haven)
+library(sotu)
+library(glue)
+library(jsonlite)
+```
+:::
+:::
+
+## ¿Cuándo y por qué utilizamos marcos de datos? {#sec-dataframes}
+
+En la Sección [-@sec-datatypes], introdujimos los tipos de datos básicos: cadenas (que contienen texto), enteros 
+(que contienen números enteros, o números sin nada "detrás del punto"), *floats* (números de coma flotante; números 
+con decimales) y *bools* (valores booleanos, Verdadero o Falso). También hemos aprendido que una serie de valores 
+múltiples (por ejemplo, múltiples enteros, múltiples cadenas) puede almacenarse en lo que llamamos un vector 
+(R) o una lista (Python).
+
+En la mayoría de las aplicaciones sociocientíficas, sin embargo, no tratamos con series aisladas de valores. Lo que 
+queremos es vincular varios valores entre sí. Una forma de conseguirlo es utilizar diccionarios (véase el apartado 
+[-@sec-datatypes]). Estas estructuras de datos son muy útiles para los datos anidados: Por ejemplo, si no solo queremos 
+almacenar las edades de las personas, sino también sus direcciones, podríamos almacenar un diccionario dentro de otro diccionario.
+
+De hecho, como veremos más adelante en este capítulo, muchos de los datos utilizados por los científicos sociales 
+computacionales tienen este formato. Por ejemplo, los datos sobre un producto en línea pueden contener muchas reseñas 
+que, a su vez, contienen diversos datos sobre el autor de la reseña.
+
+Pero, en realidad, para muchos análisis sociocientíficos se prefiere un formato de datos tabular. Estamos acostumbrados 
+a pensar en las observaciones (casos) como filas con columnas que contienen información o medidas sobre estas observaciones 
+(por ejemplo, edad, sexo, días por semana de lectura del periódico, ...). Esto también simplifica la ejecución posterior de 
+muchos análisis estadísticos.
+
+Podríamos construir una lista de listas para conseguir ese formato de datos tabulares. Lo cierto es que esta técnica de lista de 
+listas se utiliza a menudo para almacenar datos tabulares o matrices, y es probable que la encuentres en algunos ejemplos de 
+este libro o en otros lugares. Sin embargo, el enfoque de lista de listas es de muy bajo nivel: si quisiéramos, por ejemplo, 
+insertar una columna o una fila en un lugar específico, escribir el código podría resultar muy engorroso. Tampoco hay cabeceras 
+de columna ni controles de coherencia: nada nos avisaría si una fila contuviera más "columnas" que otra, lo que no debería 
+ocurrir en una tabla rectangular.
+
+Para facilitarnos la vida, podemos utilizar una estructura de datos llamada *data frame* (marco de datos). Los marcos de datos 
+pueden generarse a partir de estructuras de listas, diccionarios y muchas otras. Una forma de hacerlo es la que se muestra en el 
+Ejemplo [-@exm-createdataframe], pero se suele preferir leer los datos de un archivo o de un recurso en línea directamente en un 
+marco de datos (véase la Sección [-@sec-reading]).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-createdataframe}
+Creación de un marco de datos a partir de otras estructuras de datos
+
+::: {.panel-tabset}
+## Código Python
+```{python createdataframe-python}
+# Create two lists that will be columns
+list1 = ["Anna", "Peter", "Sarah", "Kees"]
+list2 = [40, 33, 40, 77]
+
+# or we could have a list of lists instead
+mytable = [["Anna", 40], ["Peter", 33], ["Sarah", 40], ["Kees", 77]]
+
+# Convert an array to a dataframe
+df = pd.DataFrame(mytable)
+
+# Or create the data frame directly from vectors
+df2 = pd.DataFrame.from_records(zip(list1, list2))
+
+# No. of rows, no. of columns, and shape
+print(f"{len(df)} rows x {len(df.columns)} cols")
+print(f"Its shape is {df.shape}")
+
+print("Element-wise equality of df and df2:")
+print(df == df2)
+
+```
+## Código R
+```{r createdataframe-r}
+# Create two vectors that will be columns
+vector1 <- c("Anna","Peter","Sarah","Kees")
+vector2 <- c(40,33,40,77)
+
+# Create an array of four rows and two columns
+myarray <- array(c(vector1,vector2), dim=c(4,2))
+
+# Convert an array to a dataframe
+df1=data.frame(myarray)
+
+# Or create the data frame directly from vectors
+df2=data.frame(vector1, vector2)
+
+# No. of rows, no. of columns, and dimension
+print(glue("{ncol(df1)} rows x {nrow(df1)} cols"))
+print(dim(df1))
+
+print("Element-wise equality of df1 and df2:")
+print(df1 == df2)
+```
+:::
+:::
+:::
+
+En este libro utilizaremos mucho los marcos de datos, ya que son muy convenientes para manejar datos tabulares, y porque 
+proporcionan muchas funcionalidades útiles, en lugar de requerir que reinventemos la rueda todo el tiempo. En la siguiente 
+sección, discutiremos algunas de ellas.
+
+Por supuesto, situaciones en las que los marcos de datos no son una buena opción para organizar sus datos: si los datos 
+son unidimensionales. Piensa en recursos como una lista de palabras clave o una lista de textos sin ninguna metainformación: 
+esos datos no tienen una estructura tabular. O si tratamos con datos profundamente anidados, datos de red o datos muy desordenados: 
+son tan grandes que no puedes (o no quieres) cargarlos en memoria. Imagínate que quieres procesar el texto de todos los artículos 
+de Wikipedia: probablemente sea mejor procesarlos uno a uno en lugar de cargar todos los artículos al mismo tiempo.
+
+Por ello, te encontrarás (y te presentaremos) ejemplos en los que no utilizamos marcos de datos para organizar nuestros datos. 
+Pero en la mayoría de los casos lo haremos, porque nos facilitan la vida: una vez que hemos construido nuestro marco de datos, 
+tenemos a nuestra disposición una serie de funciones muy prácticas que nos permiten seleccionar filas o columnas, añadir otras 
+nuevas, aplicarles funciones, etcétera. Hablaremos de ellas en el Capítulo [-@sec-chap-datawrangling].
+
+Pero, aparte de *toy examples* como los del ejemplo [-@exm-createdataframe], ¿Cómo introducimos y extraemos datos de los marcos de datos?
+
+## Leer y guardar datos {#sec-reading}
+
+### El papel de los ficheros
+
+En softwares estadísticos como SPSS o Stata, o en todas las aplicaciones de oficina habituales, se abre un archivo, se trabaja 
+en él y, una vez que se ha terminado, se guardan los cambios en el mismo archivo. Básicamente, "trabajas en el archivo".
+
+Así no es como funciona el flujo de trabajo habitual en R o Python. Aquí, trabajas en uno o múltiples marcos de datos (o 
+algunas otras estructuras de datos). Esto significa que puedes empezar leyendo el contenido de algún archivo en un marco de 
+datos, pero una vez hecho esto, ya no hay ningún vínculo entre el marco de datos y ese archivo. Una vez que has terminado tu 
+trabajo, puedes guardar el marco de datos en un archivo, por supuesto, pero es una buena práctica no sobrescribir el archivo 
+de entrada, para que siempre puedas volver al punto de partida. Un flujo de trabajo típico sería el siguiente:
+
+-  Leer los datos sin decodificar del archivo 'myrawdata.csv' en el marco de datos 'df'. Realizar algunas operaciones y análisis 
+en 'df'. Guardar 'df' en el archivo 'myfinaldata.csv'. (Ten en cuenta que el último paso ni siquiera es necesario, pero puede ser 
+útil si la ejecución del *script* lleva mucho tiempo, o si deseas redistribuir el archivo resultante).
+
+El formato en el que leemos los archivos en un marco de datos y el formato en el que guardamos nuestro marco de datos final no 
+tienen por qué ser idénticos. Podemos, por ejemplo, leer datos creados por otra persona en el formato original de Stata ('.dta') 
+en un marco de datos y guardarlos después en una tabla '.csv'.
+
+Aunque a veces no podemos elegir el formato en el que obtenemos nuestros datos de entrada, tenemos algunas opciones en cuanto a 
+nuestros datos de salida. Para ello solemos preferir formatos abiertos e interoperables, lo que garantiza que puedan ser utilizados 
+por el mayor número de personas posible y que no estén vinculados a ninguna herramienta de *software* específica (propietaria) que 
+podría no estar disponible para todo el mundo o dejar de fabricarse en el futuro.
+
+En la Tabla [-@tbl-fileformats] se enumeran los formatos de archivo más comunes que nos interesan. Los archivos 'txt' son especialmente 
+útiles para textos largos (piensa en un archivo que contenga un artículo de periódico o incluso un libro entero), pero no son 
+adecuados para almacenar metadatos asociados. Los archivos 'csv' son la opción por defecto para datos tabulares, y los archivos 
+'json' nos permiten almacenar datos anidados en un formato similar al de un diccionario.
+
+En aras de la exhaustividad, también enumeramos los formatos nativos de Python y R 'pickle', 'RDS' y 'RDA'. Debido a su falta de 
+interoperabilidad, no son muy adecuados para el almacenamiento a largo plazo o para compartir datos, pero pueden tener su lugar en 
+el flujo de trabajo como un paso intermedio, y que son los únicos formatos capaces de almacenar todas las propiedades de un marco 
+de datos (por ejemplo, el archivo 'csv' no puede saber si una columna dada en un marco de datos R debe entenderse como que contiene 
+las cadenas "hombre", "mujer" y "no binario" o un factor con los tres niveles hombre, mujer y no binario). Si es importante almacenar 
+un objeto (como un marco de datos) exactamente como es, podemos utilizar estos formatos. Uno de los pocos casos en los que utilizamos 
+estos formatos es en el Ejemplo [-@exm-reuse], donde almacenamos modelos de aprendizaje automático para su posterior reutilización.
+
+| |Se usa para | En abierto | Interoperable|
+|-|-|-|-|
+|txt | Texto | Sí | Sí|
+|csv | Datos tabulares | Sí | Sí|
+|json | Datos anidados, pares clave-valor | Sí | Sí|
+|pickle | Objetos de Python| Sí | No|
+|RDS/RDA | Objetos de R | Sí | No|
+:  Conceptos básicos del manejo de marcos de datos {#tbl-fileformats}
+
+### Codificaciones y dialectos {#sec-encodings}
+
+Los archivos 'txt', 'csv' y 'json' son archivos basados en texto. A diferencia de los formatos de archivos binarios, 
+puedes leerlos en cualquier editor de texto. Pruébalo tú mismo para entender su funcionamiento.
+
+Descarga un archivo 'csv' (como [cssbook.net/d/gun-polls.csv](https://cssbook.net/d/gun-polls.csv)) y ábrelo en un 
+editor de texto de tu elección. Ciertas personas juran que su editor preferido es el mejor (busca en Google la guerra 
+de vi contra emacs si tienes curiosidad), pero si no tienes sentimientos fuertes al respecto, Notepad ++, Atom, o 
+Sublime pueden ser buenas opciones.
+
+Como podrás observar (Figura [-@fig-csv-in-editor]), internamente, un archivo csv solo parece un montón de texto en 
+el que cada línea representa una fila y en el que las columnas están separadas por una coma (de ahí el nombre de valores 
+separados por comas (csv)). Mirar los datos en un editor de texto es una muy buena forma de averiguar qué ocurre si la 
+lectura de tus archivos en un marco de datos no funciona como esperabas, lo que ocurre con más frecuencia de lo que 
+cabría esperar.
+
+Debido sobre todo a razones históricas, no todos los archivos basados en texto (que, como hemos visto, incluyen los 
+archivos csv) se almacenan internamente de la misma manera. Durante mucho tiempo, era habitual codificar de forma 
+que un carácter correspondiera a un byte. Esto era fácil desde el punto de vista de la programación (al fin y al cabo, 
+el carácter $n$ de un texto puede leerse y escribirse directamente en el byte $n$ de un archivo) y también era eficiente 
+desde el punto de vista del almacenamiento. Pero dado que un byte consta de 8 bits, solo hay 256 caracteres posibles. 
+Todas las letras del alfabeto en mayúsculas, otra vez en minúsculas, números, signos de puntuación, algunos caracteres 
+de control... Y ya no quedan caracteres. Debido a esta limitación, existían diferentes codificaciones y páginas de códigos 
+para los distintos idiomas que indicaban a un programa qué valor debía interpretarse como qué carácter.
+
+Todos nos hemos encontrado con caracteres especiales distorsionados, como las diéresis alemanas o los caracteres escandinavos 
+(ø, å o œ), que se muestran como algo completamente diferente. Esto ocurre cuando los archivos se leen con una codificación 
+distinta de la que se utilizó para crearlos.
+
+En principio, este problema se ha resuelto gracias a la aparición de Unicode. Unicode permite manejar todos los caracteres 
+de todas las escrituras, incluidos emoticonos, caracteres coreanos y chinos, etc. La codificación más popular para los caracteres 
+Unicode se llama UTF-8, y existe desde hace décadas.
+
+Para evitar pérdidas de datos, es aconsejable asegurarse de que todo tu flujo de trabajo utiliza archivos UTF-8. La mayoría de 
+las aplicaciones modernas admiten UTF-8, aunque algunas todavía utilizan por defecto una codificación diferente (por ejemplo, 
+"Windows-1252") para almacenar los datos. Como ilustra la Figura [-@fig-csv-in-editor], puedes utilizar un editor de texto para 
+averiguar qué codificación tienen tus datos, y muchos de estos editores ofrecen una opción para cambiar la codificación. Sin 
+embargo, no puedes recuperar lo que se ha perdido (por ejemplo, si en un momento dado guardas tus datos con una codificación que 
+solo permite 256 caracteres diferentes, no podrás recuperar esa información).
+
+![Un archivo csv abierto en un editor de texto, que ilustra que las columnas están separadas por comas y muestra la codificación y los finales de línea.](img/ch6_csv-in-editor.png){#fig-csv-in-editor}
+
+Como mostraremos en los ejemplos prácticos a continuación, también puedes forzar a Python y R a utilizar una codificación 
+específica, lo que puede resultar útil si tus datos llegan en una codificación heredada.
+
+En relación con las diferentes codificaciones que puede tener un archivo, pero menos problemático, están las diferentes 
+convenciones sobre cómo se indica un final de línea. Los programas basados en Windows utilizan un “Intro” (retorno de carro) 
+seguido de un “Salto de Línea” (indicado como '\r\n'); versiones muy antiguas de MacOS utilizaban solo un “Intro” ('\r'), 
+y versiones más recientes de MacOS así como Linux utilizan solo un Salto de Línea ('\n'). En nuestro campo, los finales de 
+línea estilo Linux (o Unix) se han convertido en los más dominantes, y Python 3 convierte automáticamente los finales de 
+línea estilo Windows a finales de línea estilo Unix al leer un archivo, incluso en el propio Windows.
+
+Una tercera diferencia es el uso de los llamados “marcadores de orden de bytes” (BOM, por sus siglas en inglés). En esencia, 
+un BOM es un byte adicional que se añade al principio de un archivo de texto para indicar que se trata de un archivo codificado 
+en UTF y en qué orden deben leerse los bytes (el llamado *endianness* (extremidad)). Aunque resulta informativo, esto puede causar 
+problemas si el programa no se espera que ese byte esté ahí. En ese caso, es posible que desees eliminarlo o especificar 
+explícitamente la codificación como tal. Por ejemplo, puedes añadir un argumento como 'encoding="UTF-8"' o 'encoding="UTF-8bom"' 
+al comando 'open' (Python) o 'scan' (R).
+
+En resumen, la forma más estándar en la que codificar los datos es en UTF-8 con finales de línea al estilo Linux sin el uso de 
+un marcador de orden de bytes.
+
+En el caso de la lectura y escritura de archivos csv, necesitamos conocer la codificación y, posiblemente, también las convenciones 
+de final de línea y la presencia de un marcador de orden de bytes. Sin embargo, también hay algunas variaciones adicionales que 
+debemos tener en cuenta. No existe una definición única del aspecto que debe tener un archivo csv, y hay múltiples dialectos 
+ampliamente utilizados. Se diferencian principalmente en dos aspectos: el delimitador elegido y el entrecomillado y/o la forma de 
+anular la función de los valores.
+
+En primer lugar, aunque csv significa “valores separados por comas”, se pueden utilizar otros caracteres en lugar de una coma para 
+separar las columnas. De hecho, como muchos países utilizan una coma en lugar de un punto como separador decimal (10.30$ frente a 
+10,30€), en estos países se utiliza un punto y coma (;) en lugar de una coma como delimitador de columna. Para evitar cualquier 
+posible confusión, otros utilizan un carácter de tabulación ('\t') para separar las columnas. A veces, estos archivos se denominan 
+archivos separados por tabuladores y, en lugar de '.csv', pueden tener una extensión como '.tsv', '.tab' o incluso '.txt'. Esto no 
+cambia la forma en que se leen, pero debes saber si las columnas están separadas por ',', ';', o '\t'.
+
+En segundo lugar, puede haber distintas formas de tratar las cadenas como valores en un archivo csv. Por ejemplo, puede ocurrir 
+que un valor concreto contenga el mismo carácter que también se utiliza como delimitador. Estos casos suelen resolverse poniendo 
+todas las cadenas entre comillas, poniendo entre comillas solo las cadenas que contienen tales ambigüedades o anteponiendo al 
+carácter ambiguo un carácter de anulación específico. Lo más probable es que todo esto se gestione de forma automática, pero en 
+caso de que surjan problemas, es posible que desees comprobarlo y consultar la documentación de los paquetes que estés utilizando 
+para saber cómo especificar la estrategia que se debe aplicar.
+
+Pongámonos prácticos: vamos a leer y escribir ficheros en un marco de datos (Ejemplo [-@exm-readfiles]).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-readfiles}
+Lectura de ficheros en un marco de datos
+
+::: {.panel-tabset}
+## Código Python
+```{python readfiles-python}
+url = "https://cssbook.net/d/media.csv"
+# Directly read a csv file from internet
+df = pd.read_csv(url)
+
+# We can also explicitly specify delimiter etc.
+df = pd.read_csv(url, delimiter=",")
+# Note: use help(pd.read_csv) to see all options
+
+# Save dataframe to a csv:
+df.to_csv("mynewcsvfile.csv")
+
+```
+## Código R
+```{r readfiles-r}
+url = "https://cssbook.net/d/media.csv"
+# Directly read a csv file from internet
+df = read_csv(url)
+
+# We can also explicitly specify delimiter etc.
+df = read_delim(url, delim = ",")
+# Note: use ?read_csv to see all options
+
+# Save dataframe to a csv:
+write_csv(df,"mynewcsvfile.csv")
+```
+:::
+:::
+:::
+
+Por supuesto, podemos leer más que archivos csv. En el ejemplo de Python, puedes utilizar 'tabcompletion' (completado con 
+tabulación) para obtener una visión general de todos los formatos de archivo que soporta Python: escribe 'pd.read' y luego 
+pulsa la tecla 'TAB' para obtener una lista de todos los archivos soportados. Por ejemplo, podrías 'pd.read_excel('test.xlsx')', 
+'df3 = pd.read_stata('test.dta')', o 'df4 = pd.read_json('test.json')' De forma similar, para R, puedes pulsar 'TAB' después 
+de escribir 'haven::' para obtener una visión general sobre funciones como 'read_spss'.
+
+### Manejo de ficheros más allá de los marcos de datos
+Los marcos de datos son una estructura de datos muy útil para organizar y analizar datos, y aparecerán en muchos ejemplos de 
+este libro. Sin embargo, no todo lo que queramos leer de un archivo tiene que ir en un marco de datos. Imaginemos que tenemos 
+una lista de palabras que queremos eliminar de algunos textos (las llamadas palabras vacías o ”*stopwords*”, véase el 
+capítulo [-@sec-chap-protext]). Podríamos hacer una lista (o vector) de esas palabras directamente en nuestro código. Pero si 
+tenemos más de un par de palabras de este tipo, es más fácil y legible guardarlas en un archivo externo. Podríamos crear un 
+archivo 'stopwords.txt' en un editor de texto con una de esas palabras por línea:
+
+```
+and
+or
+a
+an
+```
+
+Si no quieres crear la lista tú mismo, también puedes descargar una de [cssbook.net/d/stopwords.txt](https://cssbook.net/d/stopwords.txt) 
+y guardarla en el mismo directorio que tu *script* Python o R.
+
+A continuación, puedes leer este archivo en un vector o lista (véase el Ejemplo [-@exm-readingstopwords]).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-readingstopwords}
+Lectura de ficheros sin marcos de datos
+
+::: {.panel-tabset}
+## Código Python
+```{python readingstopwords-python}
+# Define stopword list in the code itself
+stopwords = ["and", "or", "a", "an", "the"]
+
+# Better idea: Download stopwords file and read it
+url = "https://cssbook.net/d/stopwords.txt"
+urllib.request.urlretrieve(url, "stopwords.txt")
+with open("stopwords.txt") as f:
+    stopwords = [w.strip() for w in f]
+stopwords
+
+```
+## Código R
+```{r readingstopwords-r}
+# Define stopword list in the code itself 
+stopwords = c("and", "or", "a", "an", "the")
+
+# Better idea: Download stopwords file and read it
+url = "https://cssbook.net/d/stopwords.txt"
+download.file(url, "stopwords.txt")
+stopwords =  scan("stopwords.txt", what="string")
+stopwords
+```
+:::
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-extendedfilehandling}
+More examples for reading from and writing to files.
+
+::: {.panel-tabset}
+## Código Python
+```{python extendedfilehandling-python}
+# Modify the stopword list and save it:
+stopwords += ["somenewstopword", "andanotherone"]
+with open("newstopwords.txt", mode="w") as f:
+    f.writelines(stopwords)
+
+# Use json to read/write dictionaries
+somedict = {"label": "Report", "entries": [1, 2, 3, 4]}
+
+with open("test.json", mode="w") as f:
+    json.dump(somedict, f)
+
+with open("test.json", mode="r") as f:
+    d = json.load(f)
+print(d)
+
+```
+## Código R
+```{r extendedfilehandling-r}
+# Modify the stopword list and save it:
+stopwords = c(stopwords, 
+              "somenewstopword", "andanotherone")
+fileConn<-file("newstopwords.txt")
+writeLines(stopwords, fileConn)
+close(fileConn)
+
+# Use json to read/write named lists
+somedict = list(label="Report",
+               entries=c(1,2,3,4))
+
+write_json(somedict, "/tmp/x.json", auto_unbox=T)
+
+d=read_json("/tmp/x.json", simplifyVector = T)
+print(d)
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-extendedfilehandling] proporciona algunos ejemplos de código más elaborados para profundizar un poco más en 
+la forma general de manejar ficheros.
+
+En el ejemplo de Python, podemos abrir un fichero y asignarle un objeto que nos permita referirnos a él (el nombre del objeto 
+es arbitrario, lo llamaremos 'f'). Luego, podemos usar un bucle *for* para iterar sobre todas las líneas del fichero y añadirlas 
+a una lista.
+
+El 'mode = 'r'' especifica que queremos leer el fichero. El 'mode = 'w'' abre el fichero para escribir sobre él, creándolo si 
+es necesario, y, si el fichero ya existiera, borraría todo el contenido que pudiera haber en él (¡!). Ten en cuenta que el 
+'.strip()' es necesario para eliminar el propio final de línea, además de cualquier posible espacio en blanco al principio o al 
+final de la línea. Si queremos guardar las palabras vacías, podemos hacerlo de forma similar: primero abrimos el fichero (esta vez, 
+para escribir), y luego usamos los métodos del objeto del fichero para escribir en él. Tampoco estamos limitados a ficheros de 
+texto plano. Por ejemplo, podemos utilizar el mismo enfoque para leer archivos json en un diccionario de Python o para almacenar 
+un diccionario de Python en un archivo json.
+
+También podríamos combinarlo con un bucle *for* que recorra todos los archivos de un diccionario. Imaginemos que tenemos una carpeta 
+llena de críticas positivas de películas y otra llena de críticas negativas. Queremos utilizarlas para entrenar un clasificador de 
+aprendizaje automático (véase el apartado [-@sec-supervised]). Supongamos además que todas estas críticas se guardan como archivos 
+.txt. Podemos iterar sobre todas ellas, como se muestra en el Ejemplo [-@exm-reviewdata]. Si lo que quieres es leer archivos de texto 
+en un marco de datos en R, el paquete 'readtext' puede resultarte interesante.
+
+## Datos de fuentes en línea {#sec-gathering}
+
+Hoy en día, muchos datos interesantes (para quienes analizan la comunicación) se recopilan en línea. En el Capítulo [-@sec-chap-scraping], 
+aprenderás a utilizar APIs para recuperar datos de servicios web y a escribir tu propio *web scraper* para descargar y extraer 
+automáticamente información relevante de un gran número de páginas web. Por ejemplo, si quieres recuperar opiniones de clientes de 
+un sitio web o artículos de sitios de noticias.
+
+En esta sección, sin embargo, nos centraremos en cómo reutilizar conjuntos de datos existentes que otros han puesto a nuestra 
+disposición en línea. Gracias al movimiento de ciencia abierta, cada vez más conjuntos de datos se comparten abiertamente a 
+través de repositorios como Dataverse, Figshare u otros. La reutilización de datos existentes puede ser muy útil por varias 
+razones: en primer lugar, para confirmar (o no) las conclusiones extraídas por otros; en segundo lugar, para evitar malgastar 
+recursos volviendo a recopilar datos muy similares o incluso idénticos, y, en tercer lugar, porque reunir una base de datos 
+grande y de alta calidad puede no ser factible con los medios de los que se dispone. Esto es especialmente cierto cuando se 
+necesitan datos anotados (es decir, codificados a mano) para fines de aprendizaje automático supervisado (capítulo [-@sec-chap-introsml]).
+
+Podemos distinguir entre dos tipos de conjuntos de datos en línea: los conjuntos de datos que son intrínsecamente interesantes 
+y los denominados “*toy datasets*”.
+
+Los *toy datsets* pueden incluir datos inventados, pero suelen contener datos reales. No se analizan para obtener conocimientos 
+científicos (ya no), por ser demasiado pequeños, obsoletos o ya analizados una y otra vez. Sin embargo, constituyen una excelente 
+manera de aprender y explorar nuevas técnicas: al fin y al cabo, los resultados y las características de los datos ya se conocen. 
+De ahí que estos *toy datasets* se incluyan a menudo en paquetes de R y Python. Algunos de ellos son muy conocidos en la enseñanza 
+(por ejemplo, la base de datos 'iris' contiene medidas de flores; 'titanic', estadísticas sobre las tasas de supervivencia de los 
+pasajeros del Titanic; 'MNIST', para la clasificación de imágenes y 'MPG', sobre el consumo de combustible de los coches). Muchos 
+de ellos están incluidos en paquetes como 'scikit-learn', 'seaborn' o 'ggplot2' y puedes echar un vistazo a su documentación.
+
+Por ejemplo, la base de datos '20 Newsgroups' contiene $18.846$ grupos de noticias junto a los grupos en los que se publicaron 
+(Ejemplo [-@exm-20newsgroups]). Este puede ser un recurso interesante para practicar con el procesamiento del lenguaje natural, 
+el aprendizaje automático supervisado y el no supervisado. Otro recurso interesante son las colecciones de discursos políticos, 
+como los discursos sobre el estado de la nación de EE.UU., disponibles en múltiples paquetes (Ejemplo [-@exm-sotudata]). Otros 
+ejemplos interesantes que contienen grandes colecciones de datos textuales pueden ser: 'Financial News' compilado por @Chen2017 
+o la base de datos de noticias políticas compilado por @Horne2018.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-20newsgroups}
+En Python, 'scikit-learn' tiene una función para descargar y limpiar automáticamente '20 Newsgroups'. En R, puedes descargar la versión sin procesar (hay varias copias en Internet) y realizar la limpieza por tu cuenta.
+
+::: {.panel-tabset}
+## Código Python
+```{python 20newsgroups-python}
+# Note: use fetch_20newsgroups? for more options
+d = fetch_20newsgroups(remove=("headers", "footers", "quotes"))
+df = pd.DataFrame(zip(d["data"], d["target_names"]))
+df.head()
+
+```
+## Código R
+```{r 20newsgroups-r}
+url = "https://cssbook.net/d/20_newsgroups.csv"
+d = read_csv(url)
+head(d)
+```
+:::
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-sotudata}
+Las colecciones de discursos sobre el estado de la nación en EE.UU. está disponible en varios paquetes y en diversas formas.
+
+::: {.panel-tabset}
+## Código Python
+```{python sotudata-python}
+# Note: download is only needed once...
+nltk.download("state_union")
+sentences = state_union.sents()
+print(f"There are {len(sentences)} sentences.")
+
+```
+## Código R
+```{r sotudata-r}
+speeches = sotu_meta
+# show only first 50 characters
+speeches %>% 
+    mutate(text = substr(sotu_text,0,50)) %>%
+    head()
+```
+:::
+:::
+:::
+
+Existen otros recursos más genéricos que pueden ser interesantes si buscas más conjuntos de datos con los que jugar. 
+En [datasetsearch.research.google.com](https://datasetsearch.research.google.com), puedes buscar conjuntos de datos de 
+todo tipo, tanto *toys* como algunos realmente interesantes. Otra buena opción es [kaggle.com](https://kaggle.com), un 
+sitio que organiza concursos de ciencia de datos.
+
+```{bash cleanup}
+#| echo: false
+rm -f mynewcsvfile.csv newstopwords.txt stopwords.txt test.json
+```

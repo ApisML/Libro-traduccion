@@ -1,0 +1,923 @@
+# Manipulación de datos {#sec-chap-datawrangling}
+
+```{python}
+#| echo: false
+import warnings; warnings.filterwarnings('ignore')
+```
+
+**Resumen.**
+Este capítulo muestra cómo hacer "*data wrangling*" (manipulación de datos) en R y Python. Este es el proceso de transformar 
+datos sin procesar a una forma que sea adecuada para el análisis. Las secciones de este capítulo te llevarán a través del 
+proceso normal de filtrado, modificación, agrupación y unión de datos. La última sección te mostrará cómo se pueden remodelar 
+los datos.
+
+**Palabras clave.** Gestión de datos, limpieza de datos, filtrado, fusión, remodelación
+
+**Objetivos:**
+
+-  Filtrar filas y columnas en marcos de datos
+-  Calcular nuevas columnas y estadísticas de resumen para marcos de datos
+-  Reformar y combinar marcos de datos
+
+::: {.callout-note icon=false collapse=true}
+## Paquetes utilizados en este capítulo
+
+Este capítulo utiliza el paquete 'readxl', para leer archivos de Excel, junto con algunas partes de 'tidyverse', incluyendo 
+'ggplot2', 'dplyr' y 'tidyr' (que se instalan automáticamente al instalar 'tidyverse'). En Python dependemos sobre todo del 
+paquete 'pandas', pero también utilizamos el paquete 'scipy' para estadísticas y el 'xlrd' para leer archivos de Excel. Puedes 
+instalar estos paquetes con el siguiente código si es necesario (consulta la Sección [-@sec-installing] para más detalles).
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter06install-python}
+#| eval: false
+!pip3 install pandas scipy seaborn  "xlrd>1.2"
+```
+## R code
+```{r chapter06install-r}
+#| eval: false
+#install.packages("tidyverse")
+```
+:::
+Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter06library-python}
+import pandas as pd
+import seaborn as sns
+import scipy.stats
+import re
+
+```
+## Código R
+```{r chapter06library-r}
+library(tidyverse)
+library(readxl)
+```
+:::
+:::
+
+## Filtrar, seleccionar y renombrar
+
+**Seleccionar y renombrar columnas.**
+La primera limpieza suele ser eliminar las columnas innecesarias y renombrar las columnas con nombres poco claros o demasiado 
+largos. En particular, suele ser conveniente renombrar las columnas que contienen espacios o caracteres no estándar, para que 
+sea más fácil referirse a ellas más adelante.
+
+**Seleccionar filas.**
+Como siguiente paso, podemos filtrar determinadas filas. Por ejemplo, es posible que queramos utilizar solo un subconjunto de 
+los datos, o que queramos eliminar algunas filas por estar incompletas o ser incorrectas.
+
+Como ejemplo, FiveThirtyEight publicó un cuestionario sobre la opinión pública estadounidense acerca de las armas, y tuvieron la 
+amabilidad de añadir también los datos 'subyacentes'[^1]. El ejemplo @exm-data-filter muestra un ejemplo de carga y limpieza de 
+este conjunto de datos, comenzando con la función 'read_csv' (incluida tanto en 'tidyverse' como en 'pandas'), que carga los datos 
+directamente desde Internet. Este conjunto de datos contiene una respuesta por fila, con una columna “*Question*” que indica qué pregunta 
+se hizo. Las columnas indican cuántos estadounidenses (adultos o votantes registrados) estaban a favor de esa medida, en total y 
+diferenciando entre republicanos y demócratas. Para realizar la limpieza, las columnas “*Republican Support*” y “*Democratic Support*” 
+se renombran acortando los nombres y eliminando el espacio. A continuación, se elimina la columna “URL” utilizando la función “'select'” 
+de 'tidyverse' (en R) o la función 'drop' de 'pandas' (en Python). Fíjate en que el resultado de estas operaciones se asigna al 
+mismo objeto 'd'. Esto significa que el 'd' original se está sobrescribiendo.
+
+::: {.callout-note icon=false collapse=true}
+
+
+En R, la función 'select' de 'tidyverse' es bastante versátil. Puedes seleccionar varias columnas utilizando 'select(d, column1, column2)' 
+o especificando un rango de columnas: 'select(d, column1:column3)'. Ambos comandos conservan solo las columnas especificadas. Como 
+en el ejemplo, también puedes especificar una selección negativa con el signo menos: 'select(d, -column1)'. Esto elimina la 
+columna1, manteniendo el resto de columnas. Por último, también puedes renombrar columnas en el comando 
+'select: select(d, column1=col1, column2)'. Con ello se renombra 'col' a 'column1', mantiene esa columna y 'column2', al tiempo que 
+elimina todas las demás columnas.
+
+:::
+
+A continuación, filtramos el conjunto de datos para que solo aparezcan las encuestas sobre si los profesores deberían ir armados 
+(como comprenderás, es un tema sensible). Para hacerlo, comparamos el valor de la columna “'Question'” con el valor "'arm-teachers'". 
+Esta comparación se realiza con un doble signo igual ('=='). Tanto en Python como en R, se utiliza un solo signo igual para las 
+asignaciones, y un doble signo igual para las comparaciones. Por último, ten en cuenta que mientras en R usamos la función 'filter' 
+de 'dplyr' para filtrar filas, en Python indexamos el marco de datos usando corchetes en el atributo 'loc' (location) de 'pandas' 
+'DataFrame: d.loc[]'.
+
+Fíjate en que hemos elegido asignar el resultado de la limpieza a 'd2', por lo que después de estas operaciones tenemos a nuestra 
+disposición el conjunto de datos original 'd', y el subconjunto limpio 'd2'. Es tu decisión si sobrescribes los datos asignándolos 
+al mismo objeto o si creas una copia asignándola a un nuevo nombre[^2]. Si sabes que más adelante vas a necesitar trabajar con un 
+subconjunto diferente, lo más inteligente es conservar el original para poder volver a dividirlo. Por otro lado, si vas a realizar 
+todos los análisis en el subconjunto, es mejor sobrescribir el original. En cualquier caso, siempre podremos volver a descargarlo de 
+Internet (o volver a cargarlo desde nuestro disco duro) si resulta que necesitábamos el original de todos modos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-data-filter}
+Filtrado
+
+::: {.panel-tabset}
+## Código Python
+```{python data-filter-python}
+url = "https://cssbook.net/d/guns-polls.csv"
+d = pd.read_csv(url)
+d = d.rename(columns={"Republican Support": "rep", "Democratic Support": "dem"})
+d = d.drop(columns="URL")
+# alternatively, we can write:
+# d.drop(columns="URL", inplace=True)
+d2 = d.loc[d.Question == "arm-teachers"]
+d2
+
+```
+## Código R
+```{r data-filter-r}
+url="https://cssbook.net/d/guns-polls.csv"
+d = read_csv(url)
+d = rename(d, rep=`Republican Support`, 
+           dem=`Democratic Support`)
+d = select(d, -URL)
+
+d2 = filter(d, Question == "arm-teachers")
+d2
+```
+:::
+:::
+:::
+
+## Calcular valores {#sec-calculate}
+
+A menudo necesitaremos calcular valores para nuevas columnas o cambiar el contenido de columnas existentes. Puede que queramos 
+calcular la diferencia entre dos columnas, que necesitemos limpiar una columna corrigiendo errores administrativos o convertir 
+tipos de datos.
+
+En estos casos, lo que se suele hacer es asignar a una columna un valor nuevo (basado en un cálculo que generalmente involucra 
+a otras columnas). Tanto en R como en Python, hay, principalmente, dos formas de hacerlo. En primer lugar, puedes simplemente 
+asignar la operación a una columna existente o nueva, utilizando la notación de selección de columna explicada en la 
+Sección [-@sec-datatypes]: 'df["column"] = ...' en Python, o 'df$column = ... en R'.
+
+Tanto Python como R cuentan también con una función que permite cambiar varias columnas, devolviendo una nueva copia del marco 
+de datos en lugar de cambiar el marco de datos original. En R, esto se hace utilizando la función 'mutate' de 'tidyverse', que es 
+la forma recomendada de calcular los valores. El equivalente en Python, la función 'assign' de 'pandas', no se utiliza tan a menudo 
+ya que no ofrece tantas ventajas sobre la asignación directa.
+
+En cualquier caso, puedes utilizar la aritmética: por ejemplo, 'rep - dem' para calcular la diferencia entre estas columnas. 
+Esto funciona sin más en 'mutate' (R), pero en Python y en la asignación directa de R es necesario especificar también el nombre 
+del marco de datos. En Python, sería 'd["rep"] - d["dem"]' [^3], mientras que en R es 'd$rep - d$dem'.
+
+No obstante, en muchos casos necesitarás utilizar varias funciones para realizar las tareas de limpieza y conversión de datos 
+(consulta la Sección [-@sec-functions] para una explicación detallada de las funciones incorporadas y personalizadas). Por ejemplo, 
+para convertir una columna en numérica se utilizaría la función base de R 'as.numeric' o la función 'to_numeric' de 'pandas' en 
+Python. Ambas funciones toman una columna como argumento y la convierten en una columna numérica.
+
+Casi todas las funciones de R trabajan de esta manera, sobre columnas enteras. En Python, sin embargo, muchas funciones trabajan sobre 
+valores individuales en lugar de columnas. Para aplicar una función sobre cada elemento de una columna col, se puede utilizar 
+'df.col.apply(my_function)' (donde 'df' y 'col' son los nombres del marco de datos y la columna). Por eso, es especialmente interesante 
+saber que las columnas de 'pandas' cuentan con varios métodos útiles que, por ser métodos de columna, se aplican a toda la columna[^4]. 
+Por ejemplo, el método 'df.col.fillna' reemplaza los valores que faltan en la columna 'col', y 'df.col.str.replace' realiza una búsqueda 
+y reemplazo. A diferencia de las funciones que se utilizan sobre valores individuales en lugar de columnas, no es necesario utilizar 
+'apply' sobre ellas. Como siempre, puedes utilizar el tabulador (pulsando la tecla 'TAB' después de escribir 'df.col'.) para obtener 
+un menú que incluya todos los métodos disponibles.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-mutate}
+Mutar
+
+::: {.panel-tabset}
+## Código Python
+```{python mutate-python}
+# version of the guns polls with some errors
+url = "https://cssbook.net/d/guns-polls-dirty.csv"
+d2 = pd.read_csv(url)
+
+# Option 1: clean with direct assignment
+# Note that when creating a new column,
+# you have to use df["col"] rather than df.col
+d2["rep2"] = d2.rep.str.replace("[^0-9\\.]", "")
+d2["rep2"] = pd.to_numeric(d2.rep2)
+d2["Support2"] = d2.Support.fillna(d.Support.mean())
+
+# Alternatively, clean with .assign
+# Note the need to use an anonymous function
+# (lambda) to chain calculations
+cleaned = d2.assign(
+    rep2=d2.rep.str.replace("[^0-9\\.]", ""),
+    rep3=lambda d2: pd.to_numeric(d2.rep2),
+    Support2=d2.Support.fillna(d2.Support.mean()),
+)
+
+# Finally, you can create your own function
+def clean_num(x):
+    x = re.sub("[^0-9\\.]", "", x)
+    return int(x)
+
+cleaned["rep3"] = cleaned.rep.apply(clean_num)
+cleaned.head()
+
+```
+## Código R
+```{r mutate-r}
+# version of the guns polls with some errors
+url="https://cssbook.net/d/guns-polls-dirty.csv"
+d2 = read_csv(url)
+
+# Option 1: clean with direct assignment. 
+# Note the need to specify d2$ everywhere
+d2$rep2=str_replace_all(d2$rep, "[^0-9\\.]", "")
+d2$rep2 = as.numeric(d2$rep2)
+d2$Support2 = replace_na(d2$Support, 
+                        mean(d2$Support, na.rm=T))
+
+# Alternative, clean with mutate
+# No need to specify d2$, 
+# and we can assign to a new or existing object
+cleaned = mutate(d2, 
+    rep2 = str_replace_all(rep, "[^0-9\\.]", ""),
+    rep2 = as.numeric(rep2),
+    Support2 = replace_na(Support, 
+        mean(Support, na.rm=TRUE)))
+
+# Finally, you can create your own function
+clean_num = function(x) {
+    x = str_replace_all(x, "[^0-9\\.]", "")
+    as.numeric(x)
+}
+cleaned = mutate(cleaned, rep3 = clean_num(rep))
+head(cleaned)
+```
+:::
+:::
+:::
+
+Para ilustrar algunas (de las muchas) posibilidades, el @exm-mutate muestra el código necesario para limpiar una versión de 
+las encuestas sobre armas a la que hemos introducido intencionadamente dos problemas: hemos añadido algunas erratas a la columna 
+'rep' y hemos introducido un valor perdido en la columna 'Support'. Para limpiar los datos, realizamos tres pasos: en primer lugar, 
+eliminamos todos los caracteres no numéricos mediante una expresión regular (consulta la sección [-@sec-regular] para obtener 
+más información sobre el tratamiento de texto y las expresiones regulares). A continuación, tenemos que convertir la columna 
+resultante en una columna numérica para poder utilizarla posteriormente en los cálculos. Por último, sustituimos el valor omitido 
+por la media de la columna (por supuesto, esta no es la mejor estrategia para lidiar con valores perdidos, lo hacemos para mostrar 
+cómo se pueden tratar técnicamente). Encontrarás más información sobre los valores perdidos en la Sección [-@sec-simpleeda].
+
+En este caso, el proceso de limpieza se realiza dos veces: las líneas 5-10 utilizan la asignación directa, mientras que las líneas 
+12-19 utilizan la función 'mutate'/'assign'. Por último, las líneas 21-27 muestran cómo se puede definir y aplicar una función 
+personalizada para combinar los dos primeros pasos de limpieza. Esto puede ser bastante útil si utilizas los mismos procesos 
+en varios lugares, ya que se reduce la repetición de código y, por tanto, la posibilidad de introducir errores o incoherencias
+
+Ten en cuenta que todas estas opciones funcionan correctamente y producen el mismo resultado. Al final, depende del investigador 
+determinar cuál le parece más adecuada dadas las circunstancias. Como se ha señalado anteriormente, en R preferimos 'mutate' en lugar 
+de la asignación directa, sobre todo porque encaja perfectamente en el flujo de trabajo 'tidyverse' y no es necesario repetir el 
+nombre del marco de datos. En Python, generalmente preferiríamos la asignación directa, a menos que sea conveniente una copia de 
+los datos con los cambios realizados, en cuyo caso 'assign' puede ser más útil.
+
+## Agrupar y agregar {#sec-grouping}
+
+Las funciones que hemos utilizado para modificar los datos operaban sobre filas individuales. A veces, sin embargo, deseamos 
+calcular estadísticas resumidas de grupos de filas. En esencia, esto supone mover la unidad de análisis a un nivel de abstracción 
+superior. Por ejemplo, a partir de un archivo de datos que contenga información por alumno, podríamos calcular estadísticas por 
+escuela; o, a partir de un archivo de datos que contenga información por artículos, podríamos calcular el número medio de menciones 
+a un político por día (¡Cada fecha podría tener múltiples artículos y cada artículo múltiples menciones a políticos!).
+
+En el análisis de datos, esto se denomina *aggregation* (agregación). Tanto en Python como en R, consta de dos pasos: En primer 
+lugar, se define qué filas se agrupan para formar una nueva unidad especificando qué columna identifica a estos grupos. En los 
+ejemplos anteriores, sería el nombre de la escuela o la fecha de cada artículo. También es posible agrupar por varias columnas, 
+por ejemplo, para calcular la media diaria por fuente de noticias.
+
+El siguiente paso consiste en especificar una o varias funciones de resumen (o agregación) que se aplicarán sobre las columnas 
+de valores deseadas. Estas funciones calculan un valor de resumen, como la media, la suma o la desviación estándar, sobre todos 
+los valores pertenecientes a cada grupo. En el ejemplo, para calcular las puntuaciones medias de los exámenes por centro educativo, 
+aplicaríamos la función media a la columna de valores de las puntuaciones de los exámenes. En general, puedes utilizar varias 
+funciones (p. ej., media y varianza) y varias columnas (p. ej., puntuación media de los exámenes e ingresos medios de los padres).
+
+El conjunto de datos resultante se reduce tanto en filas como en columnas. Cada fila representa ahora un grupo de casos anteriores 
+(por ejemplo, escuela o fecha), y las columnas ahora solo son las de agrupación y las puntuaciones de resumen calculadas.
+
+El @exm-aggregate muestra el código en R y Python para definir grupos y calcular valores de resumen. Primero, agrupamos por pregunta 
+de sondeo y luego, para cada pregunta, calculamos la media y la desviación estándar. La sintaxis es un poco diferente para R y Python, 
+pero la idea es la misma: primero creamos una nueva variable “'groups'” que almacena la información de agrupación, y luego creamos las 
+estadísticas agregadas. En este ejemplo, no almacenamos el resultado del cálculo, sino que lo mostramos en la pantalla. Para almacenar 
+los resultados, basta con asignarlos a un nuevo objeto de la forma habitual.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-aggregate}
+Agregación. Observa que en el ejemplo de Python, podemos especificar funciones frecuentes tales como "'mean'" en una cadena de caracteres, pero también podríamos pasarlas como funciones numéricas directamente, como 'np.mean' de 'numpy'
+
+::: {.panel-tabset}
+## Código Python
+```{python aggregate-python}
+groups = d.groupby("Question")
+groups.agg({"Support": ["mean", "std"]})
+
+```
+## Código R
+```{r aggregate-r}
+groups = group_by(d, Question)
+summarize(groups, m=mean(Support), sd=sd(Support))
+```
+:::
+:::
+:::
+
+En R, se utiliza la función 'group_by' de 'dplyr' para definir los grupos y, a continuación, se aplica la función 'summarize' 
+para calcular los valores de resumen especificando 'name=function(value)'.
+
+En Python, la agrupación es bastante similar. Durante la creación del estadístico, sin embargo, se especifica en un diccionario[^5] 
+qué operaciones calcular. Las claves del diccionario enumeran las columnas en las que calcular los estadísticos, y los valores 
+contienen las funciones estadísticas a aplicar, por lo que ''value': function' o ''value': [list of functions]'.
+
+### Combinar varias operaciones
+En los ejemplos anteriores, cada línea de código (a menudo denominada *statement* (sentencia)) contenía una única operación, 
+generalmente una función o un método (véase la sección [-@sec-functions]). En R, cada línea solía tener la forma: 
+'data = function(data, arguments)', es decir, los datos se proporcionan como primer argumento de la función. En Python, a menudo 
+utilizamos métodos que "pertenecen a" objetos como marcos de datos o columnas. En ese caso, por lo tanto, especificamos el propio 
+objeto seguido de un punto y su método que va a llamar, por ejemplo: 'object = object.method(arguments)'.
+
+Aunque no hay nada de malo en limitar cada línea a una sola operación, ambos lenguajes permiten encadenar varias operaciones. 
+Especialmente para agrupar y resumir, puede ser recomendable encadenarlas, ya que pueden considerarse como un único paso de la 
+"manipulación de datos".
+
+En Python, esto se puede conseguir añadiendo el segundo '.method()' inmediatamente después de la primera sentencia. Esto hace que 
+se aplique el segundo método sobre el resultado del primer método: 'data.method1(arguments).method2(arguments)'. En R, como ya hemos 
+visto, los datos deben incluirse en los argumentos de la función. Pero también podemos encadenar las funciones. Para ello se utiliza 
+'pipe' operator (operador de tubería) ('%>%') del paquete 'magrittr' (¿No te parece un nombre adorable?). El *pipe operator* inserta el 
+resultado de la primera función como el primer argumento de la segunda función. Más técnicamente, 'f1(d) %>% f2()' es equivalente a 
+'f2(f1(d))'. Esto se puede utilizar para encadenar varios comandos, por ejemplo, 
+'data = data %>% function1(arguments) %>% function2(arguments)'.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-aggregate2}
+Combinar varias funciones o métodos. El resultado es idéntico al Ejemplo [-@exm-aggregate].
+
+::: {.panel-tabset}
+## Código Python
+```{python aggregate2-python}
+d.groupby("Question").agg({"Support": ["mean", "std"]})
+
+```
+## Código R
+```{r aggregate2-r}
+d %>% group_by(Question) %>% 
+  summarize(m=mean(Support), sd=sd(Support))
+```
+:::
+:::
+:::
+
+El @exm-aggregate2 muestra la misma operación que en el Ejemplo [-@exm-aggregate], pero encadenada en una única sentencia.
+
+### Añadir valores de resumen
+
+En vez de reducir el marco de datos para que contenga solo la información a nivel de grupo, a veces es conveniente añadir los 
+valores de resumen a los datos originales. Por ejemplo, si añadimos la puntuación media por escuela a los datos a nivel de 
+estudiante, podemos determinar si los estudiantes individuales superan la media de la escuela.
+
+Por supuesto, las puntuaciones de resumen son las mismas para todas las filas del mismo grupo: todos los alumnos de la misma 
+escuela tienen la misma media escolar. Por lo tanto, estos valores se repetirán para estas filas, mezclando variables individuales 
+y de grupo en el mismo marco de datos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-transform}
+Añadir valores de resumen a casos individuales
+
+::: {.panel-tabset}
+## Código Python
+```{python transform-python}
+# Note the use of ( ) to split a long line
+d["mean"] = d.groupby("Question")["Support"].transform("mean")
+d["deviation"] = d["Support"] - d["mean"]
+d.head()
+
+```
+## Código R
+```{r transform-r}
+d = d %>% group_by(Question) %>% 
+  mutate(mean = mean(Support), 
+         deviation=Support - mean)
+head(d)
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-transform] muestra cómo se puede lograr en Python y R: calculando el apoyo medio por pregunta y 
+luego calculando cuánto se desvía cada encuesta de la media.
+
+En R, el código es muy similar al del ejemplo [-@exm-aggregate2] anterior, simplemente sustituyendo la función 'summarize' 
+de 'dplyr' por la función 'mutate' (comentada anteriormente). En esta función se pueden mezclar funciones de resumen y funciones 
+regulares, tal y como se muestra en el ejemplo: primero se calcula la media por grupo, seguida de la desviación de esta media.
+
+El código Python también reutiliza la misma sintaxis utilizada para calcular nuevas columnas. La primera línea selecciona la columna 
+“Support” en el conjunto de datos agrupados y luego aplica el método 'transform' de 'pandas' en la columna para calcular la media 
+por grupo. Haciendo esto, se añade como una nueva columna. La segunda línea utiliza la sintaxis de asignación regular para crear 
+la desviación basada en la columna “Support” y la media calculada.
+
+## Fusionar datos {#sec-join}
+
+En muchos casos, necesitamos combinar datos de distintas fuentes o archivos de datos. Por ejemplo, podemos tener los resultados de 
+un sondeo electoral en un archivo y los datos socioeconómicos por zona en otro. Para comprobar si podemos explicar la variación en 
+los resultados de las encuestas a partir de factores como el nivel educativo, tendríamos que combinar los resultados de las encuestas 
+con los datos económicos. Este proceso suele denominarse *merging data* o *joining data* (fusión o unión de datos).
+
+### Unidades de análisis equivalentes
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-piketty}
+Datos sobre capital privado y público (fuente: Piketty 2014).
+
+::: {.panel-tabset}
+## Código Python
+```{python piketty_1-python}
+url = "https://cssbook.net/d/private_capital.csv"
+private = pd.read_csv(url)
+private.tail()
+
+```
+## Código R
+```{r piketty_1-r}
+url="https://cssbook.net/d/private_capital.csv"
+private = read_csv(url)
+tail(private)
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python piketty_2-python}
+url = "https://cssbook.net/d/public_capital.csv"
+public = pd.read_csv(url)
+public.tail()
+
+```
+## Código R
+```{r piketty_2-r}
+url = "https://cssbook.net/d/public_capital.csv"
+public = read_csv(url)
+tail(public)
+```
+:::
+:::
+:::
+
+Las fusiones más sencillas se dan cuando ambos conjuntos de datos tienen la misma unidad de análisis, es decir, las filas 
+representan las mismas unidades. Vamos a tomar los datos sobre la propiedad del capital público y privado publicados por @piketty 
+junto con su destacado libro “*Capital in the 21st Century*”. Como se muestra en el @exm-piketty, publicó archivos separados para 
+la propiedad del capital público y privado. Si quisiéramos analizar la relación entre ellos (por ejemplo, para recrear la Figura 3.6), 
+primero tendríamos que combinarlos en un único marco de datos.
+
+Para combinar estos marcos de datos, utilizamos el método de marcos de datos “'merge'” de 'pandas' en Python o el método 'full_join' 
+de 'dplyr' en R. Ambos métodos unen los marcos de datos en una o más columnas clave. La(s) columna(s) clave identifica(n) las unidades 
+en ambos marcos de datos, en este caso la columna “Year”. A menudo, la columna clave contiene algún tipo de identificador común, 
+tal como  el código de un encuestado o la ubicación. El marco de datos resultante contendrá la(s) columna(s) clave compartida(s) y 
+todas las demás columnas de ambos marcos de datos unidos.
+
+Tanto en Python como en R, se asume por defecto que todas las columnas que aparecen en ambos marcos de datos son las columnas clave. 
+En muchos casos, éste es el comportamiento deseado, ya que ambos marcos de datos pueden contener, por ejemplo, una columna “Year” o 
+“RepondentID”. Sin embargo, a veces no es así. Es posible que la columna clave se denomine de forma diferente en ambos marcos de datos, 
+por ejemplo, “respID” en uno y “Respondent” en el otro. También es posible que los dos marcos contengan columnas con el mismo nombre, 
+pero que contengan datos importantes que no deberían utilizarse como clave. Por ejemplo, en los datos de Piketty mostrados anteriormente, 
+la columna clave se llama “Year” en ambos marcos, pero también comparten las columnas de los países, las cuales contienen datos 
+interesantes.
+
+Para estos casos, es posible especificar qué columnas unir (utilizando el argumento 'on=' (Python) o 'by=' (R)). Sin embargo, en 
+general recomendamos preprocesar los datos y seleccionar y/o renombrar las columnas de forma que las únicas columnas compartidas 
+sean las columnas clave. Al fin y al cabo, si las columnas de diferentes marcos de datos significan lo mismo (por ejemplo, “respID” y 
+“Respondent”), que tengan el mismo nombre evitará confusiones. En el caso de los nombres de columna compartidos "accidentalmente", 
+como los nombres de los países del ejemplo, también es mejor cambiarles el nombre para que sea obvio cuál es cuál en el conjunto de 
+datos resultante. Por defecto, si las columnas compartidas no se fusionan, se les añade "'.x'" y "'.y'" (R) o "'_x'" y "'_y'" (Python), 
+pero esto no aclara gran cosa a la hora de leer los datos. Por otra parte, incluso si la columna clave es la única columna compartida, 
+te recomendamos seleccionar esa columna para dejar claro al lector (o a ti mismo en el futuro) lo que está pasando.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-merge}
+Fusión de datos privados y públicos de Francia.
+
+::: {.panel-tabset}
+## Código Python
+```{python capital_1-python}
+private_fr = private[["Year", "France"]].rename(
+    columns={"France": "fr_private"}
+)
+public_fr = public[["Year", "France"]].rename(columns={"France": "fr_public"})
+capital_fr = pd.merge(private_fr, public_fr)
+# Data for Figure 3.6 (Piketty, 2014, p 128)
+capital_fr.head()
+
+```
+## Código R
+```{r capital_1-r}
+private_fr = private %>% 
+    select(Year, fr_private=France)
+public_fr = public %>% 
+    select(Year, fr_public=France)
+capital_fr = full_join(private_fr, public_fr)
+# Data for Figure 3.6 (Piketty, 2014, p 128)
+head(capital_fr)
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python capital_2-python}
+# Are private and public capital correlated?
+r, p = scipy.stats.pearsonr(capital_fr.fr_private, capital_fr.fr_public)
+print(f"Pearson correlation: rho={r:.2},p={p:.3}")
+
+```
+## Código R
+```{r capital_2-r}
+# Are private and public capital correlated?
+cor.test(capital_fr$fr_private, 
+         capital_fr$fr_public)
+```
+:::
+:::
+:::
+
+Puedes ver todo esto en el @exm-merge. Las dos primeras líneas seleccionan solo las columnas “Year” y “France”, y cambian el nombre 
+de la columna “France” para indicar si se trata de los datos privados o públicos. La línea 3 realiza la unión real, con y sin la 
+selección explícita de la columna clave, respectivamente. A continuación, se utiliza para calcular la correlación entre el capital 
+privado y el público, que muestra que existe una correlación negativa débil, pero (por poco) significativa ($\rho=-.32, p=.04$) [^6].
+
+::: {.callout-note icon=false collapse=true}
+
+Además de merge, los marcos de datos de pandas también tienen un método llamado 'join'. Se trata de una versión simplificada para 
+unir índices (es decir, las etiquetas de las filas). Si tienes dos marcos de datos en los que las filas equivalentes tienen el mismo 
+número de filas, puedes escribir 'df1.join(df2)'. En resumen: ambos métodos hacen lo mismo, pero 'merge' ofrece más opciones, y 'join' 
+es más fácil si quieres unir índices.
+:::
+
+### Uniones interiores y exteriores
+
+En el ejemplo anterior, ambos conjuntos de datos tenían exactamente una entrada para cada unidad (año), por lo que es un caso 
+bastante sencillo. Sin embargo, si en alguno de los conjuntos de datos (o en ambos) faltan unidades, deberás especificar cómo 
+quieres que se trate.
+
+En la Tabla [-@tbl-joins] se enumeran las cuatro formas posibles de unir, manteniendo todas las filas (unión externa), solo las 
+filas presentes en ambos (unión interna), o todas las filas de uno de los conjuntos y las filas coincidentes del otro (unión izquierda 
+o derecha). Izquierda y derecha se refieren literalmente al orden en que se escriben los nombres de los marcos de datos. La 
+Figura [-@fig-joinvenn] y la Tabla [-@tbl-joins] ofrecen una visión general. En todos los casos, excepto en las uniones internas, 
+pueden crearse unidades en las que falte información de uno de los conjuntos de datos. Esto provocará que se inserten valores 
+perdidos ('NA'/'NaN') en las columnas de los conjuntos de datos con unidades que faltan.
+
+![El área azul indica si los casos en los conjuntos de datos resultantes proceden de uno, ambos o cualquiera de los conjuntos de datos individuales.](img/ch07_figjoins.png){#fig-joinvenn}
+
+|Tipo | Descripción | R | Python|
+|-|-|-|-|
+|Externa | Todas las unidades de ambos sets | `full_join(d1,d2)` | `d1.merge(d2, how='outer')`|
+|Interna | Solo las unidades que están en ambos sets | `inner_join(d1,d2)` | `d1.merge(d2, how='inner')`|
+|Izquierda | Todas las unidades del set de la izquierda | `left_join(d1,d2)` | `d1.merge(d2, how='left')`|
+|Derecha | Todas las unidades del set de la derecha | `right_join(d1,d2)` | `d1.merge(d2, how='right')`|
+: Diferentes tipos de uniones entre los conjuntos de datos d1 y d2 {#tbl-joins}
+
+En la mayoría de casos, utilizarás o la unión interna o la unión izquierda. La unión interna es útil cuando la 
+información debe estar completa, o cuando solo te interesan las unidades con información en ambos conjuntos de datos. 
+En general, al unir conjuntos con las mismas unidades, conviene comprobar el número de filas antes y después de la operación. 
+Si disminuye, indica que hay unidades en las que falta información en cualquiera de los dos conjuntos. Si aumenta, indica 
+que los conjuntos no están al mismo nivel de análisis, o que hay unidades duplicadas en los datos. En cualquier caso, un 
+cambio inesperado en el número de filas es un buen indicador de que algo va mal.
+
+Las uniones izquierda son útiles cuando se añade información adicional a un conjunto de datos "primario". Por ejemplo, puedes 
+tener los resultados de tu encuesta principal en un conjunto de datos al que desees añadir metadatos o información adicional 
+sobre los encuestados. Si estos datos no están disponibles para todos los encuestados, puedes utilizar una unión izquierda para 
+añadir la información donde esté disponible, y simplemente dejar a los demás con valores perdidos.
+
+Un caso similar es cuando se tiene una lista de noticias y otra de artículos codificados o encontrados con algún término de 
+búsqueda. Una unión izquierda te permitirá conservar todas las noticias y, además, añadir la codificación cuando esté disponible. 
+Esto es especialmente interesante si, por ejemplo, los artículos que tengan cero coincidencias en un término de búsqueda son 
+excluidos de los resultados de búsqueda. En esa situación, puedes utilizar una unión izquierda seguida de un cálculo para sustituir 
+los valores perdidos por ceros: así indicas que los recuentos de los términos no faltan, sino que equivalen a cero.
+
+Por supuesto, también puedes utilizar una unión derecha para conseguir el mismo efecto. Sin embargo, es más natural trabajar a 
+partir del conjunto de datos primario y añadir los datos secundarios, por eso se utilizan más las uniones izquierdas que las uniones 
+derechas.
+
+Las uniones externas (o completas) pueden ser útiles cuando se añade información de, por ejemplo, múltiples oleadas de encuestas, y 
+se desea incluir a cualquier encuestado que haya respondido a cualquiera de las oleadas. Por supuesto, tendrás que pensar cuidadosamente 
+cómo tratar los valores perdidos resultantes en un análisis sustancial.
+
+### Datos anidados
+
+En las secciones anteriores se ha tratado la fusión de dos conjuntos de datos al mismo nivel de análisis, es decir, con filas que 
+representan las mismas unidades (encuestados, artículos, años) en ambos conjuntos. Sin embargo, también es posible unir un conjunto más 
+agregado (de alto nivel) con un conjunto de datos más detallado. Por ejemplo, puedes tener encuestados que formen parte de una unidad 
+escolar u organizativa. Puede ser conveniente unir la información a nivel de encuestado con la información a nivel de centro educativo, 
+por ejemplo, para explorar las diferencias entre centros educativos o realizar modelos multinivel.
+
+Para hacer esto, utilizamos los mismos comandos que para las uniones equivalentes. En el conjunto de datos fusionado resultante, la 
+información del nivel de grupo se duplicará para todos los individuos de ese grupo.
+
+Por ejemplo, tomemos los dos conjuntos de datos del Ejemplo [-@exm-primary]. El conjunto de datos 'results' muestra cuántos votos 
+recibió cada candidato a las primarias presidenciales de 2016 en cada condado: Bernie Sanders obtuvo 544 votos en el condado de 
+Autauga, en el estado estadounidense de Alabama, lo que supuso el 18,2\% de todos los votos emitidos en las primarias demócratas. 
+Por otra parte, el conjunto de datos 'counties' muestra un gran número de datos sobre estos condados, como la población, el cambio 
+en la población, la distribución por género y educación, etc.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-primary}
+ Resultados de las primarias de 2016 y metadatos a nivel de condado. Ten en cuenta que para evitar la duplicados, mostramos los datos de los condados en el ejemplo de Python y los datos de los resultados en el ejemplo de R.
+
+::: {.panel-tabset}
+## Código Python
+```{python primary-python}
+r = "https://cssbook.net/d/2016_primary_results.csv"
+results = pd.read_csv(r)
+results.head()
+
+```
+## Código R
+```{r primary-r}
+r="https://cssbook.net/d/2016_primary_results.csv"
+results = read_csv(r) 
+head(results)
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python primaryb-python}
+c = "https://cssbook.net/d/2016_primary_county.csv"
+counties = pd.read_csv(c)
+counties.head()
+
+```
+## Código R
+```{r primaryb-r}
+c="https://cssbook.net/d/2016_primary_county.csv"
+counties = read_csv(c)
+head(counties)
+```
+:::
+:::
+:::
+
+Supongamos que tenemos como hipótesis que a Hillary Clinton le fue relativamente bien en las zonas con más votantes negros. 
+Para comprobarlo, tendríamos que combinar los datos sobre composición étnica a nivel de condado con los datos sobre los resultados 
+de las elecciones a nivel del candidato.
+
+En el Ejemplo [-@exm-nested] mostramos cómo hacerlo en dos pasos. En primer lugar, limpiamos ambos conjuntos de datos para que 
+contengan solo los datos relevantes. En el conjunto de datos 'results' conservamos solo las filas de los demócratas y, de las columnas, 
+conservamos 'fips' (código de condado), 'candidate' (candidato), 'votes' (votos) y 'fraction columns' (fracción). En el conjunto de 
+datos de los condados, conservamos todas las filas, pero solo las columnas 'county code' (código de condado), 'name' (nombre) y 
+'Race_white_pct' (porcentaje_de raza blanca).
+ 
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-nested}
+Unir datos a nivel de resultado y de condado
+
+::: {.panel-tabset}
+## Código Python
+```{python nested-python}
+c = counties[["fips", "area_name", "Race_black_pct"]]
+
+r = results.loc[results.candidate == "Hillary Clinton"]
+r = r[["fips", "votes", "fraction_votes"]]
+r = r.merge(c)
+r.head()
+
+```
+## Código R
+```{r nested-r}
+c = counties %>% 
+  select("fips", "area_name", "Race_black_pct")
+r = results %>% 
+  filter(candidate == "Hillary Clinton") %>% 
+  select(fips, votes, fraction_votes)
+r = inner_join(r, c)
+cor.test(r$Race_black_pct, r$fraction_votes)
+```
+:::
+:::
+:::
+
+En el segundo paso, ambos conjuntos se unen mediante una unión interna a partir del conjunto de datos 'results'. Ten en cuenta que 
+aquí también podríamos haber utilizado una unión izquierda, pero con una unión interna veremos inmediatamente si faltan datos a nivel 
+de condado, ya que el número de filas disminuirá. De hecho, en este caso el número de filas disminuye, porque en 'results' faltan algunos 
+de los datos correspondientes a los condados. Te proponemos un pequeño puzzle: ¿Crees que puedes utilizar los comandos de filtrado de 
+conjuntos de datos comentados anteriormente para averiguar de qué datos se tratan?
+
+Observa también que los datos a nivel de condado contienen unidades que no se utilizan, en concreto, las estadísticas a nivel nacional 
+y estatal. Estas, junto a los datos de los resultados que no corresponden a condados, se filtran automáticamente utilizando una unión.
+
+Por último, podemos crear un gráfico de dispersión o un análisis de correlación de la relación entre la composición étnica y el éxito 
+electoral (véase cómo crear el gráfico de dispersión en el apartado [-@sec-visualization]). En este caso, resulta que a Hillary Clinton 
+le fue mucho mejor en los condados con un alto porcentaje de residentes negros. No olvides que esto no significa que exista una relación 
+causal directa, ya que puede haber factores subyacentes, como la fecha de las elecciones (que es muy importante en las primarias). Desde 
+el punto de vista estadístico, dado que las observaciones dentro de un estado no son independientes, lo que deberíamos controlar es el 
+voto a nivel a nivel de cada estado. Por ejemplo, podríamos utilizar una correlación parcial, pero seguiríamos violando el supuesto de 
+independencia de los errores, por lo que sería mejor adoptar un enfoque de modelización más sofisticado (por ejemplo, multinivel). Sin 
+embargo, esto queda fuera del alcance de este capítulo.
+
+## Remodelar datos: De ancho a largo y de largo a ancho {#sec-pivot}
+
+Los datos que encuentras o creas no siempre tienen la forma que necesitas para tu análisis. En muchos casos, necesitarás que cada 
+observación esté en su propia fila para la posterior manipulación de los datos o para los análisis. Sin embargo, muchas fuentes de 
+datos enumeran múltiples observaciones en columnas. Por ejemplo, los datos de encuestas de panel en las que se hace la misma pregunta 
+cada semana suelen tener una fila por encuestado y una columna para cada medición semanal. Sin embargo, para un análisis de series 
+temporales, cada fila debe ser una única medición, es decir, la unidad de análisis es un encuestado por semana.
+
+Generalmente, los datos con múltiples observaciones de la misma unidad se denominan datos anchos (ya que hay muchas columnas), mientras 
+que un conjunto de datos con una fila por cada observación se denomina datos largos (ya que hay muchas filas). En la mayoría de los 
+casos, es más fácil trabajar con datos largos y, de hecho, en la jerga de 'tidyverse', estos datos se denominan “*tidy data*” 
+(datos ordenados).
+
+Vamos a imaginarnos un ejemplo relativamente sencillo: consideremos los conjuntos de datos que contienen capital público y privado. 
+Estos datos son "anchos" en el sentido de que las medidas de los distintos países están contenidas en las columnas. Para hacer estos 
+datos "largos" tendríamos que crear filas para cada combinación país-año. Esto facilitará enormemente la manipulación o el análisis de 
+los datos, ya que ahora es posible, por ejemplo, fusionar directamente los conjuntos de datos y calcular la correlación combinada entre 
+estas variables. De hecho, cuando anteriormente fusionamos estos conjuntos de datos en el Ejemplo [-@exm-merge2], seleccionamos solo 
+las mediciones para Francia, convirtiéndolos, en esencia, en datos largos.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-merge2}
+Conversión de datos anchos en datos largos para facilitar la fusión y la visualización.
+
+::: {.panel-tabset}
+## Código Python
+```{python merge1-python}
+url = "https://cssbook.net/d/private_capital.csv"
+private = pd.read_csv(url)
+private = private.melt(id_vars="Year", var_name="country", value_name="capital")
+private.head()
+
+```
+## Código R
+```{r merge1-r}
+url = "https://cssbook.net/d/private_capital.csv"
+private = read_csv(url)
+private = private %>% pivot_longer(cols = -Year,
+    names_to="country", values_to="capital")
+head(private)
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python merge2-python}
+#| results: hide
+url = "https://cssbook.net/d/public_capital.csv"
+public = pd.read_csv(url)
+public = public.melt(id_vars="Year", var_name="country", value_name="capital")
+d = pd.concat([private.assign(type="private"), public.assign(type="public")])
+
+countries = {"France", "U.K.", "Germany"}
+d = d.loc[d.country.isin(countries)]
+d.reset_index(inplace=True)
+plt = sns.lineplot(data=d, x="Year", y="capital", hue="country", style="type")
+plt.set(ylabel="Capital (% of national income")
+plt.set_title(
+    "Capital in Europe, 1970 - 2010" "\nPartial reproduction of Piketty fig 4.4"
+)
+
+```
+## Código R
+```{r merge2-r}
+url = "https://cssbook.net/d/public_capital.csv"
+public = read_csv(url) %>% pivot_longer(-Year,
+    names_to="country", values_to="capital")
+
+d = bind_rows(
+    private %>% add_column(type="private"),
+    public %>% add_column(type="public"))
+countries = c("Germany", "France", "U.K.")
+d %>% filter(country %in% countries) %>% 
+  ggplot(aes(x=Year, y=capital, 
+             color=country, lty=type)) + 
+  geom_line()+ 
+  ylab("Capital (% of national income)") +
+  guides(colour=guide_legend("Country"), 
+         linetype=guide_legend("Capital")) + 
+  theme_classic() + 
+  ggtitle("Capital in Europe, 1970 - 2010", 
+    "Partial reproduction of Piketty fig 4.4")
+
+```
+:::
+:::
+:::
+
+El @exm-merge2 muestra cómo "pivotar" los datos de capital a formato largo utilizando 'pivot_longer' (R) y 'melt' (Pandas). La segunda 
+parte del ejemplo hace esto para ambos conjuntos de datos, los fusiona y reproduce parcialmente la Figura 4.4 de @piketty.
+
+## Reestructuración de datos desordenados
+
+Como último ejemplo, examinaremos los datos de Piketty sobre la proporción de nóminas y salarios (tablas complementarias S8.1 y S8.2). 
+Queremos visualizar la proporción de nóminas y salarios que se destina al 1% de los que más ganan en Francia y en Estados Unidos. La 
+@fig-messy muestra una captura de pantalla de estos datos en Libre Office, con los datos de EE.UU., que tienen una forma similar. En 
+los ejemplos anteriores, utilizamos una versión csv limpia de estos datos, pero ahora nos enfrentaremos al reto adicional de tratar 
+con el archivo de Excel, que incluye filas de encabezado adicionales y nombres de columnas destinados al consumo humano en lugar de 
+a la computación fácil.
+
+![Datos de las rentas más altas según Piketty (2014; apéndice digital).](img/messy.png){#fig-messy}
+
+Para realizar nuestra visualización, queremos un conjunto de datos que contenga una única columna de medidas (porcentaje de 
+participación) y una fila para cada combinación de año-país (por ejemplo, una fila para la desigualdad salarial en 1910 en EE.UU.). 
+Una de las habilidades más importantes en las ciencias sociales computacionales (y en el análisis basado en datos en general) es 
+comprender qué serie de pequeños pasos son necesarios para pasar de un formato de datos a otro. Pese a que no existe una lista inmutable 
+de pasos que haya que dar, los necesarios para pasar de los datos visualizados en la Figura [-@fig-messy] a un conjunto de datos 
+"ordenado" son bastante habituales:
+
+- Entrada: volcar los datos en marcos de datos. En este caso, volcar una hoja de Excel y saltarse las filas de cabecera adicionales.
+   -  Reformar: pivotar los datos a formato largo.
+   -  Normalizar: estandarizar nombres, tipos de valores, etc. En este caso, también separar un encabezado como "Cuota de ingresos del 1% superior" en tipo de ingresos (nómina, salario) y percentil (10%, 1%, etc.).
+   -  Filtrar: filtrar los datos deseados
+   -  Analizar: crear la visualización
+
+Por suerte para nosotros, estos pasos ya los hemos tratado anteriormente: lectura de datos csv en la Sección [-@sec-reading]; pivote a 
+datos largos en la Sección [-@sec-pivot]; añadir una columna en la Sección [-@sec-calculate]; unir datos en la Sección [-@sec-join]; 
+y visualización en la Sección [-@sec-visualization].
+
+El ejemplo [-@exm-excel] muestra cómo realizar estos pasos para el caso de EE.UU. En primer lugar, utilizamos 'readxl' (R) y 'xlrd' 
+(Python) para abrir una hoja de archivo Excel en un marco de datos, especificando manualmente el número de filas de encabezado y pie 
+de página que deben omitirse. A continuación, pivotamos las columnas a formato largo. En el paso 3, dividimos la cabecera en dos 
+columnas utilizando 'separate' (R) y 'split' (Python). Por último, los pasos 4 y 5 toman el subconjunto deseado y crean un gráfico 
+de líneas.
+
+El paso que falta, dividir una cabecera en dos columnas, se realiza utilizando 'separate' (R) o 'split' (Python).
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-excel}
+Tratar con datos "desordenados".
+
+::: {.panel-tabset}
+## Código Python
+```{python excel1-python}
+url = "https://cssbook.net/d/Chapitre8.xls"
+# 1 Input: Read the data into a data frame
+d = pd.read_excel(url, sheet_name="TS8.2", skiprows=4, skipfooter=3)
+
+d = d.rename(columns={"Unnamed: 0": "year"})
+
+# 2 Reshape: Pivoting to long, dropping missing
+d = d.melt(value_name="share", id_vars="year")
+
+# 3 Normalize
+cols = ["_top", "percentile", "type", "_share", "capital_gains"]
+d[cols] = d.variable.str.split(n=4, expand=True)
+d = d.drop(columns=["variable", "_top", "_share"])
+d["capital_gains"] = d["capital_gains"].notna()
+d.head()
+
+```
+## Código R
+```{r excel1-r}
+#1 Input: Read the data into a data frame
+url="https://cssbook.net/d/Chapitre8.xls"
+dest = tempfile(fileext=".xls")
+download.file(url, dest)
+d = read_excel(dest,sheet="TS8.2",skip=4)
+d = d%>% rename("year"=1)
+
+#2 Reshape: Pivoting to long, dropping missing
+d = d%>%pivot_longer(-year, values_to="share")%>% 
+        na.omit()
+
+#3 Normalize
+cols = c(NA,"percent","type",NA,"capital_gains")
+d = d %>% separate(name, into=cols,
+   sep=" ", extra="merge", fill="right") %>% 
+  mutate(year=as.numeric(year), 
+         capital_gains=!is.na(capital_gains))
+head(d)
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python excel2-python}
+#| results: hide
+# 4 Filter for the desired data
+subset = d[
+    (d.year >= 1910) & (d.percentile == "1%") & (d.capital_gains == False)
+]
+
+# 5 Analyze and/or visualize
+plt = sns.lineplot(data=subset, hue="type", x="year", y="share")
+plt.set(xlabel="Year", ylabel="Share of income going to top-1%")
+
+```
+## Código R
+```{r excel2-r}
+#4 Filter for the desired data
+subset = d %>% filter(year >=1910, 
+                      percent=="1%", 
+                      capital_gains==F)
+
+#5 Analyze and/or visualization
+ggplot(subset, aes(x=year, y=share, color=type)) +
+  geom_line() + xlab("Year") + 
+ylab("Share of income going to top-1%") +
+  theme_classic()
+
+```
+:::
+:::
+:::
+
+[^1]: https://projects.fivethirtyeight.com/guns-parkland-polling-quiz/; véase https://github.com/fivethirtyeight/data/tree/master/poll-quiz-guns para los datos subyacentes.︎
+
+[^2]: Ten en cuenta que, en Python, 'df2=df1' no crea una copia de un marco de datos, sino un puntero a la misma posición de memoria (véase la discusión sobre objetos mutables en la Sección [-@sec-datatypes]). A menudo esto puede no tener importancia práctica, pero si realmente necesitas estar seguro de que se crea una copia, utiliza 'df2=df1.copy()'.︎
+
+[^3]: También puedes escribir 'd.rep - d.dem', que es más corto, pero no funciona si los nombres de columna contienen, por ejemplo, espacios.
+
+[^4]: Ve a la Sección [-@sec-functions] para hacer un repaso de métodos y funciones︎
+
+[^5]: Ve a la Sección  [-@sec-datatypes] para más información sobre cómo trabajar con diccionarios︎
+
+[^6]: Por supuesto, el hecho de que se trate de datos de series temporales significa que se viola gravemente el supuesto de independencia de la correlación regular, por lo que esto debe interpretarse como una estadística descriptiva, por ejemplo, en los años con alto capital privado hay bajo capital público y al revés.︎
