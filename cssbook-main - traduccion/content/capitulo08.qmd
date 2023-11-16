@@ -1,0 +1,1316 @@
+# Modelado estadístico y aprendizaje automático supervisado {#sec-chap-introsml}
+
+{{< include common_setup.qmd >}}
+
+::: {.callout-warning}
+# Update planned: R Tidymodels
+
+At the time of writing this chapter for the published book, `caret` was the state of the art Machine Learning package for R.
+We now think that the (newer) `tidymodels` package is a better choice in many regards.
+For this reason, we are planning to rewrite this chapter using that package. 
+See the [relevant github issue](https://github.com/vanatteveldt/cssbook/issues/6) for more information. 
+
+We also plan to add a section on Encoder Representation / Transformer models, see the [relevant github issue](https://github.com/vanatteveldt/cssbook/issues/4)
+:::
+
+
+**Resumen.** Este capítulo introduce al lector en el mundo del aprendizaje automático supervisado. Comienza explicando cómo pueden 
+utilizarse las técnicas estadísticas clásicas, como los modelos de regresión, para hacer predicciones. También ofrece una visión 
+general de las técnicas más utilizadas, desde los clasificadores Naive Bayes hasta las redes neuronales.
+
+**Palabras clave.** Aprendizaje automático supervisado
+
+**Objetivos:**
+
+ -  Comprender los principios del aprendizaje automático supervisado 
+ -  Ser capaz de ejecutar un modelo predictivo 
+ -  Ser capaz de evaluar el rendimiento de un modelo predictivo
+
+
+::: {.callout-note icon=false collapse=true}
+
+En este capítulo, utilizamos el paquete de Python 'statsmodels' para el modelado estadístico clásico, antes de pasar a utilizar 
+un paquete dedicado al aprendizaje automático, 'scikit-learn'. En R, utilizamos R base para el modelado estadístico, 'rsample' para 
+dividir nuestro conjunto de datos, 'caret' para el aprendizaje automático y 'pROC' para determinar la Curva ROC (*Receiver Operating 
+Characteristic*). Ten en cuenta que 'caret' requiere paquetes adicionales para los modelos de aprendizaje automático: 'naivebayes', 
+'LiblineaR' y 'randomforest'. Puedes instalarlos de la siguiente manera (consulta la Sección [@sec-installing] para obtener más 
+detalles):
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter08install-python}
+#| eval: false
+!pip3 install pandas statsmodels sklearn
+```
+## Código R
+```{r chapter08install-r}
+#| eval: false
+install.packages(c("randomForest", "rsample",
+    "glue", "caret", "naivebayes", "LiblineaR",
+    "randomForest", "pROC","e1071"))
+```
+:::
+Una vez instalados, tienes que importar (activar) los paquetes en cada sesión:
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter08library-python}
+# Data handling, math, and plotting
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Classical statistical modeling
+import statsmodels.formula.api as smf
+
+# ML: Preprocessing
+from sklearn import preprocessing
+
+# ML: Train/test splits, cross validation,
+# gridsearch
+from sklearn.model_selection import (
+    train_test_split,
+    cross_val_score,
+    GridSearchCV,
+)
+
+# ML: Different models
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+
+# ML: Model evaluation
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_curve,
+    auc,
+    cohen_kappa_score,
+    make_scorer,
+    f1_score,
+)
+
+```
+## Código R
+```{r chapter08library-r}
+library(tidyverse)
+library(rsample)
+library(glue)
+library(caret)
+library(naivebayes)
+library(LiblineaR)
+library(randomForest)
+library(pROC)
+
+```
+:::
+
+ Ten en cuenta que, en Python, podríamos simplemente escribir 'import sklearn' una vez en lugar de todas las líneas from 
+'sklearn import ....' Pero nuestro enfoque nos ahorrará tiempo más tarde, ya que podremos escribir 'classification_report' en lugar 
+de 'sklearn.metrics.classification_report', por ejemplo.
+
+:::
+
+En este capítulo, presentamos los conceptos e ideas básicos del aprendizaje automático. Esbozaremos cómo se relaciona el aprendizaje 
+automático con los enfoques estadísticos tradicionales (que probablemente ya conozcas y con los que verás que hay mucho solapamiento), 
+presentaremos distintos tipos de modelos y discutiremos cómo validarlos. Más adelante en este libro (sección [@sec-supervised]), 
+aplicaremos específicamente los conocimientos adquiridos en este capítulo al análisis de datos textuales, posiblemente una de las tareas 
+más interesantes en el análisis computacional de la comunicación.
+
+En este capítulo, nos centraremos en el aprendizaje automático supervisado (SML, por sus siglas en inglés), una forma de aprendizaje 
+automático en la que pretendemos predecir una variable que, al menos para una parte de nuestros datos, es conocida. El SML suele 
+aplicarse a problemas de clasificación y regresión. Para ilustrar la idea, imagina que estás interesado en predecir el género de los 
+usuarios basándote en las biografías de Twitter. Para ello, tú mismo determinas el sexo de algunas de las biografías y entregas estos 
+ejemplos al ordenador. El ordenador "aprende" esta clasificación a partir de tus ejemplos y puede utilizarla para predecir el sexo de 
+otras biografías de Twitter de las que no conoce el género.
+
+En cambio, en el aprendizaje automático no supervisado (UML, por sus siglas en inglés) no se dispone de tales ejemplos. Por lo tanto, 
+UML suele aplicarse a problemas de clústeres y asociaciones. Hemos tratado algunas de estas técnicas en la sección [@sec-clustering], 
+en particular, el análisis de clústeres y el análisis de componentes principales (PCA, por sus siglas en inglés). Más adelante, en la 
+sección [@sec-unsupervised], hablaremos del modelado de temas, un método no supervisado para extraer los llamados “temas” de datos 
+textuales.
+
+Aunque ambos enfoques pueden combinarse (por ejemplo, se podría reducir primero la cantidad de datos mediante PCA o SVD y, a 
+continuación, predecir algún resultado), pueden considerarse fundamentalmente diferentes, tanto desde el punto de vista teórico como 
+conceptual. El aprendizaje automático no supervisado es un enfoque ascendente y corresponde a un razonamiento inductivo: no se tiene 
+una hipótesis de, por ejemplo, qué temas están presentes en un corpus de texto; más bien se deja que los temas emerjan de los datos. 
+El aprendizaje automático supervisado, por el contrario, es un enfoque descendente y puede considerarse más deductivo: se definen a 
+priori los temas que hay que predecir.
+
+## Modelado estadístico y predicciones {#sec-prediction}
+
+Mucha gente bromea con que el aprendizaje automático no es más que un nombre elegante de la estadística. Y lo cierto es que hay algo 
+de verdad en ello: si alguien dice "regresión logística", tanto a los estadísticos como a los profesionales del aprendizaje automático 
+les sonará familiar. De ahí que no tenga mucho sentido distinguir entre estadística, por un lado, y aprendizaje automático, por otro. 
+Aun así, existen algunas diferencias entre los enfoques estadísticos tradicionales (que puede que hayas aprendido en tus clases de 
+estadística) y el enfoque del aprendizaje automático, aunque se utilicen algunas de las mismas herramientas matemáticas. Tanto el enfoque 
+como los objetivos que queremos alcanzar, son diferentes.
+
+Ilustrémoslo con un ejemplo. 'media.csv'[^1] contiene algunas columnas de datos de encuestas sobre cuántos días a la semana los 
+encuestados recurren a distintos tipos de medios (radio, periódico, televisión e Internet) para seguir las noticias[^2]. También 
+contiene su edad (en años), su sexo (codificado como mujer = 0, hombre = 1) y su educación (en una escala de 5 puntos).
+
+Una pregunta sencilla que podemos hacernos es hasta qué punto las características sociodemográficas de los encuestados explican su 
+uso de los medios de comunicación. Los científicos sociales suelen abordar esta cuestión mediante un análisis de regresión. Un 
+análisis de este tipo nos dice hasta qué punto algunas variables independientes $x_1, x_2, \ldots, x_n$ pueden explicar $y$. En una 
+regresión por mínimos cuadrados ordinarios (OLS, por sus siglas en inglés), calcularíamos 
+$y=\beta_0 +\beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_n x_n$.
+
+En un artículo de ciencias sociales típico, interpretaríamos los coeficientes que hemos calculado y diríamos algo como: cuando $x_1$ 
+aumenta en una unidad, $y$ aumenta en $\beta_1$. A veces llamamos a esto "el efecto de $x_1$ en $y$" (aunque, por supuesto, depende del 
+diseño del estudio si la relación puede interpretarse realmente como un efecto causal). Además, podríamos observar la varianza 
+explicada $R^2$, para evaluar hasta qué punto el modelo se ajusta a nuestros datos. En el [@exm-ols] utilizamos este enfoque de regresión 
+para modelizar la relación de la edad y el sexo con el número de días por semana que una persona lee un periódico. Ajustamos el modelo 
+lineal utilizando la función 'lm' de 'stats' en R y la función 'ols' de 'statsmodels' (importada del módulo 'statsmodels.formula.api') 
+en Python.
+
+::: 
+{.callout-note appearance="simple" icon=false}
+
+::: {#exm-ols}
+Obtención de un modelo calculando una regresión OLS
+
+::: {.panel-tabset}
+## Código Python
+```{python ols-python}
+df = pd.read_csv("https://cssbook.net/d/media.csv")
+mod = smf.ols(formula="newspaper ~ age + gender", data=df).fit()
+# mod.summary() would give a lot more info,
+# but we only care about the coefficients:
+mod.params
+```
+## Código R
+```{r ols-r}
+df = read.csv("https://cssbook.net/d/media.csv")
+mod = lm(formula = "newspaper ~ age + gender",
+         data = df)
+# summary(mod) would give a lot more info, 
+# but we only care about the coefficients:
+mod
+```
+:::
+:::
+:::
+
+La mayoría de los análisis sociocientíficos tradicionales se detienen después de informar e interpretar los coeficientes de edad 
+($\beta = 0.0676$) y sexo (B=0.0896($\beta = -0.0896$)), así como sus errores estándar, intervalos de confianza, valores p y la varianza 
+total explicada (19\%). Pero podemos ir un paso más allá. Dado que ya hemos calculado nuestra ecuación de regresión, ¿Por qué no 
+utilizarla para hacer alguna predicción?
+
+Acabamos de calcular que
+
+$$newspaperreading = -0.0896 + 0.0676 \cdot age + 0.1767 \cdot gender$$
+
+
+Con solo introducir los valores de un hombre de 20 años o una mujer de 40, podemos calcular fácilmente el número esperado de días que 
+esa persona lee el periódico a la semana, aunque no exista esa persona en el conjunto de datos original.
+
+Descubrimos que:
+
+
+$$\hat{y}_{man20} = -0.0896 + 0.0676 \cdot 20 + 1 \cdot 0.1767 = 1.4391$$
+
+$$\hat{y}_{woman40} = -0.0896 + 0.0676 \cdot 40 + 0 \cdot 0.1767 = 2.6144$$
+
+Esto es fácil de hacer a mano, pero, por supuesto, es más interesante hacerlo automáticamente para un número grande y esencialmente 
+ilimitado de casos. Podría ser tan sencillo como se muestra en el [@exm-olspredict].
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-olspredict}
+Utilizar el modelo OLS que hemos calculado antes para predecir la variable dependiente para nuevos datos en los que es desconocida.
+
+::: {.panel-tabset}
+## Código Python
+```{python olspredict-python}
+#| cache: true
+newdata = pd.DataFrame([{"gender": 1, "age": 20}, {"gender": 0, "age": 40}])
+mod.predict(newdata)
+```
+## Código R
+```{r olspredict-r}
+#| cache: true
+gender = c(1,0)
+age = c(20,40)
+newdata = data.frame(age, gender)
+predict(mod, newdata)
+```
+:::
+:::
+:::
+
+Haciendo esto, desplazamos nuestra atención de la interpretación de los coeficientes a la predicción de la variable dependiente para 
+casos nuevos y desconocidos. No nos importan los valores reales de los coeficientes, solo los necesitamos para nuestra predicción. De 
+hecho, en muchos modelos de aprendizaje automático, tendremos tantos que ni siquiera nos molestaremos en comunicarlos.
+
+Como puedes ver, esto implica que procedemos en dos pasos: primero, utilizamos algunos datos para entrenar a nuestro modelo. A 
+continuación, utilizamos ese modelo para hacer predicciones.
+
+Hemos utilizado una regresión OLS para nuestro primer ejemplo, porque es muy fácil de interpretar y la mayoría de nuestros lectores 
+estarán familiarizados con ella. Sin embargo, un modelo puede adoptar la forma de cualquier función, siempre que tome como entrada 
+algunas características (o "rasgos") de los casos (en este caso, las personas) y devuelva una predicción.
+
+Sin embargo, utilizar un método de regresión OLS tan sencillo como el que hemos probado, para realizar predicciones, puede plantear 
+un par de problemas. Uno de ellos es que, en algunos casos, estas predicciones no tienen mucho sentido. Por ejemplo, aunque sepamos 
+que el resultado debe estar entre 0 y 7 (ya que es el número de días de la semana), nuestro modelo puede predecir que, una vez que un 
+hombre alcance la edad de 105 años (raro, pero no imposible), leerá el periódico 7,185 de cada 7 días. Del mismo modo, una niña de un 
+año podrá tener incluso una cantidad negativa de lectura de periódicos. Otro problema está relacionado con los supuestos inherentes a 
+los modelos. Por ejemplo, en nuestro ejemplo, estamos asumiendo que las relaciones entre estas variables son lineales. Para luchar 
+contra este problema, más adelante, en este capítulo, discutiremos modelos múltiples que no hacen tales suposiciones. Y, por último, 
+en muchos casos, en realidad no estamos interesados en obtener una predicción precisa de un número continuo (una tarea de regresión), 
+sino en predecir una categoría. Podemos querer predecir si un tuit se convierte en viral o no, si es probable que un comentario de un 
+usuario contenga lenguaje ofensivo o no, si es más probable que un artículo trate sobre política, deportes, economía o estilo de vida. 
+En términos de aprendizaje automático, estas tareas se conocen como clasificación.
+
+En la siguiente sección, describiremos los términos y conceptos clave del aprendizaje automático. A continuación, hablaremos de modelos 
+específicos que puedes utilizar para diferentes aplicaciones.
+
+## Conceptos y principios {#sec-principles}
+
+El objetivo del aprendizaje automático supervisado puede resumirse en lo siguiente: calcular un modelo basado en algunos datos de los 
+que sabemos el resultado y utilizarlo para predecir el resultado esperado de los nuevos casos cuyo resultado no conocemos. Esto es 
+exactamente lo que hemos hecho en el ejemplo introductorio de la sección [@sec-prediction].
+
+¿Pero cuándo nos hace esto falta?
+
+En resumen, en cualquier escenario en el que se cumplan estas dos condiciones previas: en primer lugar, tenemos un gran conjunto de 
+datos (digamos, $100.000$ titulares) para los que queremos predecir a qué clase pertenecen (digamos, si son clickbait o no); en segundo 
+lugar, para un subconjunto aleatorio de los datos (digamos $2.000$ de los titulares), ya conocemos la clase. Por ejemplo, porque los 
+hemos codificado manualmente ("anotado").
+
+Sin embargo, antes de empezar a utilizar SML, necesitamos disponer de una terminología común. Aún a riesgo de simplificar demasiado las 
+cosas, la [@tbl-mllingo] proporciona una guía aproximada de cómo algunos términos típicos del aprendizaje automático se traducen en 
+términos estadísticos con los que puede que estés familiarizado.
+
+|Términos de aprendizaje automático | Términos de estadística|
+|-|-|
+|Característica | Variable independiente|
+|Etiqueta | Variable dependiente|
+|Conjunto de datos etiquetados | Conjunto de datos con variables independientes y dependientes|
+|Entrenar un modelo | Calcular|
+|Clasificador (clasificación)  | Modelo para predecir resultados nominales|
+|Anotar | codificar (manualmente) (análisis de contenido)|
+: Some common machine learning terms explained {#tbl-mllingo}
+
+Para familiarizarnos con estos términos, vamos a explicarlos recorriendo un flujo de trabajo SML típico.
+
+Antes de empezar, necesitamos un conjunto de datos etiquetados. Puede que nos lo den, o puede que tengamos que crearlo nosotros 
+mismos. Por ejemplo, a menudo podemos extraer una muestra aleatoria de nuestros datos y utilizar técnicas de análisis de contenido 
+manual (por ejemplo, @riffe2019analyzing) para anotar (es decir, codificar manualmente) los datos. Puedes descargar un ejemplo para 
+este proceso (en este caso, anotar el tema de los artículos de noticias) en 
+[dx.doi.org/10.6084/m9.figshare.7314896.v1](http://dx.doi.org/10.6084/m9.figshare.7314896.v1) [@Vermeer2018].
+
+Es difícil crear una regla general sobre la cantidad de datos etiquetados que se necesitan. Depende en gran medida del tipo de datos 
+de que disponga (por ejemplo, si se trata de un problema de clasificación binario en lugar de multiclase), y de lo distribuidos que 
+estén (equilibrio de clases) (tener $10.000$ titulares anotados no nos serviría de mucho si $9.990$ no son clickbait y solo $10$ lo son). 
+A pesar de esto, podríamos decir que los tamaños típicos en nuestro campo suelen ser (muy aproximadamente) del orden de $1.000$ a 
+$10.000$ cuando se clasifican textos largos (véase @Burscher2014), aunque los investigadores que estudian datos menos ricos a veces 
+anotan conjuntos de datos más grandes (p. ej, $60.000$ mensajes de las redes sociales en @vermeer2019seeing).
+
+Una vez que hayamos comprobado que disponemos de este conjunto de datos etiquetados y nos hayamos asegurado de que es de buena 
+calidad, lo dividiremos aleatoriamente en dos conjuntos de datos: uno de entrenamiento y otro de prueba.[^3] Utilizaremos el primero 
+para entrenar nuestro modelo y el segundo para comprobar su rendimiento. Las proporciones habituales oscilan entre 50:50 y 80:20; y 
+especialmente si el tamaño del conjunto de datos etiquetados es limitado, es posible que desees tener un conjunto de datos de 
+entrenamiento ligeramente mayor a expensas de un conjunto de datos de prueba ligeramente menor.
+
+En el Ejemplo [@exm-preparedata], preparamos el conjunto de datos que ya utilizamos en la Sección [@sec-prediction] para la clasificación. Para 
+ello, creamos una variable dicotómica (la etiqueta) y lo dividimos entre un conjunto de datos de entrenamiento y uno de prueba. 
+Utilizamos 'y_train' para denotar las etiquetas de entrenamiento y 'X_train' para denotar la matriz de características del conjunto 
+de datos de entrenamiento; 'y_test' y 'X_test' serán los conjuntos de datos de prueba, respectivamente. Establecemos una semilla de 
+estado aleatorio para asegurarnos de que la división aleatoria será la misma al volver a ejecutar el código. Podemos dividir fácilmente 
+estos conjuntos de datos utilizando la función 'rsample initial_split' en R y la función 'sklearn train_test_split' en Python.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-preparedata}
+Preparación de un conjunto de datos para el aprendizaje automático supervisado
+
+::: {.panel-tabset}
+## Código Python
+```{python preparedata-python}
+df = pd.read_csv("https://cssbook.net/d/media.csv")
+
+df["uses-internet"] = (df["internet"] > 0).replace(
+    {True: "user", False: "non-user"}
+)
+df.dropna(inplace=True)
+print("How many people used online news at all?")
+print(df["uses-internet"].value_counts())
+
+X_train, X_test, y_train, y_test = train_test_split(
+    df[["age", "education", "gender"]],
+    df["uses-internet"],
+    test_size=0.2,
+    random_state=42,
+)
+print(f"We have {len(X_train)} training and " f"{len(X_test)} test cases.")
+```
+## Código R
+```{r preparedata-r}
+df = read.csv("https://cssbook.net/d/media.csv")
+df = na.omit(df %>% mutate(
+    usesinternet=recode(internet, 
+            .default="user", `0`="non-user")))
+
+set.seed(42)
+df$usesinternet = as.factor(df$usesinternet)
+print("How many people used online news at all?")
+print(table(df$usesinternet))
+
+split = initial_split(df, prop = .8)
+traindata = training(split)
+testdata  = testing(split)
+
+X_train = select(traindata, 
+                 c("age", "gender", "education"))
+y_train = traindata$usesinternet
+X_test = select(testdata, 
+                c("age", "gender", "education"))
+y_test = testdata$usesinternet
+
+glue("We have {nrow(X_train)} training and {nrow(X_test)} test cases.")
+```
+:::
+:::
+:::
+
+Ahora podemos entrenar nuestro clasificador (es decir, calcular nuestro modelo utilizando el conjunto de datos de entrenamiento 
+contenido en los objetos 'X_train' e 'y_train'). Esto puede ser tan sencillo como calcular una ecuación de regresión logística 
+(hablaremos de los distintos clasificadores en la sección [@sec-nb2dnn]). Puede que primero tengamos que crear nuevas variables 
+independientes, denominadas características, en un paso conocido como ingeniería de características (por ejemplo, transformando 
+variables existentes, combinándolas o convirtiendo texto en frecuencias numéricas de palabras). El [@exm-nb] muestra lo fácil que es 
+entrenar un clasificador utilizando el algoritmo Naive Bayes con los paquetes 'caret/naivebayes' en R y 'sklearn' en Python (este 
+enfoque se explicará mejor en la [@sec-naive-bayes]).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-nb}
+Un clasificador Naive Bayes sencillo
+
+::: {.panel-tabset}
+## Código Python
+```{python nb-python}
+myclassifier = GaussianNB()
+myclassifier.fit(X_train, y_train)
+
+y_pred = myclassifier.predict(X_test)
+
+```
+## Código R
+```{r nb-r}
+myclassifier = train(x = X_train, y = y_train, 
+                     method = "naive_bayes")
+y_pred = predict(myclassifier, newdata = X_test)
+```
+:::
+:::
+:::
+
+Pero antes de poder utilizar este clasificador para realizar un trabajo útil, tenemos que probar su capacidad para predecir las 
+etiquetas correctas, dado un conjunto de características. Podríamos pensar que basta con volver a introducir los mismos datos de 
+entrada (es decir, las mismas características) y comprobar si las etiquetas predichas coinciden con las etiquetas reales del conjunto 
+de datos de prueba. De hecho, podríamos hacerlo. Pero esta prueba no sería lo suficientemente estricta: al fin y al cabo, el 
+clasificador se ha entrenado con esos datos y, por tanto, cabría esperar que funcionara bastante bien con ellos. Puede ocurrir que el 
+clasificador sea muy bueno en la predicción de sus propios datos de entrenamiento, pero falle en la predicción de otros datos, porque 
+generaliza en exceso alguna idiosincrasia de los datos, un fenómeno conocido como sobreajuste (véase la [@fig-overfit]).
+
+![Subajuste y sobreajuste. Ejemplo adaptado de  https://scikit-learn.org/stable/auto \_ examples/model \_ selection/plot \_ underfitting \_ overfitting.html](img/ch09_overfitting.png){#fig-overfit}
+
+En su lugar, utilizamos las características del conjunto de datos de prueba (almacenadas en los objetos 'X_test' e 'y_test') como 
+entrada para nuestro clasificador, y evaluamos hasta qué punto las etiquetas predichas coinciden con las etiquetas reales. Recuerda: 
+el clasificador no ha visto en ningún momento las etiquetas reales. Por lo tanto, podemos calcular la frecuencia con la que la 
+predicción es correcta.[^4]
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-classificationreport}
+Calcular la precisión y la exhaustividad 
+
+::: {.panel-tabset}
+## Código Python
+```{python classificationreport-python}
+print("Confusion matrix:")
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+```
+## Código R
+```{r classificationreport-r}
+print(confusionMatrix(y_pred, y_test))
+
+print("Confusion matrix:")
+confmat = table(testdata$usesinternet, y_pred)
+print(confmat)
+
+print("Precision for predicting True internet")
+print("users and non-internet-users:")
+precision = diag(confmat) / colSums(confmat)
+print(precision)
+
+print("Recall for predicting True internet")
+print("users and non-internet-users:")
+recall = (diag(confmat) / rowSums(confmat))
+print(recall)
+```
+:::
+:::
+:::
+
+Como se muestra en el Ejemplo [@exm-classificationreport], podemos crear una matriz de confusión (generada con la función 
+'confusionMatrix' de 'caret' en R y la función 'confusion_matrix' de 'sklearn' en Python) y, a continuación, calcular dos medidas: 
+precisión y exhaustividad (utilizando cálculos base de R y la función 'classification_report' de 'sklearn' en Python). En una 
+clasificación binaria, la matriz de confusión es una tabla útil en la que cada columna suele representar el número de casos en una 
+clase predicha, y cada fila el número de casos en la clase real o verdadera. Con esta matriz (véase la Figura [@fig-matrix]) podemos 
+calcular el número de verdaderos positivos (TP, predicción correcta), falsos positivos (FP, predicción incorrecta), verdaderos negativos 
+(TN, predicción correcta) y falsos negativos (FN, predicción incorrecta).
+
+![Representación visual de una matriz de confusión.](img/ch09_matrix.png){#fig-matrix}
+
+Para entender mejor estos conceptos, imaginemos que construimos un clasificador de sentimientos que predice, basándose en el texto de 
+la crítica de una película, si se trata de una crítica positiva o negativa. Supongamos que el objetivo del entrenamiento de este 
+clasificador es crear una aplicación que recomiende al usuario solo buenas películas. Hay dos cosas que queremos conseguir: queremos e
+ncontrar tantas películas positivas como sea posible (exhaustividad), pero también queremos que la selección que encontremos solo 
+contenga películas positivas (precisión).
+
+La precisión (*precision*) se calcula como  $\frac{\rm{TP}}{\rm{TP}+\rm{FP}}$, donde TP son verdaderos positivos y FP son falsos 
+positivos. Por ejemplo, si nuestro clasificador recupera 200 artículos que clasifica como películas positivas, pero solo 150 de ellos 
+lo son realmente, entonces la precisión $\frac{150}{150+50} = \frac{150}{200} = 0.75$.
+
+La exhaustividad (*recall*) se calcula como  $\frac{\rm{TP}}{\rm{TP}+\rm{FN}}$, donde TP son los verdaderos positivos y FN son los 
+falsos negativos. Si sabemos que el clasificador del párrafo anterior omitió 20 películas positivas, entonces la exhaustividad es 
+$\frac{150}{150+20} = \frac{150}{170}= 0.88$.
+
+En otras palabras: la exhaustividad mide cuántos de los casos que queríamos encontrar hemos encontrado realmente. La precisión mide 
+en qué medida lo que hemos encontrado es realmente correcto.
+
+A menudo hay que elegir entre precisión y exhaustividad. Por ejemplo, si recuperáramos todas las películas, obtendríamos una 
+exhaustividad de 1,0 (después de todo, no nos perdimos ni una sola película positiva). Pero, por otro lado, también recuperamos todas 
+las películas negativas, por lo que la precisión será extremadamente baja. Dependiendo de la tarea, puede ser más importante la precisión 
+o la exhaustividad. En la sección [@sec-validation] se analiza en detalle este equilibrio, así como otras métricas como la exactitud 
+(*accuracy*), el valor $F_1$ o el área bajo la curva (AUC, por sus siglas en inglés).
+
+## Aprendizaje automático clásico: De Naive Bayes a las redes neuronales {#sec-nb2dnn}
+
+Para realizar aprendizaje automático supervisado, podemos utilizar varios modelos, todos ellos con diferentes ventajas e inconvenientes, 
+y más útiles para unos casos que para otros. En este capítulo nos limitaremos a los más comunes. El sitio web de scikit-learn 
+([www.scikit-learn.org](http://www.scikit-learn.org)) ofrece un buen resumen de más alternativas.
+
+To do supervised machine learning, we can use several models, all of
+which have different advantages and disadvantages, and are more useful
+for some use cases than for others.
+We limit ourselves to the most common ones in this chapter. The
+website of scikit-learn ([www.scikit-learn.org](http://www.scikit-learn.org)) gives a
+good overview of more alternatives.
+
+### Naive Bayes {#sec-naive-bayes}
+
+El clasificador Naive Bayes (o clasificador Bayesiano Ingenuo) es un clasificador muy sencillo que suele utilizarse como "referencia". 
+Antes de calcular modelos más complicados y que consumen más recursos, se calcula un modelo más sencillo, para evaluar hasta qué punto 
+es mejor el otro modelo. A veces, el modelo simple puede ser incluso bueno.
+
+El clasificador Naive Bayes permite predecir un resultado binario, como por ejemplo: "¿Este mensaje es spam o no?"; "¿Este artículo 
+trata de política o no?"; "¿Se hará viral o no?". No solo eso, sino que también permite hacer lo mismo con más de una categoría: 
+tanto la implementación de Python como la de R permiten entrenar un clasificador Naive Bayes con datos nominales, como identificar 
+si un artículo trata de política, deportes, economía o algo diferente.
+
+Aún sabiendo esto, para simplificar, vamos a tratar un ejemplo binario.
+
+Como su nombre indica, un clasificador Naive Bayes se basa en el teorema de Bayes que es "ingenuo". Puede sonar un poco raro llamar 
+"ingenuo" a un modelo, pero lo que significa en realidad no es que sea estúpido, sino que hace suposiciones muy generales sobre los 
+datos (de ahí que sea ingenuo). En concreto, supone que todas las características son independientes entre sí. Por ejemplo, en un 
+conjunto de datos de encuestas, si bien la edad y el sexo suelen ser independientes entre sí, no ocurre lo mismo con la educación, los 
+intereses políticos, el uso de los medios de comunicación, etc. Y, en los datos textuales, el uso de una palabra $W_2$ no es independiente 
+del uso de la palabra $W_2$: al fin y al cabo, ambas no se extraen al azar de un diccionario, sino que dependen del tema del texto (entre 
+otras cosas). Sorprendentemente, a pesar de que estos supuestos se incumplen con regularidad, el clasificador Naive Bayes funciona 
+razonablemente bien en la práctica.
+
+La parte Bayes del clasificador Naive Bayes proviene del hecho de que utiliza la fórmula de Bayes:
+
+$$P(A|B) = \frac{P(B|A) \cdot P(A)}{P(B)}$$
+
+A modo de breve repaso: $P(A|B)$ puede leerse como: la probabilidad de A, dado B. O: la probabilidad de A si B es el 
+caso/presente/verdadero. Aplicado a nuestro problema, esto significa que estamos interesados en calcular la probabilidad de que 
+un elemento tenga una etiqueta, dado un conjunto de características:
+
+$$P(label|features) = \frac{P(features|label) \cdot P(label)}{P(features)}$$
+
+$P(label)$ cse puede calcular fácilmente: es la fracción de todos los casos con la etiqueta que nos interesa. Como suponemos que 
+nuestras características son independientes (recordemos la parte "ingenua"), podemos calcular  $P(features)$ y $P(features|label)$ 
+simplemente multiplicando las probabilidades de cada característica individual. Supongamos que tenemos tres características, 
+$x_1, x_2, x_3$. Ahora solo tenemos que calcular el porcentaje de casos que contienen estas características: 
+$P(x_1)$, $P(x_2)$ and $P(x_3)$. 
+
+A continuación, hacemos lo mismo con las probabilidades condicionales y calculamos el porcentaje de casos con nuestra etiqueta que 
+contienen estas características, $P(x_1|label)$, $P(x_2|label)$ and $P(x_3|label)$.
+
+Si sustituimos esto en nuestra fórmula, obtenemos:
+
+$$P(label|features)=\frac{P(x_1|label)\cdot (x_2|label) \cdot (x_3|label)}{P(x_1)\cdot P(x_2)\cdot P(x_3)}$$
+
+Recuerda que todo lo que tenemos que hacer para calcular esta fórmula es: (1) contar cuántos casos tenemos en total; (2) contar cuántos 
+casos tienen nuestra etiqueta; (3) contar cuántos casos en (1) tienen la característica $x$ (4) contar cuántos casos de (2) tienen la 
+característica $x$. Como puedes imaginar, hacer esto no lleva mucho tiempo, que es lo que hace que el clasificador Naive Bayes sea una 
+opción tan rápida y eficiente. Esta agilidad es especialmente interesante si tienes muchas características (es decir, datos de alta 
+dimensión).
+
+Contar si una característica está presente o no, por supuesto, solo es posible para datos binarios. Por ejemplo, podríamos comprobar 
+simplemente si una palabra determinada está presente o no en un texto. Pero, ¿Y si nuestras características son datos continuos, como el 
+número de veces que está presente la palabra? Podríamos dicotomizarla, pero eso descartaría información. Así que lo que hacemos en su 
+lugar es calcular P$(x_i)$ utilizando una distribución (como una distribución gaussiana, Bernoulli o multinomial). Sin embargo, la idea 
+central sigue siendo la misma.
+
+Los ejemplos del apartado [@sec-principles] ilustran cómo entrenar un clasificador Naive Bayes. En primer lugar, creamos las etiquetas 
+(si alguien utiliza las noticias en línea o no), dividimos nuestros datos en un conjunto de datos de entrenamiento y otro de prueba 
+(en este caso, utilizamos el 80% para el entrenamiento y el 20% para la prueba) ([@exm-preparedata]) y, a continuación, ajustamos 
+(entrenamos) un clasificador ([@exm-nb]), antes de evaluar lo bien que predice nuestros datos de entrenamiento ([@exm-classificationreport]).
+
+En la [@sec-validation] veremos con más detalle cómo evaluar los distintos clasificadores, pero, por ahora, trataremos las medidas más 
+utilizadas para medir el rendimiento de nuestro clasificador. La matriz de confusión del [@exm-classificationreport] nos dice cuántos 
+usuarios se clasificaron como usuarios (55) y cuántos (erróneamente) como no usuarios (106).[^5] Estos no parecen buenos resultados, 
+pero por otro lado, 212 de los no usuarios se clasificaron correctamente como tales, y solo 40 no lo fueron.
+
+Más formalmente, podemos expresarlo utilizando la precisión y la exhaustividad. Cuando nos interesa encontrar usuarios verdaderos, 
+obtenemos una precisión de  $\frac{212}{212+106} = 0.67$ y una exhaustividad de $\frac{212}{212+40} = 0.84$.Sin embargo, si queremos 
+saber lo buenos que somos identificando a los que no utilizan las noticias en línea, lo hacemos (como vimos en la matriz de confusión) 
+bastante peor: la precisión y la exhaustividad son de 0,58 y 0,34, respectivamente.
+
+### Regresión logística {#sec-logreg}
+
+El análisis de regresión no presupone tanto la independencia de las características como el clasificador Naive Bayes . Por supuesto, 
+ya hemos sido advertidos de los peligros de la multicolinealidad en las clases de estadística, pero la correlación entre características 
+(llamada multicolinealidad, si queremos sonar más profesionales) afecta a los coeficientes y a sus valores $p$, pero no a las predicciones
+ del modelo en su conjunto. Dicho de otro modo, en los modelos de regresión, no calculamos la probabilidad de una etiqueta dada una 
+característica, independientemente de todas las demás características, sino que podemos "controlar" su influencia. En teoría, esto 
+debería mejorar nuestros modelos y, en la práctica, suele ser así. Sin embargo, en última instancia, saber qué modelo funciona mejor es 
+cuestión de probar.
+
+Aunque empezamos este capítulo con un ejemplo de regresión OLS para calcular un resultado continuo (bueno, por aproximación, ya que 
+para "días por semana" no todos los valores tienen sentido), ahora utilizaremos un enfoque de regresión para predecir resultados 
+nominales, igual que en el ejemplo de Naive Bayes . El tipo de análisis de regresión que se utiliza para ello se denomina regresión 
+logística.
+
+En una regresión OLS normal, calculamos:
+$$y = \beta_o + \beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_n x_n$$
+
+
+Pero esto nos da un resultado continuo, que, en este caso, no queremos. Por lo tanto, en una regresión logística, utilizamos la función 
+sigmoidea para asignar este resultado continuo a un valor entre 0 y 1. La función sigmoidea se define como 
+$sigmoid(x) = \frac{1}{1 + e^{-x}}$ y se representa en la [@fig-sigmoid].
+
+![Función sigmoidea.](img/fig_sigmoid.png){#fig-sigmoid}
+
+Combinando estas fórmulas obtenemos:
+
+$$P = \frac{1}{1 + e^{-(\beta_o + \beta_1 x_1 + \beta_2 x_2 = \ldots + \beta_n x_n)}} $$
+
+Espera, dirás. ¿No sigue siendo $P$ una continua, aunque ahora esté acotada entre 0 y 1? Pues sí. Por lo tanto, una vez calculado el 
+modelo, utilizamos un valor umbral (normalmente, 0,5, pero en el apartado [@sec-balance] veremos cómo seleccionar valores diferentes) 
+para predecir la etiqueta. Si $P>0.5$, predecimos que el caso es spam/sobre política/que se hará viral; si no, predecimos que no lo es. 
+Un buen efecto secundario de esto es que aún podemos utilizar las probabilidades si nos resultan interesantes, por ejemplo, para 
+averiguar en qué casos tenemos más confianza en nuestra predicción.
+
+Al igual que con el clasificador Naive Bayes, Python y R nos permitirán calcular modelos con múltiples resultados nominales en lugar de 
+un resultado binario. En el [@exm-logreg] ajustamos la regresión logística utilizando el método 'logreg' de 'caret' en R y la función 
+'LogisticRegression' de 'sklearn' (módulo 'linear_model') en Python.
+
+Y, por supuesto, puedes hacer una regresión OLS (o modelos de regresión más avanzados) si quieres calcular un resultado continuo.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-logreg}
+Un clasificador de regresión logística simple
+
+::: {.panel-tabset}
+## Código Python
+```{python logreg-python}
+#| cache: true
+myclassifier = LogisticRegression(solver="lbfgs")
+myclassifier.fit(X_train, y_train)
+
+y_pred = myclassifier.predict(X_test)
+
+```
+## Código R
+```{r logreg-r}
+#| cache: true
+myclassifier = train(x = X_train, y = y_train,
+    method = "glm",family = "binomial")
+y_pred = predict(myclassifier, newdata = X_test)
+```
+:::
+:::
+:::
+
+### Máquinas de vectores de soporte {#sec-svm}
+
+Las máquinas de vectores soporte (SVM, por sus siglas en inglés) son otro enfoque muy popular y versátil del aprendizaje automático 
+supervisado. De hecho, son bastante similares a la regresión logística, pero intentan optimizar una función diferente. En términos 
+técnicos, las SVM minimizan la pérdida bisagra (*hinge loss*) en lugar de la pérdida logística.
+
+¿Qué significa esto para nosotros? Cuando calculamos regresiones logísticas, nos interesa calcular probabilidades, mientras que cuando 
+entrenamos una SVM, nos interesa encontrar un plano (más concretamente, un hiperplano) que separe lo mejor posible los puntos de datos 
+de las dos clases (por ejemplo, mensajes de spam frente a mensajes de no spam) que queremos distinguir. Esto también significa que una 
+SVM no da probabilidades asociadas a su predicción, solo nos da la etiqueta. Pero, por lo general, eso es exactamente lo que queremos.
+
+Sin entrar en detalles matemáticos (para ello, una buena fuente sería Kelleher et al., 2015), podemos decir que encontrar el margen de 
+separación más amplio que podamos conseguir construyendo un plano en un espacio gráfico (SVM) frente a optimizar una función de 
+log-verosimilitud (regresión logística) da como resultado un modelo menos sensible a los valores atípicos, y que tiende a ser más 
+equilibrado.
+
+Hay muchas visualizaciones gráficas disponibles, por ejemplo, en los cuadernos que complementan @vanderplas2016python [^6]. Por ahora, 
+puede bastar con imaginar el caso bidimensional: construimos una línea que separa dos grupos de puntos con el margen más amplio posible. 
+Los puntos que el margen de esta línea apenas toca se denominan "vectores de apoyo", de ahí su nombre.
+
+Podemos imaginar que a veces queramos ser un poco indulgentes con los márgenes. Si tenemos miles de puntos de datos, tal vez esté bien 
+si uno o dos de estos puntos de datos están, de hecho, dentro del margen de la línea de separación (o hiperplano). Podemos controlar 
+esto con un parámetro llamado $C$: Para valores muy altos, hacer esto no está permitido, pero cuanto más bajo sea el valor, más "difuso" 
+será el margen. En la sección [@sec-crossvalidation], mostraremos un enfoque para encontrar el valor óptimo.
+
+Una gran ventaja de las SVM es que pueden ampliarse a clases no separables linealmente. Utilizando la llamada función kernel o truco 
+kernel, podemos transformar nuestros datos para que el conjunto de datos sea linealmente separable. Las opciones incluyen, entre otras, 
+los núcleos multinomiales, la función de base radial (RBF, por sus siglas en inglés) o los núcleos gaussianos. Si, por ejemplo, tenemos 
+dos anillos concéntricos de puntos de datos (como un donut), no podemos encontrar una línea recta que los separe. Sin embargo, un núcleo 
+RBF puede transferirlos a un espacio linealmente separable. Las visualizaciones en línea antes mencionadas pueden ser muy instructivas 
+en este sentido.
+
+El [@exm-svm] muestra cómo implementamos SVM estándar a nuestros datos utilizando el método 'svmLinear3' de 'caret' en R y la función 
+'SVC' de 'sklearn' (módulo 'svm') en Python. Puedes ver en el código que los datos de características se normalizan (con $m = 0$ y 
+$\rm{std} = 1$) antes de entrenar el modelo para que todas las características se midan a la misma escala, como exige SMV.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-svm}
+Un clasificador simple de máquina de vectores de soporte
+
+::: {.panel-tabset}
+## Código Python
+```{python svm-python}
+# !!! We normalize our features to have M=0 and
+# SD=1. This is necessary as our features are not
+# measured on the same scale, which SVM requires.
+# Alternatively, rescale to [0:1] or [-1:1]
+
+scaler = preprocessing.StandardScaler().fit(X_train)
+
+X_train_scaled = scaler.transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+myclassifier = SVC(gamma="scale")
+myclassifier.fit(X_train_scaled, y_train)
+
+y_pred = myclassifier.predict(X_test_scaled)
+
+```
+## Código R
+```{r svm-r}
+#| cache: true
+# !!! We normalize our features to have M=0 and 
+# SD=1. This is necessary as our features are not 
+# measured on the same scale, which SVM requires.
+# Alternatively, rescale to [0:1] or [-1:1]
+
+myclassifier = train(x = X_train, y = y_train, 
+    preProcess = c("center", "scale"), 
+                     method = "svmLinear3")
+y_pred = predict(myclassifier, newdata = X_test)
+```
+:::
+:::
+:::
+
+### Árboles de decisión y bosques aleatorios {#sec-randomforest}
+
+En los modelos que hemos analizado hasta ahora, esencialmente modelábamos relaciones lineales: si el valor de una característica es el 
+doble, su influencia en el resultado también será el doble. Claro que podemos (y lo hacemos, como en el caso de la función sigmoidea o 
+el truco del núcleo SVM) aplicar algunas transformaciones, pero aún no hemos considerado realmente cómo podemos modelar situaciones en 
+las que, por ejemplo, nos importa si el valor de una característica está por encima (o por debajo) de un umbral específico. Por ejemplo, 
+si tenemos un conjunto de mensajes de las redes sociales y queremos modelar el medio del que probablemente proceden, entonces su longitud 
+es una información muy importante. Si tiene más de 280 caracteres (o, históricamente, 140), entonces podemos estar muy seguros de que 
+no procede de Twitter, aunque lo contrario no sea necesariamente cierto. Pero no importa en absoluto si tiene 290 o $10.000$ caracteres.
+
+Por lo tanto, introducir esta variable en una regresión logística no sería una buena idea. Podríamos, por supuesto, dicotomizarla, pero 
+eso solo resolvería el problema en parte, ya que su efecto todavía puede ser anulado por otras variables. En este ejemplo, sabemos cómo 
+dicotomizarla basándonos en nuestro conocimiento previo sobre el número de caracteres de un tuit, pero no tiene por qué ser siempre así; 
+puede ser algo que tengamos que calcular.
+
+En esta situación, debemos ir paso a paso: primero comprobamos una característica (la longitud), antes de comprobar otra característica 
+(puede modelarse como un árbol de decisiones). La [@fig-decisiontree] muestra un árbol de decisiones (hipotético) con tres hojas.
+
+![Árbol de decisiones simple..](img/fig_decisiontree.png){#fig-decisiontree}
+
+Ante el reto de predecir si un mensaje de las redes sociales es un tuit o un post de Facebook, podríamos predecir "post de Facebook" si 
+su longitud es superior a 280 caracteres. Si no, comprobamos si incluye *hashtags* y, si es así, predecimos "tweet"; si no, 
+"post de Facebook". Por supuesto, este modelo simplista será erróneo en algunas ocasiones, porque no todos los tuits tienen *hashtags*, 
+y algunas publicaciones de Facebook sí incluyen *hashtags*.
+
+Aunque construimos este árbol de decisión hipotético a mano, normalmente nos interesa más aprender esas relaciones no lineales a partir 
+de los datos. Esto significa que no tenemos que determinar nosotros mismos el punto de corte, pero tampoco determinar a mano el orden 
+en que comprobamos múltiples variables.
+
+Los árboles de decisiones tienen dos buenas propiedades. En primer lugar, son muy fáciles de explicar. De hecho, una figura como la de 
+la [@fig-decisiontree] es comprensible para los no expertos, lo que puede ser importante en escenarios en los que, por razones de 
+responsabilidad, la decisión de un clasificador debe ser lo más transparente posible. En segundo lugar, nos permiten abordar casi todas 
+las relaciones no lineales (aunque no necesariamente con mucha precisión).
+
+Sin embargo, esto tiene un precio. Formular un modelo como una serie de preguntas sí/no, como puede imaginarse, pierde intrínsecamente 
+muchos matices. Y lo que es más importante, en un árbol de este tipo no se puede "ascender" de nuevo. En otras palabras, si se toma una 
+decisión equivocada al principio del árbol (es decir, cerca de su nodo raíz), no se puede corregir después. Esta rigidez hace que los 
+árboles de decisión también sean propensos al sobreajuste: pueden ajustarse muy bien a los datos de entrenamiento, pero no generalizar 
+lo suficiente a datos (de prueba) ligeramente diferentes.
+
+Debido a estos inconvenientes, los árboles de decisión rara vez se utilizan en tareas de clasificación de la vida real. En su lugar, 
+se utiliza un modelo de ensamblado: los llamados bosques aleatorios (*random forest*). Tomando muestras aleatorias de los datos, se 
+calculan varios árboles de decisión, de ahí el nombre de bosque. Para llegar a una predicción final, podemos dejar que los árboles 
+"voten" sobre la etiqueta que debemos predecir. Este procedimiento se denomina "votación por mayoría", pero también existen otros 
+métodos. Por ejemplo, 'scikit-learn' en Python utiliza por defecto un método llamado 'probabilistic prediction' (predicción 
+probabilística), que tiene en cuenta valores de probabilidad en lugar de simples votos.
+
+En el [@exm-randomforest] creamos un clasificador de bosque aleatorio con 100 árboles utilizando el método 'rf' de 'caret' en R y la 
+función 'RandomForestClassifier' de 'sklearn' (módulo 'ensamble') en Python.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-randomforest}
+Un clasificador de bosque aleatorio sencillo
+
+::: {.panel-tabset}
+## Código Python
+```{python randomforest-python}
+#| cache: true
+myclassifier = RandomForestClassifier(n_estimators=100)
+myclassifier.fit(X_train, y_train)
+
+y_pred = myclassifier.predict(X_test)
+
+```
+## Código R
+```{r randomforest-r}
+#| cache: true
+myclassifier = train(x = X_train, y = y_train, 
+                     method = "rf")
+y_pred = predict(myclassifier, newdata = X_test)
+```
+:::
+:::
+:::
+
+Dado que los bosques aleatorios solucionan los problemas de los árboles de decisión, pero mantienen la ventaja de poder modelar 
+relaciones no lineales, se utilizan con frecuencia cuando esperamos tales relaciones (o no tenemos ni idea de cómo es la relación). 
+Además, los bosques aleatorios pueden ser una buena opción si tienes tipos muy diferentes de características (algunas nominales, otras 
+continuas, etc.) en tu modelo. Lo mismo ocurre si tienes muchas (muchísimas) características: métodos como SVM requerirían construir 
+grandes matrices en memoria, cosa que los bosques aleatorios no hacen. Pero si las relaciones entre tus características y tus etiquetas 
+son realmente (aproximadamente) lineales, entonces probablemente sea mejor uno de los otros modelos que hemos discutido.
+
+### Redes neuronales {#sec-neural}
+
+Inspiradas en las neuronas del cerebro humano (y de otros animales), las redes neuronales están formadas por conexiones entre neuronas 
+que se activan si la entrada total supera un determinado umbral.
+
+La [@fig-perceptron] muestra el tipo más sencillo de red neuronal, a veces denominado perceptrón. Esta red neuronal consta únicamente 
+de una serie de neuronas de entrada (que representan las características o variables independientes) que están conectadas directamente 
+con la neurona o neuronas de salida (que representan la clase o clases de salida). Cada una de las conexiones entre neuronas tiene un 
+peso, que puede ser positivo o negativo. Para cada neurona de salida, se calcula la suma ponderada de las entradas y se aplica una 
+función para determinar el resultado. Un ejemplo de función de salida es la función sigmoidea ([@fig-sigmoid]), que transforma la salida 
+en un valor entre cero y uno, en cuyo caso el modelo resultante es esencialmente una forma de regresión logística.
+
+![Representación esquemática de un modelo clásico típico de aprendizaje automático. ](img/fig_perceptron.png){#fig-perceptron}
+
+Si consideramos una red neuronal para el análisis de sentimientos de los tuits, las neuronas de entrada podrían ser las frecuencias de 
+palabras como "genial" o "terrible", y supondríamos que el peso de la primera sería positivo mientras que el de la segunda sería 
+negativo. Sin embargo, una red de este tipo no puede tener en cuenta las combinaciones: el resultado de "nada bueno" será simplemente 
+la suma de los resultados de "nada" y "bueno".
+
+Para superar esta limitación, es posible añadir una capa oculta de variables latentes entre la capa de entrada y la de salida, como se 
+muestra en la [@fig-hiddenlayers]. Esto permite combinaciones de neuronas, por ejemplo, con "no" y "grande" cargando en una neurona 
+oculta, que puede anular el efecto directo de "grande". Se puede utilizar un algoritmo llamado retropropagación para aproximar 
+iterativamente los valores óptimos del modelo. Este algoritmo parte de un estado aleatorio y optimiza la segunda capa manteniendo 
+constante la primera, luego optimiza la primera capa, y repite hasta que converge.
+
+Aunque estas capas ocultas, que pueden contener fácilmente miles de neuronas, son difíciles de interpretar de forma sustantiva, pueden 
+mejorar sustancialmente el rendimiento del modelo. De hecho, el teorema de la aproximación universal afirma que toda función de decisión 
+puede aproximarse con una precisión infinita con una única (pero posiblemente muy grande) capa oculta ([@goldberg2017]). Por supuesto, 
+dado que los datos de entrenamiento siempre son limitados, existe un límite práctico en cuanto a la profundidad o amplitud de la red. 
+Sin embargo, esto demuestra la gran diferencia que puede suponer una capa oculta en el rango de regularidades que pueden "capturarse" 
+en el modelo.
+
+![Una red neuronal. ](img/fig_hiddenlayers.png){#fig-hiddenlayers}
+
+## Aprendizaje profundo {#sec-deeplearning}
+
+En la [@sec-neural], introdujimos las redes neuronales con capas ocultas y el algoritmo de retropropagación para ajustarlas, ambos de 
+los cuales se remontan al menos a la década de 1970. En la última década, sin embargo, la comunidad de la Inteligencia Artificial se ha 
+visto transformada por la introducción del aprendizaje profundo, donde profundo se refiere a una gran cantidad de capas ocultas entre 
+las capas de entrada y salida. Muchos de los avances recientes en IA, desde los coches con piloto automático a la traducción automática 
+y los asistentes de voz, son posibles gracias a la aplicación de técnicas de aprendizaje profundo a las enormes cantidades de datos 
+digitales disponibles en la actualidad.
+
+Las explicaciones detalladas sobre el aprendizaje profundo quedan fuera del alcance de este libro (recomendamos en su lugar 
+@geron2019hands). Sin embargo, en esta sección ofreceremos una breve introducción que creemos que ayudará a entenderlo a nivel 
+conceptual, y ya en los capítulos [@sec-chap-dtm] y [@sec-chap-image] explicaremos cómo se pueden aplicar estas técnicas al análisis de 
+textos y al análisis visual, respectivamente.
+
+En principio, no hay una demarcación clara entre una red neuronal "clásica" con capas ocultas y una red neuronal "profunda". Sin embargo, 
+hay tres propiedades que distinguen al aprendizaje profundo y explican su éxito: escala, estructura y aprendizaje de características.
+
+**Escala.** La principal diferencia es que los modelos de aprendizaje profundo son mucho mayores y más complejos que los modelos 
+entrenados en décadas anteriores. Esto ha sido posible gracias a la confluencia de cantidades sin precedentes de datos digitales de 
+entrenamiento y una mayor capacidad de procesamiento informático. En parte, esto ha sido posible gracias al uso de unidades de 
+procesamiento gráfico (GPU): *hardware* diseñado para renderizar los mundos tridimensionales utilizados en los juegos, pero que 
+también se puede utilizar de manera muy eficiente para realizar los cálculos necesarios para entrenar redes neuronales (y minar *bitcoins*, 
+pero esa es otra historia).
+
+**Estructura.** La mayoría de las redes neuronales clásicas se construyen a través de capas ocultas "totalmente conectadas" con 
+propagación hacia delante, lo que significa que cada neurona de una capa está conectada a cada neurona de la capa siguiente. En el 
+aprendizaje profundo, se combinan muchas arquitecturas específicas (algunas de las cuales se analizarán más adelante) para procesar 
+la información de determinadas maneras, lo que limita el número de parámetros que deben calcularse.
+
+**Aprendizaje de características. ** En todos los modelos descritos hasta ahora, a excepción de las redes neuronales con capas ocultas, 
+existía una relación directa entre las características o variables de entrada y la clase de salida. Esto significa que es importante 
+asegurarse de que la información que el modelo necesita para distinguir las clases está directamente codificada en las características 
+de entrada. En el ejemplo anterior, si "nada" y "bueno" son características separadas, una red de una sola capa (o un modelo Naive Bayes) 
+no puede aprender que estas palabras juntas tienen un significado distinto que la suma de sus significados por separado. Sin embargo, al 
+igual que en el análisis de regresión, donde se puede crear un término de interacción o un término al cuadrado para modelar una relación 
+no lineal, el investigador puede crear características de entrada para, por ejemplo, pares de palabras, incluyendo bigramas (pares de 
+palabras) como "nada_bueno". De hecho, la ingeniería de las características adecuadas era la principal forma en que un investigador podía 
+mejorar el rendimiento del modelo. En el aprendizaje profundo, sin embargo, este paso de aprendizaje de características se incluye 
+generalmente en el propio modelo, con capas posteriores que codifican diferentes aspectos de los datos brutos.
+
+Las propiedades de escala, estructura y aprendizaje de características están entrelazadas en el aprendizaje profundo: las redes mucho 
+más grandes permiten estructuras con nombres tan bonitos como "redes recurrentes", "capas convolucionales" o 
+"memoria a corto plazo de larga duración" (*long short term memory*), que se utilizan para codificar relaciones y dependencias 
+específicas entre características. En este libro, nos centraremos en las redes convolucionales como nuestro único ejemplo de 
+aprendizaje profundo, ya que estas redes se utilizan ampliamente tanto en el análisis de textos como de imágenes. Esperamos que esto 
+te ayude a comprender la idea general que subyace en el aprendizaje profundo, y, si tienes curiosidad, puedes aprender más sobre este 
+y otros modelos en los recursos especializados citados anteriormente.
+
+
+### Redes neuronales convolucionales {#sec-cnnbasis}
+
+Uno de los muchos problemas del aprendizaje automático es la falta de correspondencia entre el nivel de medición de la salida y la 
+entrada. Por ejemplo, normalmente queremos asignar un único código, como el sentimiento o el tema, a un documento o una imagen. Sin 
+embargo, la entrada en bruto es a nivel de palabra o píxel. En el aprendizaje automático clásico, esto se resuelve generalmente 
+resumiendo la entrada en el nivel superior de abstracción, por ejemplo, utilizando la frecuencia total de cada palabra por documento 
+como característica de entrada. Sin embargo, el problema es que este proceso de resumen elimina mucha información que podría ser útil 
+para el modelo de aprendizaje automático, como combinaciones de palabras ("no es bueno") o su orden ("Juan votó a María" frente a "María 
+votó a Juan"), imposible de recuperar a menos que el investigador diseñe características, como los pares de palabras, para añadir esta 
+información.
+
+Las redes neuronales convolucionales son una de las formas en que el aprendizaje profundo puede superar esta limitación. Esencialmente, 
+el modelo internaliza el aprendizaje de características como una primera parte o "capa" del modelo, utilizando una red especializada para 
+resumir los valores de entrada brutos en características a nivel de documento (o imagen).
+
+![Ejemplo simplificado de una red convolucional aplicada al análisis de texto.](img/ch09_cnn_cropped.png){#fig-cnn}
+
+En la [@fig-cnn] se muestra un ejemplo muy simplificado para el análisis de texto del fragmento de frase: “*Would not recommend*” 
+("No recomendaría"). La parte izquierda muestra cómo se codifica cada palabra como un vector binario (por ejemplo, 010 para "not" y 
+001 para "*recommend*"). En la segunda columna, una ventana de desplazamiento concatena estos valores en pares de palabras (así 010001 
+para "*not recommend*"). A continuación, una capa de mapa de características detecta rasgos interesantes en estos valores concatenados: 
+un rasgo para un término positivo negado que tiene pesos positivos para los negadores en la primera mitad y para las palabras positivas 
+en la segunda. A continuación, estas características se agrupan para crear características a nivel de documento, por ejemplo, tomando el 
+valor máximo por característica (una característica estará presente en el documento si está presente en cualquiera de las ventanas de 
+palabras del documento). Por último, estas características a nivel de documento se utilizan en una red neuronal normal (densa) que se 
+conecta al valor de salida, por ejemplo, el sentimiento del documento. Como la capa convolucional está ahora conectada con la clase de 
+salida, los mapas de características pueden aprenderse automáticamente mediante el algoritmo de retropropagación explicado anteriormente. 
+Esto significa que el modelo puede encontrar las características en las ventanas de palabras que son más útiles para predecir la clase 
+de documento, introduciendo el aprendizaje de características en el proceso de modelado.
+
+Por supuesto, se trata de un ejemplo muy simplificado, pero que muestra cómo las dependencias locales pueden detectarse automáticamente 
+utilizando la red convolucional, siempre que las características interesantes se encuentren dentro de la ventana de palabras 
+especificada. Otras arquitecturas, como la memoria a corto plazo de larga duración, también pueden utilizarse para encontrar dependencias 
+no locales, pero como ya hemos dicho, no las trataremos en este libro. El [@sec-chap-dtm] ofrecerá un ejemplo más detallado de 
+aprendizaje profundo para el análisis de textos, en el que se combina una capa de encaje (*embedding*) con una red convolucional para 
+construir un modelo de análisis de sentimientos. Del mismo modo, el [@sec-chap-image] mostrará cómo se puede utilizar una técnica similar 
+para extraer características de pequeñas áreas de imágenes que luego se utilizan en la clasificación automática de imágenes. Esto implica 
+crear una ventana bidimensional sobre píxeles en lugar de una ventana unidimensional sobre palabras, y a menudo se encadenan múltiples 
+capas convolucionales para detectar características en áreas cada vez más grandes de la imagen. Sin embargo, la técnica subyacente de 
+las redes convolucionales es la misma en ambos casos.
+
+## Validación y buenas prácticas {#sec-validation} 
+### Equilibrio entre precisión y exhaustividad {#sec-balance}
+En las secciones anteriores hemos aprendido a ajustar distintos modelos: Naive Bayes, regresiones logísticas, máquinas de vectores 
+soporte y bosques aleatorios. También hemos echado un primer vistazo a las matrices de confusión, la precisión y la exhaustividad.
+
+Pero, ¿Cómo encontrar el mejor modelo? Entendiéndolo como "el mejor para nuestros objetivos" algunos modelos serán “malos” y otros 
+“buenos”, pero “el mejor” dependerá de a qué le demos más importancia: ¿Nos preocupa más la precisión o la exhaustividad? ¿Todas las 
+clases tienen la misma relevancia para nosotros? Para la decisión final, deberemos tener en cuenta otros factores además de cuál es 
+“el mejor”, como la explicabilidad o los costes computacionales.
+
+En cualquier caso, tendremos que decidir en qué métricas centrarnos. Luego podremos inspeccionarlas manualmente y ver, por ejemplo, 
+qué modelo tiene la mayor exactitud, o el mejor equilibrio entre precisión y exhaustividad, o una exhaustividad superior a algún umbral 
+que estemos dispuestos a aceptar.
+
+Si creamos un clasificador para distinguir los mensajes de *spam* y los legítimos, podríamos plantearnos las siguientes preguntas: 
+**Precisión**, ¿Qué porcentaje de lo que nuestro clasificador predice como *spam* lo es realmente?; **exhaustividad**, ¿Qué porcentaje 
+del total de los mensajes de spam ha encontrado nuestro clasificador? y **exactitud**, ¿En qué porcentaje de todos los casos acertó 
+nuestro clasificador?
+
+Además, tenemos:
+ - El valor $F_1$. La media armónica de la precisión y la exhaustividad: $F_1 = 2\cdot \frac{\rm precision \cdot recall}{\rm precision + recall}$ 
+ - AUC. El área bajo la curva (AUC, por sus siglas en inglés) es el área bajo la curva que se obtiene al comparar la tasa de verdaderos 
+positivos (TPR) con la tasa de falsos positivos (FPR) en varios umbrales. Un modelo perfecto recibirá un valor de 1, mientras que una 
+suposición aleatoria entre dos clases igualmente probables dará como resultado un valor de 0,5.
+ - Micro- y macro-media. Cuando tenemos más de dos clases, podemos calcular la media de medidas como la precisión, el exhaustividad o 
+el valor $F_1$. Podemos hacerlo basándonos en las medidas calculadas por separado (macro), o basándonos en los valores subyacentes 
+(TP, FP, etc.) (micro), lo que tiene diferentes implicaciones en la interpretación, especialmente si las clases tienen tamaños muy 
+diferentes.
+
+Entonces, ¿Cuál elegir? Si lo que queremos es que no nos moleste absolutamente ningún mensaje de *spam* en nuestra bandeja de entrada, 
+necesitamos una alta exhaustividad (queremos encontrar todos los mensajes de *spam*). Si, por el contrario, queremos estar seguros de 
+no desechar accidentalmente mensajes legítimos, necesitamos una precisión alta (queremos estar seguros de que todo el *spam* es realmente 
+*spam*).
+
+Pero ante esto, seguramente nos respondas: “¡Quiero las dos cosas!” Para ello, podrías fijarte en la exactitud, una medida que, además, 
+es muy fácil de interpretar. Sin embargo, si recibes muchos más mensajes legítimos que *spam* (o al revés), esta medida puede ser 
+engañosa: al fin y al cabo, aunque tu clasificador no encuentre casi ninguno de los mensajes spam (porque tiene una exhaustividad cercana 
+a cero), sigues obteniendo una exactitud muy alta, ya que hay muchos mensajes legítimos. En otras palabras, la exactitud no es una buena 
+medida cuando se trabaja con clases muy desequilibradas. Por lo tanto, a menudo es mejor fijarse en la media armónica de la precisión y 
+la exhaustividad (el valor $F_1$), si se quiere encontrar un modelo que ofrezca un buen equilibrio entre precisión y exhaustividad.
+
+De hecho, podemos incluso afinar nuestros modelos de forma que se orienten hacia una mejor precisión o una mejor exhaustividad. Tomemos 
+como ejemplo un modelo de regresión logística. Predice una etiqueta de clase ("*spam*" frente a "legítimo"), pero también puede 
+mostrarnos las probabilidades asignadas. Para un mensaje concreto, podemos decir que estimamos que su probabilidad de ser *spam* sea, por 
+ejemplo, 0,65. A menos que especifiquemos lo contrario, todo lo que esté por encima de 0,65 será considerado como *spam* y todo lo que 
+quede por debajo, legítimo. Pero podríamos especificar cualquier otro punto de corte: por ejemplo, clasificar todo lo que supere 0,7 como 
+*spam*. Esto nos daría un filtro de *spam* más conservador, con probablemente una mayor precisión a costa de un menor exhaustividad.
+
+![Una curva ROC (bastante buena).](img/ch09_roccurve.png){#fig-roccurve}
+
+Podemos visualizar esto con el llamado “ROC” (*Receiver Operator Characteristic* o Característica Operativa del Receptor), un gráfico en 
+el que se trazan los verdaderos positivos frente a los falsos positivos en diferentes umbrales ([@fig-roccurve]). Un buen modelo se 
+extiende hasta cerca de la esquina superior izquierda y, por tanto, tiene una gran área bajo la curva (AUC). Si elegimos un umbral en el 
+extremo izquierdo de la curva, obtendremos pocos falsos positivos (¡bien!), pero también pocos verdaderos positivos (¡mal!); si nos vamos 
+demasiado a la derecha, obtendremos el otro extremo. Entonces, ¿Cómo podemos encontrar el mejor equilibrio?
+
+Una forma de hacerlo consiste en imprimir una tabla con tres columnas: la tasa de falsos positivos, la tasa de verdaderos positivos y el 
+valor umbral. A continuación, decides qué combinación FPR-TPR te resulta más atractiva y utilizas el valor umbral correspondiente. 
+Alternativamente, puedes encontrar el valor umbral con la máxima distancia entre TPR y FPR, un enfoque también conocido como J de Yoden 
+([#exm-cutoffpoint]). Trazar la curva ROC también puede ayudar a interpretar qué combinación TPR/FPR es la más prometedora (es decir, la 
+más cercana a la esquina superior izquierda).
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-cutoffpoint}
+Elección de un punto de corte diferente para las predicciones con regresión logística. En este caso, elegimos maximizar la diferencia entre la tasa de falsos positivos y la tasa de verdaderos positivos para mejorar la precisión de la segunda categoría a expensas de la precisión de la primera categoría.
+
+::: {.panel-tabset}
+## Código Python
+```{python cutoffpoint-python}
+myclassifier = LogisticRegression(solver="lbfgs")
+myclassifier.fit(X_train, y_train)
+
+print("With default cutoff point (.5):")
+y_pred = myclassifier.predict(X_test)
+print(classification_report(y_test, y_pred))
+print(confusion_matrix(y_test, y_pred))
+
+```
+## Código R
+```{r cutoffpoint-r}
+m = glm(usesinternet ~ age + gender + education, 
+        data=traindata, family="binomial")
+y_pred = predict(m, newdata = testdata,
+                 type = "response")
+pred_default = as.factor(ifelse(y_pred>0.5, 
+                            "user", "non-user"))
+
+print("Confusion matrix, default threshold (0.5)")
+confmat = table(y_test, pred_default)
+print(confmat)
+print("Recall for predicting True internet
+users and non-internet-users:")
+print(diag(confmat) / rowSums(confmat))
+print("Precision for predicting True internet
+users and non-internet-users:")
+print(diag(confmat) / colSums(confmat))
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python cutoffpointb-python}
+# get all predicted probabilities and ROC curve
+predprobs = myclassifier.predict_log_proba(X_test)
+fpr, tpr, thresholds = roc_curve(y_test, predprobs[:, 1], pos_label="user")
+
+# determine the cutoff point
+optimal_threshold = thresholds[np.argmax(tpr - fpr)]
+
+print(
+    "With the optimal probability threshold is"
+    f"{optimal_threshold}, which is equivalent to"
+    f"a cutoff of {np.exp(optimal_threshold)},"
+    "we get:"
+)
+y_pred_alt = np.where(predprobs[:, 1] > optimal_threshold, "user", "non-user")
+print(classification_report(y_test, y_pred_alt))
+print(confusion_matrix(y_test, y_pred_alt))
+
+```
+## Código R
+```{r cutoffpointb-r}
+roc_ = roc(testdata$usesinternet ~ y_pred)
+opt = roc_$thresholds[which.max(
+    roc_$sensitivities + roc_$specificities)]
+
+print(glue("Confusion matrix with optimal",
+           "threshold ({opt}):"))
+pred_opt = ifelse(y_pred>opt, "user", "non-user")
+confmat = table(y_test, pred_opt)
+print(confmat)
+print("Recall for predicting True internet")
+print("users and non-internet-users:")
+print(diag(confmat) / rowSums(confmat))
+print("Precision for predicting True internet")
+print("users and non-internet-users:")
+print(diag(confmat) / colSums(confmat))
+```
+:::
+
+Nota: Python y R obtienen resultados ligeramente diferentes porque la implementación subyacente es diferente, pero para este ejemplo 
+podemos ignorarlo.
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-roccurve}
+La curva ROC de un clasificador (no muy impresionante) y su área bajo la curva (AUC)
+
+::: {.panel-tabset}
+## Código Python
+```{python roccurve-python}
+#| cache: true
+#| results: hide
+plt.figure(figsize=(5, 5))
+plt.title("Receiver Operating Characteristic")
+plt.plot(fpr, tpr, "b", label=f"AUC = {auc(fpr,tpr):0.2f}")
+plt.legend(loc="lower right")
+plt.plot([0, 1], [0, 1], "r--")
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.ylabel("True Positive Rate")
+plt.show()
+
+```
+## Código R
+```{r roccurve-r}
+#| cache: true
+roc_ = roc(testdata$usesinternet ~ y_pred, plot=T,
+    print.auc=T, print.thres="best",
+    print.thres.pattern="Best threshold: %1.2f")
+```
+:::
+:::
+:::
+
+### Entrenar, validar, probar {#sec-train}
+
+A estas alturas, ya hemos establecido qué medidas tener en cuenta para decidir qué modelo utilizar. Para todas ellas, hemos partido de 
+la base de que dividimos nuestro conjunto de datos etiquetados en dos: un conjunto de datos de entrenamiento y un conjunto de datos de 
+prueba. La lógica era sencilla: si calculamos la precisión y la exhaustividad en los propios datos de entrenamiento, nuestra evaluación 
+sería demasiado optimista; al fin y al cabo, nuestros modelos se han entrenado con esos mismos datos, por lo que predecir la etiqueta es 
+demasiado fácil. Evaluar los modelos en un conjunto de datos diferente, el de prueba, nos da una idea de cómo son la precisión y la 
+exhaustividad si las etiquetas no se han visto antes, que es exactamente lo que queremos saber.
+
+Por desgracia, si calculamos la precisión y la exhaustividad (o cualquier otra métrica) de varios modelos en el mismo conjunto de datos 
+de prueba y utilizamos estos resultados para determinar qué métrica utilizar, podemos encontrarnos con un problema: puede que evitemos 
+el sobreajuste de nuestro modelo en los datos de entrenamiento, pero ahora corremos el riesgo de sobreajustarlo en los datos de prueba. 
+Después de todo, podríamos ajustar nuestros modelos hasta que se predigan perfectamente los datos de prueba, aunque esto empeore las 
+predicciones para otros casos.
+
+Una forma de evitarlo es dividir los datos originales en tres conjuntos de datos en lugar de dos: un conjunto de datos de entrenamiento, 
+un conjunto de datos de validación y un conjunto de datos de prueba. Entrenamos múltiples configuraciones de modelos en el conjunto de 
+datos de entrenamiento y calculamos las métricas de interés para todos ellos en el conjunto de datos de validación. Una vez elegido el 
+modelo final, calculamos su rendimiento (una vez) en el conjunto de datos de prueba, para obtener una estimación no sesgada de su 
+rendimiento.
+
+### Validación cruzada y Grid Search {#sec-crossvalidation}
+
+En un mundo ideal, tendríamos un enorme conjunto de datos etiquetados y no tendríamos que preocuparnos por disminuir el tamaño del 
+conjunto de datos de entrenamiento para crear los conjuntos de datos de validación y prueba.
+
+Por desgracia, nuestros conjuntos de datos etiquetados sí tienen un tamaño limitado, y reservar demasiados casos puede ser problemático. 
+Especialmente si se dispone de un presupuesto ajustado, reservar no solo un conjunto de datos de prueba, sino también un conjunto de 
+datos de validación de tamaño significativo puede conducir a conjuntos de datos de entrenamiento críticamente pequeños. Aunque hemos 
+abordado el problema del sobreajuste, esto podría llevar a un infraajuste: podríamos, por ejemplo, haber eliminado los únicos ejemplos 
+de alguna combinación específica de características.
+
+Un método habitual para resolver este problema es la validación cruzada $k$-fold. Para aplicarla, dividimos nuestros datos de 
+entrenamiento en $k$ particiones, conocidas como folds. A continuación, calculamos nuestro modelo $k$ veces y cada vez dejamos una de 
+las particiones para la validación. Por tanto, cada partición es exactamente una vez el conjunto de datos de validación y exactamente 
+$k-1$ veces parte de los datos de entrenamiento. A continuación, promediamos los resultados de nuestros $k$ valores para la métrica de 
+evaluación que nos interesa.
+
+Si nuestro clasificador generaliza bien, esperaríamos que nuestra métrica de interés (por ejemplo, la exactitud, o el valor $F_1$) sea 
+muy similar en todas las particiones. El [@exm-crossval] realiza una validación cruzada basada en el clasificador de regresión logística 
+que construimos anteriormente. Vemos que la desviación estándar es realmente baja, lo que indica que casi no hay cambios entre las 
+ejecuciones, lo que es estupendo.
+
+Ejecutar la misma validación cruzada en nuestro bosque aleatorio, en cambio, produciría no solo medias peores (más bajas), sino también 
+desviaciones estándar peores (más altas), aunque tampoco aquí hay cambios drásticos entre las ejecuciones.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-crossval}
+Validación cruzada
+
+::: {.panel-tabset}
+## Código Python
+```{python crossval-python}
+#| cache: true
+myclassifier = LogisticRegression(solver="lbfgs")
+acc = cross_val_score(
+    estimator=myclassifier, X=X_train, y=y_train, scoring="accuracy", cv=5
+)
+print(acc)
+print(f"M={acc.mean():.2f}, SD={acc.std():.3f}")
+
+```
+## Código R
+```{r crossval-r}
+#| cache: true
+myclassifier = train(x = X_train, y = y_train,
+    method = "glm", family="binomial",
+    metric="Accuracy", trControl = trainControl(
+     method = "cv", number = 5, 
+     returnResamp ="all", savePredictions=TRUE),)
+print(myclassifier$resample)
+print(myclassifier$results)
+```
+:::
+:::
+:::
+
+A menudo, la validación cruzada se utiliza cuando queremos comparar muchas especificaciones de modelos diferentes, por ejemplo, para 
+encontrar hiperparámetros óptimos. Los hiperparámetros son parámetros del modelo que no se calculan a partir de los datos. Dependen del 
+modelo, pero pueden ser el método de estimación que debe utilizarse o el número de veces que debe repetirse un *bootstrap*, entre otros. 
+Muy buenos ejemplos son los hiperparámetros de las máquinas de vectores soporte (véase más arriba): es difícil saber lo suaves que deben 
+ser nuestros márgenes (el $C$), y también podemos no estar seguros de cuál es el kernel adecuado ([@exm-gridsearch2]) o, en el caso de 
+un kernel polinómico, cuántos grados queremos considerar.
+
+Utilizando la función de ayuda (por ejemplo, 'RandomForestClassifier?' en Python), puedes consultar qué hiperparámetros se pueden 
+especificar. Para un clasificador de bosque aleatorio, por ejemplo, esto incluye el número de estimadores en el modelo, el criterio, y 
+si utilizar o no *bootstrapping*. Los ejemplos [@exm-gridsearch], [@exm-gridsearch2], y [@exm-gridsearch3] ilustran cómo se puede 
+evaluar automáticamente qué valores se deben elegir.
+
+Ten en cuenta que, en R, no todos los parámetros son "sintonizables" utilizando 'caret' estándar. Por lo tanto, una réplica exacta de 
+las búsquedas de cuadrícula en el [@exm-gridsearch] y [@exm-gridsearch2] requeriría comparaciones manuales o escribir una extensión de 
+'caret'.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-gridsearch}
+Una simple búsqueda en cuadrícula en Python 
+## Código Python
+```{python gridsearch-python}
+f1scorer = make_scorer(f1_score, pos_label="user")
+```
+```{python gridsearch-python-2}
+#| cache: true
+myclassifier = RandomForestClassifier()
+
+grid = {
+    "n_estimators": [10, 50, 100, 200],
+    "criterion": ["gini", "entropy"],
+    "bootstrap": [True, False],
+}
+search = GridSearchCV(
+    estimator=myclassifier, param_grid=grid, scoring=f1scorer, cv=5
+)
+search.fit(X_train, y_train)
+print(search.best_params_)
+print(classification_report(y_test, search.predict(X_test)))
+
+```
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-gridsearch2}
+Una gridsearch en Python utilizando múltiples CPUs 
+## Código Python
+```{python gridsearch2-python}
+#| cache: true
+myclassifier = SVC(gamma="scale")
+
+grid = {"C": [100, 1e4], "kernel": ["linear", "rbf", "poly"], "degree": [3, 4]}
+
+search = GridSearchCV(
+    estimator=myclassifier,
+    param_grid=grid,
+    scoring=f1scorer,
+    cv=5,
+    n_jobs=-1,  # use all cpus
+    verbose=10,
+)
+search.fit(X_train_scaled, y_train)
+print(f"Hyperparameters {search.best_params_} " "give the best performance:")
+print(classification_report(y_test, search.predict(X_test_scaled)))
+
+```
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-gridsearch3}
+Una búsqueda en cuadrícula en R. 
+## Código R
+```{r gridsearch3-r}
+#| cache: true
+# Create the grid of parameters
+grid = expand.grid(Loss=c("L1","L2"),
+                   cost=c(100,1000))
+
+# Train the model using our previously defined 
+# parameters
+gridsearch = train(x = X_train, y = y_train,
+    preProcess = c("center", "scale"), 
+    method = "svmLinear3", 
+    trControl = trainControl(method = "cv", 
+            number = 5),
+    tuneGrid = grid)
+gridsearch
+```
+:::
+:::
+
+::: {.callout-note icon=false collapse=true}
+
+El aprendizaje automático supervisado es una de las áreas donde realmente se ven las diferencias entre Python y R. Mientras que, en 
+Python, prácticamente todo lo que necesitas está disponible a través de 'scikit-learn', en R, a menudo tenemos que combinar 'caret' con 
+varias bibliotecas que proporcionan los modelos reales. Ya que todos los componentes que necesitamos para el aprendizaje automático en 
+Python se desarrollan dentro de un paquete, se crea una menor fricción. Esto es lo que se ve en los ejemplos de 'gridsearch' (búsqueda 
+de cuadrícula) en esta sección. En 'scikit-learn', cualquier hiperparámetro puede ser parte de la rejilla, pero ningún hiperparámetro 
+tiene que serlo, necesariamente. En R, por el contrario, no puedes (al menos, no fácilmente) poner cualquier parámetro del modelo en la 
+cuadrícula. En su lugar, tienes buscar los "parámetros sintonizables" que deben estar presentes como parte de la rejilla en la 
+documentación de caret. Esto significa que una réplica exacta de las búsquedas en la rejilla de los ejemplos [@exm-gridsearch] y 
+[@exm-gridsearch2] no está soportada de forma nativa por 'caret' y requiere o bien pruebas manuales o bien escribir una extensión de 
+'caret'.
+
+Aunque al final, puedes encontrar una solución de aprendizaje automático supervisado para todos tus casos de uso en R también, si el 
+aprendizaje automático supervisado es el núcleo de tu proyecto hacerlo en Python te ahorrará muchos quebraderos de cabeza. Esperemos 
+que el paquete proporcione una mejor solución para el aprendizaje automático en R en un futuro próximo.
+
+:::
+
+[^1]: Puedes descargar el archivo desde 
+  [cssbook.nl/d/media.csv](https://cssbook.nl/d/media.csv)
+
+[^2]: Para una descripción detallada del conjunto de datos, véase  @Trilling2013phd.
+
+[^3]: En la [@sec-validation], analizamos enfoques más avanzados, como la división en conjuntos de datos de entrenamiento, validación y 
+prueba, o la validación cruzada.︎
+
+[^4]: Aquí asumimos que la anotación manual es siempre correcta; una suposición que, por supuesto, se puede cuestionar. Sin embargo, a 
+falta de una mejor aproximación a la realidad, asumimos que esta anotación manual es el llamado “patrón oro” que refleja la verdad básica 
+lo más fielmente posible y que, por definición, no puede ser superado. Por tanto, al crear las anotaciones manuales, es importante 
+salvaguardar su calidad. En particular, hay que calcular y notificar algunas medidas de fiabilidad, como la fiabilidad interjueces, que 
+evalúa el grado de acuerdo entre dos o más anotadores para comprobar si nuestras clases están bien definidas y los codificadores están 
+haciendo su trabajo correctamente.
+
+[^5]: Estos son los valores del ejemplo de Python, el ejemplo de R difiere ligeramente, entre otras cosas debido a un muestreo diferente.︎
+
+[^6]: ([jakevdp.github.io/PythonDataScienceHandbook/05.07-support-vector-machines.html](https://jakevdp.github.io/PythonDataScienceHandbook/05.07-support-vector-machines.html))
+
