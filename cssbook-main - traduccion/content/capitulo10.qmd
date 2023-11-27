@@ -1,0 +1,1574 @@
+# Texto como datos {#sec-chap-dtm}
+
+::: {.callout-warning}
+# Update planned: R Tidytext
+
+At the time of writing this chapter for the published book, `quanteda` was our package of choice for text analysis in R.
+We now think that the `tidytext` package is easier to learn for students who have just leared the `tidyverse` data wrangling package.
+For this reason, we are planning to rewrite this chapter using that package. 
+See the [relevant github issue](https://github.com/vanatteveldt/cssbook/issues/5) for more information. 
+:::
+
+{{< include common_setup.qmd >}}
+
+**Resumen.**
+Este capítulo muestra cómo se pueden analizar textos almacenados como una columna o una variable de un marco de datos utilizando 
+funciones del paquete quanteda en R y del paquete sklearn en Python y R. Consulta el capítulo [-@sec-chap-protext para obtener más 
+información sobre la lectura y limpieza de textos.
+
+**Palabras clave.** Texto como dato, Matriz término-documento
+
+**Objetivos:**
+
+-  Crear una matriz término-documento a partir de un texto
+-  Selección y ponderación de documentos y características
+-  Comprender y utilizar representaciones más avanzadas, como n-gramas y *embeddings*.
+
+::: {.callout-note icon=false collapse=true}
+
+Este capítulo utiliza los paquetes 'quanteda' (R) y 'sklearn' y 'nltk' (Python) para convertir texto en una matriz término-documento. 
+También presenta el paquete 'udpipe' para el procesamiento del lenguaje natural. Si lo necesitas, puedes instalar estos paquetes con el 
+código que se muestra a continuación (consulta la Sección [-@sec-installing] para obtener más detalles):
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter10install-python}
+#| eval: false
+!pip3 install ufal.udpipe spacy nltk scikit-learn==0.24.2
+!pip3 install gensim==4.0.1 wordcloud nagisa conllu tensorflow==2.5.0 tensorflow-estimator==2.5.0
+```
+## Código R
+```{r chapter10install-r}
+#| eval: false
+install.packages(c("glue","tidyverse","quanteda", 
+    "quanteda.textstats", "quanteda.textplots", 
+    "udpipe", "spacyr"))
+```
+:::
+Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter10library-python}
+# Standard library and basic data wrangling
+import os
+import sys
+import urllib
+import urllib.request
+import re
+import regex
+import pandas as pd
+import numpy as np
+
+# Tokenization
+import nltk
+from nltk.tokenize import TreebankWordTokenizer, WhitespaceTokenizer
+from nltk.corpus import stopwords
+
+nltk.download("stopwords")
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+import nagisa
+
+# For plotting word clouds
+
+from matplotlib import pyplot as plt
+from wordcloud import WordCloud
+
+# Natural language processing
+import spacy
+import ufal.udpipe
+from gensim.models import KeyedVectors, Phrases
+from gensim.models.phrases import Phraser
+from ufal.udpipe import Model, Pipeline
+import conllu
+
+```
+## Código R
+```{r chapter10library-r}
+library(glue)
+library(tidyverse)
+# Tokenization
+library(quanteda)
+library(quanteda.textstats)
+library(quanteda.textplots)
+# Natural language processing
+library(udpipe)
+library(spacyr)
+```
+:::
+:::
+
+## La bolsa de palabras y la matriz término-documento {#sec-dtm}
+
+Antes de llevar a cabo el análisis computacional de un texto, hay que resolver un problema: los cálculos se realizan sobre datos 
+numéricos, no sobre palabras. Por lo tanto, hay que encontrar una forma de representar el texto mediante números. La matriz 
+documento-término (DTM, por sus siglas en inglés, también llamada matriz término-documento o TDM) es una representación numérica habitual 
+del texto. Representa un corpus (o conjunto de documentos) como una matriz o tabla, en la que cada fila representa un documento, cada 
+columna representa un término (palabra) y los números de cada celda muestran la frecuencia con la que esa palabra aparece en ese documento.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-dtm}
+Ejemplo de matriz documento-término
+
+::: {.panel-tabset}
+## Código Python
+```{python dtm-python}
+#| cache: true
+texts = [
+    "The caged bird sings with a fearful trill",
+    "for the caged bird sings of freedom",
+]
+cv = CountVectorizer()
+d = cv.fit_transform(texts)
+# Create a dataframe of the word counts to inspect
+# - todense transforms the dtm into a dense matrix
+# - get_feature_names() gives a list words
+pd.DataFrame(d.todense(), columns=cv.get_feature_names())
+
+```
+## Código R
+```{r dtm-r}
+#| cache: true
+texts = c(
+    "The caged bird sings with a fearful trill", 
+    "for the caged bird sings of freedom")
+d = tokens(texts) %>% dfm()
+# Inspect by converting to a (dense) matrix
+convert(d, "matrix") 
+```
+:::
+:::
+:::
+
+Como puedes ver, el Ejemplo [-@exm-dtm] muestra una DTM elaborada a partir de dos líneas del famoso poema de Mary Angelou. La matriz 
+resultante tiene dos filas, una para cada línea, y 11 columnas, una para cada término único (palabra). En las columnas se ven las 
+frecuencias documentales de cada término: la palabra "*bird*" aparece una vez en cada línea, pero la palabra "*with*" solo aparece en la 
+primera línea (texto1) y no en la segunda (texto2).
+
+En R, puedes utilizar la función dfm del paquete 'quanteda' ([@quanteda]). Esta función puede tomar un vector o columna de textos y lo 
+transforma directamente en una DTM (que 'quanteda' llama “*document-feature matrix*” o “matriz de características de documentos”, de ahí 
+el nombre de la función 'dfm'). En Python, se consigue lo mismo creando un objeto de la clase 'CountVectorizer', que tiene una función 
+'fit_transform'.
+
+### Tokenización {#sec-tokenizations}
+
+Para convertir un corpus en una matriz, hay que tokenizar cada texto, es decir, dividirlo en una lista (vector) de palabras. Esto puede 
+parecer innecesario, ya que los textos ingleses (y la mayoría de los occidentales) suelen utilizar espacios para delimitar las palabras. 
+Sin embargo, incluso en inglés hay algunos casos extremos. Por ejemplo, ¿"*haven't*" debe considerarse una sola palabra o dos? En 
+castellano, podemos pensar tanto en un “Ave María” como en un “avemaría” que, significando exactamente lo mismo, se computarían de forma 
+diferente. 
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-tokenize}
+Diferencias entre tokenizadores
+
+::: {.panel-tabset}
+## Código Python
+```{python tokenize-python}
+#| cache: true
+text = "I haven't seen John's derring-do"
+tokenizer = CountVectorizer().build_tokenizer()
+print(tokenizer(text))
+
+```
+## Código R
+```{r tokenize-r}
+#| cache: true
+text = "I haven't seen John's derring-do"
+tokens(text)
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-tokenize] muestra cómo Python y R tratan la frase "*I haven’t seen John’s derring-do*" (“No he visto las proezas de 
+John”). Para Python, primero usamos 'CountVectorizer.build_tokenizer' para acceder al tokenizador incorporado. Como se puede ver en la 
+primera línea de entrada, este tokeniza "*haven't*" a 'haven', que tiene un significado radicalmente diferente (*´t* indica negación, 
+“*haven*” significa “*refugio*”). Además, elimina silenciosamente todas las palabras de una sola letra, incluyendo las “''t'”, “''s'”, y 
+la "'I'".
+
+A través del recuadro "'Tokenizing in Python'" (Tokenización en Python), manejaremos algunas alternativas. Por ejemplo, el 
+'TreebankWordTokenizer' incluido en el paquete 'nltk' es un tokenizador más razonable y divide "*haven't*" en 'have' y 'n't', lo que es 
+un resultado más preciso. Desafortunadamente, este tokenizador asume que el texto ya ha sido dividido en frases, y también incluye la 
+puntuación como tokens por defecto. Para evitar esto, podemos introducir un tokenizador personalizado basado en el tokenizador de 
+'Treebank', que divide el texto en frases (usando 'nltk.sent_tokenize'). Puedes ver las notas al final de este texto para más detalles.
+
+En R, nos basta con ejecutar la función 'tokens' del paquete 'quanteda'. Esto mantiene 'haven't' y 'John's' como una sola palabra, lo que 
+es menos deseable que dividir las palabras, pero ya es mejor que convertirlas en 'haven'.
+
+Como muestra este sencillo ejemplo, incluso una frase relativamente simple es procesada de forma diferente por los tokenizadores aquí 
+considerados (presta atención al recuadro sobre tokenización en Python). Dependiendo del tema de investigación, estas diferencias pueden 
+ser importantes o no. Sin embargo, siempre es una buena idea comprobar el resultado de este (y otros) pasos de preprocesamiento para 
+entender qué información se mantiene o se descarta.
+
+::: {.callout-note icon=false collapse=true}
+## Tokenización en Python
+
+Como puedes ver en el ejemplo, el tokenizador incorporado en 'scikit-learn' no es muy bueno: “*haven't*” se convierte en 'haven', que es 
+una palabra completamente diferente. Afortunadamente, hay otros tokenizadores en el paquete 'nltk.tokenize' que lo hacen mejor.
+
+Por ejemplo, el 'TreebankTokenizer' utiliza las reglas de tokenización del 'Penn Treebank' para tokenizar, lo que produce mejores 
+resultados:
+
+```{python tokenizealt-python}
+text = """I haven't seen John's derring-do. 
+          Second sentence!"""
+print(TreebankWordTokenizer().tokenize(text))
+
+```
+
+Otro ejemplo es el 'WhitespaceTokenizer', que utiliza espacios en blanco para tokenizar, lo que puede ser útil si la entrada ya ha sido 
+tokenizada, y se utiliza en el Ejemplo [-@exm-tagcloud] a continuación para los tuits para conservar las etiquetas 'hash'.
+
+```{python tokenizealt1-python}
+#| cache: true
+print(WhitespaceTokenizer().tokenize(text))
+
+```
+
+También puedes escribir tu propio tokenizador si es necesario. Por ejemplo, el 'TreebankTokenizer' asume que el texto ya ha sido 
+dividido en frases (por eso el punto está unido a la palabra “*derring-do.*”). El código siguiente muestra cómo podemos hacer nuestra 
+propia clase tokenizer, que utiliza 'nltk.sent_tokenize' para dividir primero el texto en frases, y luego utiliza el 'TreebankTokenizer' 
+para procesarlas frase, manteniendo solo los tokens que incluyen al menos un carácter de letra. Aunque un poco más complicado, este 
+enfoque puede ofrecerte la máxima flexibilidad.
+
+```{python tokenizealt2-python}
+#| cache: true
+#| results: hide
+nltk.download("punkt")
+```
+```{python tokenizealt3-python}
+class MyTokenizer:
+    def tokenize(self, text):
+        tokenizer = TreebankWordTokenizer()
+        result = []
+        word = r"\p{letter}"
+        for sent in nltk.sent_tokenize(text):
+            tokens = tokenizer.tokenize(sent)
+            tokens = [t for t in tokens if regex.search(word, t)]
+            result += tokens
+        return result
+
+mytokenizer = MyTokenizer()
+print(mytokenizer.tokenize(text))
+
+```
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-haiku}
+Tokenización de un verso japonés.
+
+::: {.panel-tabset}
+## Código Python
+```{python haiku-python}
+#| cache: true
+# this snippet uses the tokenizer created above
+# (example "Tokenization with Python")
+haiku = ("\u53e4\u6c60\u86d9"
+         "\u98db\u3073\u8fbc\u3080"
+         "\u6c34\u306e\u97f3")
+print(f"Default: {mytokenizer.tokenize(haiku)}")
+print(f"Nagisa: {nagisa.tagging(haiku).words}")
+
+```
+## Código R
+```{r haiku-r}
+#| cache: true
+haiku = "\u53e4\u6c60\u86d9
+         \u98db\u3073\u8fbc\u3080
+         \u6c34\u306e\u97f3"
+tokens(haiku)
+```
+:::
+
+::: {.panel-tabset}
+:::
+:::
+:::
+
+Ten en cuenta que, para lenguas como el chino, el japonés y el coreano, que no utilizan espacios para delimitar las palabras, esto es aún 
+más difícil. Aunque no vamos a profundizar en ello, el Ejemplo [-@exm-haiku] muestra un pequeño ejemplo de tokenización de texto japonés, 
+en este caso el famoso haiku "el sonido del agua" de Bashō. El tokenizador por defecto en quanteda hace, sorprendentemente, un buen 
+trabajo, en contraste con el tokenizador por defecto de Python que mantiene toda la cadena como una palabra (lo cual tiene sentido ya que 
+este tokenizador solo busca espacios en blanco o puntuación). Para Python lo mejor es utilizar un paquete personalizado para tokenizar 
+japonés, como el paquete 'nagisa'. Este paquete contiene un tokenizador que es capaz de procesar el texto japonés, y podemos usarlo en el 
+'CountVectorizer' del mismo modo que usamos el 'TreebankWordTokenizer' para el inglés anteriormente. Del mismo modo, en el caso de 
+lenguas con muchas inflexiones, como el húngaro o el árabe, sería mejor utilizar herramientas de preprocesamiento desarrolladas 
+específicamente para estas lenguas. Por norma general, recomendamos familiarizarse y comprender los datos a tratar antes de su 
+procesamiento.
+
+### La DTM como matriz dispersa {#sec-sparse}
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-sotu}
+Ejemplo de matriz documento-término
+
+::: {.panel-tabset}
+## Código Python
+```{python sotu-python}
+# this snippet uses the tokenizer created above
+# (example "Tokenization with Python")
+sotu = pd.read_csv("https://cssbook.net/d/sotu.csv")
+cv = CountVectorizer(tokenizer=mytokenizer.tokenize)
+d = cv.fit_transform(sotu["text"])
+d
+
+```
+## Código R
+```{r sotu-r}
+url = "https://cssbook.net/d/sotu.csv"
+sotu = read_csv(url) %>% 
+       mutate(doc_id=paste(lubridate::year(Date), 
+                           President, delivery))
+d = corpus(sotu) %>% tokens() %>% dfm()
+d
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-sotu] muestra un ejemplo más realista. Descarga todos los discursos del "Estado de la Unión" de EE.UU. y crea una 
+matriz documento-término a partir de ellos. Como la matriz es demasiado grande para imprimirla, tanto Python como R se limitan a listar 
+el tamaño de la matriz. R lista $85$ documentos (filas) y $17.999$ características (columnas), y Python informa de que su tamaño es 
+$85\times17185$. Nótese la diferencia en el número de columnas (términos únicos) debido a las diferencias en la tokenización, como hemos 
+comentado anteriormente.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-freq}
+Una mirada al interior de la DTM.
+
+::: {.panel-tabset}
+## Código Python
+```{python freq-python}
+def termstats(dfm, vectorizer):
+    """Helper function to calculate term and
+    document frequency per term"""
+    # Frequencies are the column sums of the DFM
+    frequencies = dfm.sum(axis=0).tolist()[0]
+    # Document frequencies are the binned count
+    # of the column indices of DFM entries
+    docfreqs = np.bincount(dfm.indices)
+    freq_df = pd.DataFrame(
+        dict(frequency=frequencies, docfreq=docfreqs),
+        index=vectorizer.get_feature_names(),
+    )
+    return freq_df.sort_values("frequency", ascending=False)
+```
+```{python freq-python2}
+#| cache: true
+termstats(d, cv).iloc[[0, 10, 100, 1000, 10000]]
+words = ["the", "is", "energy", "scientific", "escalate"]
+indices = [cv.vocabulary_[x] for x in words]
+
+d[[[0], [25], [50], [75]], indices].todense()
+```
+## Código R
+```{r freq-r}
+#| cache: true
+textstat_frequency(d)[c(1, 10, 100, 1000, 10000), ]
+as.matrix(d[
+  c(3, 25, 50, 75),
+  c("the","first","investment","defrauded")])
+```
+:::
+:::
+:::
+
+En el Ejemplo [-@exm-freq] mostramos cómo se puede ver el contenido de la DTM. En primer lugar, mostramos las frecuencias globales de 
+término y de documento de cada palabra, donde mostramos palabras con diferentes frecuencias. Como era de esperar, la palabra “*the*” 
+encabeza ambas tablas, pero, según vamos bajando, hay pequeñas diferencias. En todos los casos, las palabras más frecuentes son sobre 
+todo funcionales, como “*them*” o “*first*”. Las palabras más informativas, como “*investments*”, se utilizan mucho menos. Estas 
+estadísticas de términos son muy útiles para detectar ruido en los datos y hacerse una idea del tipo de lenguaje que se utiliza. En 
+segundo lugar, echamos un vistazo a la frecuencia de estas mismas palabras en cuatro discursos desde Truman hasta Obama. Todos utilizan 
+palabras como “*the*” y “*first*”, pero ninguno de ellos utiliza “*defrauded*” (defraudado), lo cual no es sorprendente, ya que solo se 
+utilizó una vez en todos los discursos del corpus.
+
+Sin embargo, las 1.000 palabras de la frecuencia máxima siguen utilizándose en menos de la mitad de los documentos. Dado que en el corpus 
+hay unas 17.000 palabras aún menos frecuentes, podemos imaginarnos que la mayor parte de la matriz documento-término está formada por 
+ceros. En el resultado del ejemplo se observa claramente la dispersión. De hecho, R informa de que la DTM es dispersa en un 91\%, lo que 
+significa que el 91\% de todas las entradas son ceros. Python informa de una cifra similar, es decir, que hay solo un poco menos de 
+150.000 entradas distintas de cero de un posible $8\times22219$, lo que equivale a una matriz dispersa del 92\%.
+
+Ten en cuenta que para mostrar la matriz la hemos convertido de una representación de matriz dispersa a una de matriz densa. Explicado 
+brevemente, en una matriz densa, todas las entradas se almacenan como una larga lista de números, incluidos todos los ceros. En una 
+matriz dispersa, solo se almacenan las entradas distintas de cero y su ubicación. Sin embargo, esta conversión (mediante la función 
+'as.matrix' y el método 'todense', respectivamente) solo se realiza tras seleccionar un pequeño subconjunto de los datos. En general, es 
+muy ineficiente almacenar y trabajar con la matriz en un formato denso. Para un corpus razonablemente grande con decenas de miles de 
+documentos y palabras diferentes, hacerlo puede llevar rápidamente a miles de millones de números, lo que puede causar problemas incluso 
+en ordenadores modernos y es, además, muy ineficiente. Dado que los valores de dispersión suelen ser superiores al 99\%, el uso de una 
+representación matricial dispersa puede reducir fácilmente los requisitos de almacenamiento en un centenar de veces y, de paso, acelerar 
+los cálculos al reducir el número de entradas que hay que inspeccionar. Tanto 'quanteda' como 'scikit-learn' almacenan las DTM como 
+matrices dispersas por defecto, y la mayoría de las herramientas de análisis son capaces de tratar con matrices dispersas de manera muy 
+eficiente (véase, sin embargo, la Sección [-@sec-workflow] para problemas con el aprendizaje automático en matrices dispersas en R).
+
+Antes de terminar, vamos a matizar un poco más la diferencia entre Python y R en este ejemplo. El código en R es mucho más sencillo y 
+produce resultados más agradables, ya que también muestra las palabras y los nombres de los discursos. En Python, escribimos nuestra 
+propia función de ayuda para crear las estadísticas de frecuencia, que está integrada en el paquete R 'quanteda'. Estas diferencias entre 
+Python y R reflejan un patrón que se da en muchos casos (aunque no en todos): en Python, bibliotecas como 'numpy' y 'scikit-learn' están 
+configuradas para maximizar el rendimiento, mientras que en R una biblioteca como 'quanteda' o 'tidyverse' está más orientada a la 
+facilidad de uso. Por esa razón, el DTM en Python no "recuerda" las palabras reales, sino que utiliza el índice de cada palabra, lo que 
+consume menos memoria si no es necesario utilizar las palabras reales en, por ejemplo, una configuración de aprendizaje automático. R, en 
+cambio, almacena las palabras y también los ID de los documentos y los metadatos en el objeto DFM. Esto es más fácil de usar si se 
+necesita buscar una palabra o documento, pero consume (ligeramente) más memoria.
+
+::: {.callout-note icon=false collapse=true}
+**Python: ¿Por qué usar fit_transform?**
+En Python, no existe una función que transforme directamente el texto en un DTM. En su lugar, se crea un transformador llamado 
+'CountVectorizer', que puede utilizarse para "vectorizar" textos (convertirlos en una fila de números) contando la frecuencia con la que 
+aparece cada palabra. Para esto se utiliza la función 'fit_transform' que ofrecen todos los transformadores de 'scikit-learn'. Esta 
+función "ajusta" el modelo a los datos de entrenamiento, lo que, en este caso, significa aprender el vocabulario. A continuación, puede 
+utilizarse para transformar otros datos en un DTM con exactamente las mismas columnas, lo que a menudo es necesario para los algoritmos. 
+Dado que los nombres de las características (las palabras propiamente dichas) se almacenan en el 'CountVectorizer' y no en la matriz 
+término-documento, por lo general es necesario conservar ambos objetos.
+
+:::
+
+### La DTM como una "bolsa de palabras" {#sec-bagofwords}
+
+Seguramente ya te hayas dado cuenta, a través de los ejemplos, de que la matriz documento-término descarta bastante información del 
+texto. Algo muy llamativo, es que no tiene en cuenta el orden de las palabras del texto: Tanto "Juan despidió a María" como 
+"María despidió a Juan" dan como resultado la misma DTM, aunque el significado de las frases sea bastante diferente. Por este motivo, 
+a menudo se denomina a las DTM “bolsas de palabras”, en el sentido de que todas las palabras del documento se meten simplemente en una 
+gran bolsa sin tener en cuenta las frases o el contexto de estas palabras.
+
+Se puede decir que la DTM es una representación específica y "con pérdidas" del texto, que resulta bastante útil para determinadas 
+tareas: la aparición frecuente de palabras como "empleo", "estupendo" o "yo" pueden ser buenos indicadores de que un texto trata de 
+economía, es positivo o contiene expresiones personales, respectivamente. Como veremos en el capítulo siguiente, la representación DTM 
+puede utilizarse para muchos análisis de texto diferentes, desde diccionarios hasta aprendizaje automático supervisado y no supervisado.
+
+A veces, sin embargo, se necesita información codificada en el orden de las palabras. Por ejemplo, al analizar la cobertura de un 
+conflicto puede ser muy importante saber quién ataca a quién, no solo que se ha producido un ataque. En la sección [-@sec-ngram] veremos 
+algunas formas de crear una representación matricial más rica utilizando pares de palabras. Aunque no lo trataremos en este libro, 
+también se puede utilizar el análisis sintáctico automático para tener en cuenta las relaciones gramaticales. Como siempre ocurre con 
+los análisis automáticos, es importante entender qué información está buscando el ordenador, ya que éste no puede encontrar patrones en 
+información que no tiene.
+
+### La (inevitable) nube de palabras {#sec-wordcloud}
+
+Una de las visualizaciones de texto más famosas es sin duda la nube de palabras. En esencia, una nube de palabras es una imagen en la que 
+cada palabra aparece en un tamaño representativo de su frecuencia. Según las preferencias seleccionadas, la posición y el color de las 
+palabras pueden ser aleatorios, en función de la frecuencia de las palabras o con una forma decorativa.
+
+Las nubes de palabras suelen ser criticadas ya que son (a veces) bonitas, pero poco informativas: solo se visualiza un aspecto de las 
+palabras (la frecuencia), y esto no nos aporta mucho (por si fuera poco, las palabras más frecuentes suelen ser "palabras vacías", como 
+"el" y "yo").
+
+El ejemplo [-@exm-wordcloud] muestra la nube de palabras de los discursos sobre el estado de la unión descargados anteriormente. En R, 
+esto se hace utilizando la función 'textplot_wordcloud' de 'quanteda'. En Python es un poco más complejo, ya que solo tiene los 
+recuentos, no las palabras reales. Así que sumamos las columnas DTM para obtener la frecuencia de cada palabra, y combinamos eso con los 
+nombres de las características (palabras) del objeto 'cv' de 'CountVectorized'. Entonces podemos crear la nube de palabras y le damos las 
+frecuencias a utilizar. Por último, trazamos la nube y eliminamos los ejes.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-wordcloud}
+Nube de palabras del corpus Estado de la Unión de EE.UU.
+
+::: {.panel-tabset}
+## Código Python
+```{python wordcloud-python}
+#| results: hide
+#| cache: true
+def wordcloud(dfm, vectorizer, **options):
+    freq_dict = dict(
+        zip(vectorizer.get_feature_names(), dfm.sum(axis=0).tolist()[0])
+    )
+    wc = WordCloud(**options)
+    return wc.generate_from_frequencies(freq_dict)
+
+wc = wordcloud(d, cv, background_color="white")
+plt.imshow(wc)
+plt.axis("off")
+```
+## Código R
+```{r wordcloud-r}
+#| cache: true
+textplot_wordcloud(d, max_words=200)
+```
+:::
+:::
+:::
+
+Los resultados de Python y R parecen diferentes al principio: por un lado, R es bonito y redondo, ¡Pero Python tiene más colores! Sin 
+embargo, si se observa la nube, se ve que ninguno es muy significativo: las palabras más grandes son todas signos de puntuación o 
+palabras como "*a*", "*and*" o "*the*". Hay que fijarse bien para encontrar palabras como "*federal*" o "*security*", que dan una pista 
+sobre el contenido de los textos.
+
+## Ponderación y selección de documentos y términos {#sec-dtmselect}
+
+Hasta ahora, las DTM que has hecho en este capítulo solo muestran el recuento de cada palabra en el documento. Sin embargo, muchas 
+palabras no son informativas para responder nuestras preguntas. Esto es evidente si se observa una nube de palabras (que no son más que 
+un gráfico de las palabras más frecuentes en un corpus o conjunto de documentos).
+
+::: {.callout-note icon=false collapse=true}
+## Vectores e interpretación geométrica de las matrices documento-término
+
+Ya hemos dicho que un documento está representado por un "vector" de números, donde cada número (para una matriz documento-término) es la 
+frecuencia de una palabra específica en ese documento. El término “vector” también aparece en el nombre del tokenizador 'scikit-learn': 
+un vectorizador o función para convertir textos en vectores.
+
+En este caso, un vector interpretarse como una palabra elegante para un grupo de números. Como ya sabes, el término se utiliza a menudo 
+en R, donde una columna de un marco de datos se llama un vector, y donde las funciones que se pueden llamar en todo un vector a la vez se 
+llaman “vectorizadas”.
+
+Sin embargo, en geometría, un vector es un punto (o línea desde el origen) en un espacio n-dimensional, donde “n” es la longitud o 
+dimensionalidad del vector. Ésta es también una interpretación muy útil de los vectores en el análisis de textos: la dimensionalidad del 
+espacio es el número de palabras únicas (columnas) en la matriz documento-término, y cada documento es un punto en ese espacio 
+n-dimensional.
+
+En esa interpretación, pueden calcularse varias distancias geométricas entre documentos como indicador de lo similares que son dos 
+documentos. Las técnicas que reducen el número de columnas de la matriz (como los clústeres o el modelado de temas) pueden considerarse 
+técnicas de reducción de la dimensionalidad, ya que convierten la DTM en una matriz de menor dimensionalidad (intentando conservar la 
+mayor cantidad posible de información relevante).
+
+:::
+
+Más formalmente, una matriz documento-término puede verse como una representación de puntos de datos sobre documentos: cada documento 
+(fila) se representa como un vector que contiene el recuento por palabra (columna). Aunque es una simplificación en comparación con el 
+texto original, una matriz documento-término sin filtrar contiene mucha información relevante. Por ejemplo, un presidente utiliza la 
+palabra "terrorismo" más a menudo que la palabra "economía", podría estar dando a entender sus prioridades políticas.
+
+Sin embargo, esta información sigue estando oculta: como se ve en la nube de palabras de la sección anterior, las palabras más frecuentes 
+suelen ser bastante poco informativas. Lo mismo ocurre con las palabras que apenas aparecen en ningún documento (pero que requieren una 
+columna para ser representadas) y las "palabras" ruidosas, como los signos de puntuación o códigos técnicos (como el HTML).
+
+En esta sección se analizan varias técnicas para limpiar un corpus o una matriz documento-término con el fin de minimizar la cantidad de 
+ruido: eliminación de palabras vacías; limpieza de puntuación y otros códigos, y recorte y ponderación. Como ejemplo en esta sección, 
+utilizaremos una colección de tuits del presidente estadounidense Donald Trump. El ejemplo [-@exm-trumptweets] muestra cómo cargar estos 
+tuits en un marco de datos que contiene el ID y el texto de los tuits. Como puedes ver, este conjunto de datos contiene muchas 
+características no textuales, como hipervínculos y hashtags, así como signos de puntuación y palabras vacías. Antes de empezar a analizar 
+estos datos, tendremos que decidir y realizar varios pasos de limpieza.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-trumptweets}
+Palabras principales utilizadas en los tuits de Trump
+
+::: {.panel-tabset}
+## Código Python
+```{python trumptweets-python}
+url = "https://cssbook.net/d/trumptweets.csv"
+tweets = pd.read_csv(url, usecols=["status_id", "text"], index_col="status_id")
+tweets.head()
+
+```
+## Código R
+```{r trumptweets-r}
+url = "https://cssbook.net/d/trumptweets.csv"
+tweets = read_csv(url, 
+    col_types=cols_only(text="c", status_id="c")) 
+head(tweets)
+```
+:::
+:::
+:::
+
+Ten en cuenta que, aunque quizás los tuits se utilicen en exceso como fuente de información científica, los empleamos aquí porque 
+ejemplifican muy bien cuestiones relacionadas con elementos no textuales como los hipervínculos. En el capítulo [-@sec-chap-scraping] 
+encontrarás información sobre cómo utilizar Twitter y otras API para recopilar tus propios datos.
+
+### Eliminación de palabras vacías {#sec-stopwords}
+
+Un primer paso en la limpieza de una DTM suele ser la eliminación de las palabras vacías. Palabras como "una" y "el" suelen denominarse 
+“*stopwords*” o “palabras vacías”, es decir, palabras que no nos dicen mucho sobre el contenido. Tanto 'quanteda' como 'scikit-learn' 
+incluyen listas integradas de palabras vacías, lo que facilita la eliminación de las palabras más comunes. El ejemplo [-@exm-stopwords] 
+muestra el resultado de especificar las palabras inglesas que deben eliminarse en ambos paquetes. ¡Atrévete a probarlo con otros idiomas, 
+como el castellano ('"spanish”')!
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-stopwords}
+Eliminación simple de palabras vacías
+
+::: {.panel-tabset}
+## Código Python
+```{python stopwords-python}
+#| results: hide
+#| cache: true
+cv = CountVectorizer(
+    stop_words=stopwords.words("english"), tokenizer=mytokenizer.tokenize
+)
+d = cv.fit_transform(tweets.text)
+wc = wordcloud(d, cv, background_color="white")
+plt.imshow(wc)
+plt.axis("off")
+
+```
+## Código R
+```{r stopwords-r}
+#| cache: true
+d = corpus(tweets) %>% 
+  tokens(remove_punct=T) %>% 
+  dfm() %>%
+  dfm_remove(stopwords("english"))
+textplot_wordcloud(d, max_words=100)
+
+```
+:::
+:::
+:::
+
+Ten en cuenta que, aunque parezca fácil enumerar palabras como "uno" e "y", no existe una única lista bien definida de palabras vacías y 
+(como siempre) la mejor elección depende de tus datos y de tu pregunta de investigación.
+
+Desde el punto de vista lingüístico, las palabras vacías suelen ser palabras funcionales, es decir, que no poseen mucho significado por 
+si mismas, o clases de palabras como determinantes o pronombres. Las clases cerradas significan que, aunque se pueden acuñar nuevos 
+sustantivos, no se pueden inventar nuevos determinantes o preposiciones. Sin embargo, existen muchas listas de palabras vacías que hacen 
+selecciones diferentes y están optimizadas para distintos tipos de preprocesamiento. La nube de palabras de Python del ejemplo 
+[-@exm-stopwords] muestra un buen ejemplo de la importancia de hacer coincidir las palabras vacías con la tokenización utilizada: una 
+"palabra" central en la nube es la contracción “'s”. Estamos utilizando el tokenizador 'NLTK', que separa “*'s*” de la palabra a la que 
+estaba unida, pero la lista de palabras de 'scikit-learnstop' no incluye ese término. Por tanto, es importante asegurarse de que las 
+palabras creadas por el tokenizador coinciden con la forma en que aparecen en la lista de palabras vacías.
+
+Como ejemplo, en inglés, de las palabras conceptuales (palabras que poseen pleno significado por sí mismas) inherentes al uso de listas 
+de palabras vacías, considera la palabra "*will*". Como verbo auxiliar, probablemente sea una palabra vacía: para la mayoría de las 
+preguntas en las que se utiliza, no altera el significado de la oración. Sin embargo, "*will*" también puede ser un sustantivo (un 
+testamento) y un nombre (por ejemplo, Will Smith). En castellano, podemos tomar como ejemplo el verbo “haber”, que puede funcionar como 
+verbo auxiliar (acompañando al verbo qué sí tiene significado) y como verbo principal indistintamente. La simple eliminación de estas 
+palabras del corpus puede resultar problemática; en la sección [-@sec-nlp] se describen formas de diferenciar sustantivos y verbos para 
+un filtrado más preciso.
+
+Es más, algunas preguntas de investigación pueden estar realmente interesadas en determinadas palabras vacías. Si lo que te interesa son 
+las referencias al futuro o a modalidades específicas, los verbos auxiliares y los adverbios pueden ser indicadores clave. Del mismo 
+modo, si estás estudiando la autoexpresión en foros de Internet, la teoría de la identidad social o la retórica populista, palabras como 
+"yo", "nosotros" y "ellos" pueden ser muy informativas.
+
+Por esta razón, siempre es una buena idea entender y revisar qué lista de palabras vacía estás utilizando, y utilizar una diferente o 
+personalizarla según sea necesario (véase también @nothman18). El ejemplo [-@exm-stopwords2] muestra cómo se pueden inspeccionar y 
+personalizar las listas. Para obtener más detalles sobre qué listas están disponibles y qué opciones ofrecen estas listas, consulta la 
+documentación del paquete 'stopwords' en Python (parte de 'NLTK') y R (parte de 'quanteda')
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-stopwords2}
+Inspección y personalización de listas de palabras vacías
+
+::: {.panel-tabset}
+## Código Python
+```{python stopwords2-python}
+mystopwords = ["go", "to"] + stopwords.words("english")
+print(f"{len(mystopwords)} stopwords:" f"{', '.join(mystopwords[:5])}...")
+
+```
+## Código R
+```{r stopwords2-r}
+mystopwords = stopwords("english", 
+                        source="snowball")
+mystopwords = c("go", "one", mystopwords)
+glue("Now {length(mystopwords)} stopwords:")
+mystopwords[1:5]
+```
+:::
+:::
+:::
+
+### Eliminar los signos de puntuación y el ruido {#sec-punctuation}
+
+Además de palabras vacías, el texto suele contener signos de puntuación y otros elementos que pueden considerarse "ruido" para la mayoría 
+de las preguntas de investigación. Por ejemplo, puede contener emoticonos o *emojis*, *hashtags* de Twitter o menciones, o etiquetas HTML 
+u otras anotaciones.
+
+Tanto en Python como en R, podemos utilizar expresiones regulares para eliminar (partes de) palabras. Como ya se ha explicado en la 
+sección [-@sec-regular], las expresiones regulares son una forma eficiente de especificar (secuencias de) caracteres que deben mantenerse 
+o eliminarse. Puede sutilizarlas, por ejemplo, para eliminar signos de puntuación, emoticonos o etiquetas HTML. Esto puede hacerse antes 
+o después de tokenizar (dividir el texto en palabras): en otras palabras, podemos limpiar los textos en bruto o las palabras individuales 
+(tokens).
+
+En general, si solo desea conservar o eliminar determinadas palabras, suele ser más fácil hacerlo después de la tokenización utilizando 
+una expresión regular para seleccionar las palabras que desea conservar o eliminar. Si desea eliminar partes de palabras (por ejemplo, 
+eliminar el "\#" inicial en los *hashtags*), lo más fácil es hacerlo antes de la tokenización, es decir, como un paso de preprocesamiento 
+antes de la tokenización. Del mismo modo, si desea eliminar un término que sería dividido por la tokenización (como los hipervínculos), 
+puede ser mejor eliminarlos antes de que se produzca la tokenización.
+
+El ejemplo [-@exm-noise] muestra cómo podemos utilizar expresiones regulares para eliminar ruido en Python y R. Para mayor claridad, 
+muestra el resultado de cada paso, de procesamiento en un único tuit que ejemplifica muchos de los problemas descritos anteriormente. 
+Para entender mejor el proceso de tokenización, imprimimos los tokens de ese tuit separados por una barra vertical (`|`). Como primer 
+paso de limpieza, utilizaremos una expresión regular para eliminar hipervínculos y entidades HTML ('&amp', por ejemplo); de los textos 
+sin tokenizar. Dado que tanto los hipervínculos como las entidades HTML se dividen en varios tokens, sería difícil eliminarlos tras la 
+tokenización.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-noise}
+Limpieza de un único tuit a nivel de texto y de token
+
+::: {.panel-tabset}
+## Código Python
+```{python noise1-python}
+#| cache: true
+id = "x263687274812813312"
+one_tweet = tweets.text.values[tweets.index == id][0]
+print(f"Raw:\n{one_tweet}")
+tweet_tokens = mytokenizer.tokenize(one_tweet)
+print("\nTokenized:")
+print(" | ".join(tweet_tokens))
+one_tweet = re.sub(r"\bhttps?://\S*|&\w+;", "", one_tweet)
+tweet_tokens = mytokenizer.tokenize(one_tweet)
+print("After pre-processing:")
+print(" | ".join(tweet_tokens))
+tweet_tokens = [
+    t.lower()
+    for t in tweet_tokens
+    if not (
+        t.lower() in stopwords.words("english") or regex.match(r"\P{LETTER}", t)
+    )
+]
+print("After pruning tokens:")
+print(" | ".join(tweet_tokens))
+```
+## Código R
+```{r noise1-r}
+#| cache: true
+id="x263687274812813312"
+single_tweet = tweets$text[tweets$status_id == id]
+print(single_tweet)
+tweet_tokens = tokens(single_tweet)
+print("After tokenizing:")
+print(paste(tweet_tokens, collapse=" | "))
+single_tweet = single_tweet  %>% 
+  str_remove_all("\\bhttps?://\\S*|&\\w+;")
+tweet_tokens = tokens(single_tweet)
+print("After pre-processing:")
+print(paste(tweet_tokens, collapse=" | "))
+tweet_tokens = tweet_tokens %>%
+  tokens_tolower()  %>% 
+  tokens_remove(stopwords("english")) %>% 
+  tokens_keep("^\\p{LETTER}", valuetype="regex")
+print("After pruning:")
+print(paste(tweet_tokens, collapse=" | "))
+```
+:::
+:::
+:::
+
+Las expresiones regulares se explican detalladamente en la Sección [-@sec-regular], por lo que seremos breves: la barra '|' divide el 
+patrón en dos partes, es decir, coincidirá si encuentra cualquiera de los subpatrones. El primer patrón busca el texto literal 'http', 
+seguido de una 's' opcional y la secuencia '://'. A continuación, toma todos los caracteres que no sean espacios en blanco, es decir, el 
+patrón termina en el siguiente espacio en blanco o al final del texto. El segundo patrón busca un símbolo “et” ('&') seguido de una o más 
+letras ('\\w+'), seguidas de un punto y coma (';'). Esto coincide con escapes HTML como '&amp'; para un símbolo “et”.
+
+En el siguiente paso, procesamos el texto tokenizado para eliminar todos los tokens que sean palabras vacías o que no empiecen por una 
+letra. En Python, esto se hace utilizando una comprensión de lista ('[process(item) for item in list]') para tokenizar cada documento; y 
+una comprensión de lista anidada para filtrar cada token en cada documento. En R esto no es necesario ya que las funciones 'tokens_\*' 
+están vectorizadas, es decir, se ejecutan directamente sobre todos los tokens.
+
+Comparando R y Python, vemos que las diferentes funciones de tokenización significan que '#trump' se elimina en R (ya que es un token que 
+no empieza por una letra), pero en Python la tokenización separa el '#' del nombre y el token resultante 'trump' se mantiene. Si 
+hubiéramos utilizado un tokenizador diferente para Python (por ejemplo, el 'WhitespaceTokenizer'), no habría pasado. Esto subraya la 
+importancia de inspeccionar y comprender los resultados del tokenizador específico utilizado, y de asegurarse de que los pasos 
+posteriores coinciden con estas elecciones de tokenización. Por poner otro ejemplo, con el 'TreebankWordtokenizer' habríamos tenido que 
+eliminar también los hashtags a nivel de texto en lugar de a nivel de token.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-tagcloud}
+Limpieza del el corpus y creación de una nube de etiquetas
+
+::: {.panel-tabset}
+## Código Python
+```{python tagcloud-python}
+#| results: hide
+#| cache: true
+def do_nothing(x):
+    return x
+
+tokenized = [
+    WhitespaceTokenizer().tokenize(text) for text in tweets.text.values
+]
+tokens = [
+    [t.lower() for t in tokens if regex.match("#", t)] for tokens in tokenized
+]
+
+cv = CountVectorizer(tokenizer=do_nothing, lowercase=False)
+dtm_emoji = cv.fit_transform(tokens)
+wc = wordcloud(dtm_emoji, cv, background_color="white")
+plt.imshow(wc)
+plt.axis("off")
+
+```
+## Código R
+```{r tagcloud-r}
+#| cache: true
+dfm_cleaned = tweets %>% 
+  corpus() %>% 
+  tokens()  %>% 
+  tokens_keep("^#", valuetype="regex")  %>% 
+  dfm()
+colors = RColorBrewer::brewer.pal(8, "Dark2")
+textplot_wordcloud(dfm_cleaned, max_words=100, 
+    min_size = 1, max_size=4, random_order=TRUE,
+    random_color= TRUE, color=colors)
+```
+:::
+:::
+:::
+
+Por último, el ejemplo [-@exm-tagcloud] muestra cómo filtrar los tokens de todo el corpus, pero en lugar de eliminar los *hashtags*, 
+conserva solo los *hashtags* para producir una nube de etiquetas. En R, esto es principalmente una cadena de funciones quanteda para 
+crear el corpus, tokenizar, mantener solo los *hashtags*, y crear un DFM. Para darle un poco más de gracia al resultado, utilizamos el 
+paquete 'RColorBrewer' para establecer colores aleatorios para las etiquetas. En Python, tenemos una lista anidada de comprensión, donde 
+el bucle exterior itera sobre los textos y el bucle interior itera sobre los tokens en cada texto. Creamos una función 'do_nothing' para 
+el vectorizador, ya que los resultados ya están tokenizados. Ten en cuenta que tenemos que desactivar la función 'lowercasing' porque, de 
+lo contrario, intentará llamar a '.lower()' en las listas de tokens.
+
+::: {.callout-note icon=false collapse=true}
+## Funciones lambda en Python
+
+A veces, necesitamos definir una función que sea muy simple y que solo usemos una vez. Un ejemplo de tal función desechable es 
+'do_nothing' en el Ejemplo [-@exm-tagcloud]. En lugar de definir una función reutilizable con la palabra clave 'def' y luego llamarla por 
+su nombre cuando la necesitemos más tarde, podemos definir directamente una función sin nombre cuando la necesitemos con la palabra clave 
+lambda. La sintaxis es sencilla: 'lambda argument: returnvalue'. Una función que mapea un valor sobre sí misma puede escribirse como 
+'lambda x: x'. En el Ejemplo [-@exm-tagcloud], en lugar de definir una función con nombre, podríamos escribir simplemente 
+'v = CountVectorizer(tokenizer=lambda x: x, lowercase=False)'. Las ventajas son que ahorramos dos líneas de código y que no abarrotamos 
+el entorno con funciones que de todos modos no se pretende reutilizar. La desventaja es que lo que está pasando resulta menos claro, al 
+menos para las personas no familiarizadas con las funciones lambda.
+
+:::
+
+### Recortar una DTM{#sec-trimdtm}
+
+Las técnicas anteriores eliminan términos de la DTM basándose en opciones o patrones específicos. También puede ser beneficioso recortar 
+(*trimming*) una DTM eliminando palabras que aparecen con muy poca frecuencia o con demasiada frecuencia. En el primer caso, la razón es 
+que, si una palabra solo aparece en un porcentaje muy pequeño de documentos, es poco probable que sea muy relevante. Por otra parte, las
+palabras demasiado frecuentes, como las que aparecen en más de la mitad o el 75\% de todos los documentos, funcionan básicamente como 
+palabras vacías para el corpus. En muchos casos, esto puede deberse a la estrategia de selección. Si seleccionamos todos los tuits que 
+contienen "Trump", la propia palabra “Trump” deja de dar información sobre el contenido. También puede ocurrir que algunas palabras se 
+utilicen como expresiones, por ejemplo "compatriotas" en los discursos sobre el estado de la unión. Si todos los presidentes del corpus 
+utilizan esos términos, dejan de ser informativos sobre las diferencias entre presidentes.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-trimming}
+Recortar una matriz documento-término 
+
+::: {.panel-tabset}
+## Código Python
+```{python trimming-python}
+#| cache: true
+print(f"# of words before trimming: {d.shape[1]}")
+cv_trim = CountVectorizer(
+    stop_words=stopwords.words("english"),
+    tokenizer=mytokenizer.tokenize,
+    max_df=0.75,
+    min_df=0.005,
+)
+d_trim = cv_trim.fit_transform(tweets.text)
+print(f"  after trimming: {d_trim.shape[1]}")
+
+```
+## Código R
+```{r trimming-r}
+#| cache: true
+glue("# of words before trimming: {ncol(d)}")
+d_trim = dfm_trim(d, min_docfreq = 0.005, 
+                  max_docfreq = 0.75,
+                  docfreq_type = "prop")
+glue("# of word after trimming: {ncol(d_trim)}")
+
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-trimming] muestra cómo se puede utilizar la frecuencia relativa de documentos para recortar una DTM en Python y R. 
+Mantenemos solo las palabras con una frecuencia en los documentos de entre el 0,5\% y el 75\%.
+
+Aunque se trata de números razonables, cada elección depende, como siempre, del corpus y de la pregunta de investigación, por lo que es 
+necesario comprobar qué palabras se descartan.
+
+Hay que tener en cuenta que la eliminación de palabras que casi nunca aparecen no debería influir demasiado en los resultados, ya que, de 
+todos modos, esas palabras no aparecen. Sin embargo, el recorte de una DTM a, por ejemplo, al menos un 1\% de frecuencia de documento 
+suele reducir radicalmente el número de palabras (columnas) de la DTM. Dado que muchos algoritmos tienen que asignar pesos o parámetros a 
+cada palabra, esto puede suponer una mejora significativa de la velocidad de cálculo o del uso de memoria.
+
+### Ponderación de una DTM {#sec-dtmweight}
+
+Todas las DTM creadas anteriormente utilizan las frecuencias brutas como valores de celda. Pero también puede ser útil ponderar las 
+palabras para que las más informativas tengan un peso mayor que las menos informativas. Una técnica habitual para ello es la ponderación 
+'tf$\cdot$idf', que significa “*term frequency $\cdot$ inverse document frequency*” o “frecuencia de términos - frecuencia inversa de 
+documentos”, en castellano. Pondera cada aparición por su frecuencia bruta (frecuencia de términos) corregida por la frecuencia con la 
+que aparece en todos los documentos (frecuencia inversa de documentos). En una fórmula, la aplicación más habitual de esta ponderación 
+es la siguiente:
+
+$tf\cdot idf(t,d)=tf(t,d)\cdot idf(t)=f_{t,d}\cdot -\log \frac{n_t}{N}$
+
+Donde $f_{t,d}$ es la frecuencia del término $t$ en el documento $d$, $N$ es el número total de documentos, y $n_t$ es el número de 
+documentos en los que aparece el término $t$. En otras palabras, la frecuencia del término se pondera por el logaritmo negativo de la 
+fracción de documentos en los que aparece ese término. Dado que $\log(1)$ es cero, no se tienen en cuenta los términos que aparecen en 
+todos los documentos y, en general, cuanto menos frecuente sea un término, mayor será su ponderación. 
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-tfidf}
+Ponderación Tf$\cdot$Idf
+
+::: {.panel-tabset}
+## Código Python
+```{python tfidf-python}
+#| cache: true
+tfidf_vectorizer = TfidfVectorizer(
+    tokenizer=mytokenizer.tokenize, sublinear_tf=True
+)
+d_w = tfidf_vectorizer.fit_transform(sotu["text"])
+indices = [
+    tfidf_vectorizer.vocabulary_[x]
+    for x in ["the", "for", "them", "submit", "sizes"]
+]
+d_w[[[0], [25], [50], [75]], indices].todense()
+
+```
+## Código R
+```{r tfidf-r}
+#| cache: true
+d_tf = corpus(sotu) %>% 
+  tokens() %>% 
+  dfm() %>% 
+  dfm_tfidf(scheme_tf="prop", smoothing=1)
+as.matrix(
+  d_tf[c(3, 25, 50, 75),
+       c("the","first","investment","defrauded")])
+```
+:::
+:::
+:::
+
+La ponderación tf$\cdot$idf es una técnica bastante común y puede mejorar los resultados de análisis posteriores como el aprendizaje 
+automático supervisado. Como tal, no es de extrañar que sea fácil aplicarlo tanto en Python como en R, como se muestra en el Ejemplo 
+[-@exm-tfidf]. Este ejemplo utiliza los mismos datos que el Ejemplo [-@exm-sotu] anterior, por lo que se pueden comparar los valores 
+ponderados resultantes con los resultados reportados allí. Como puedes ver, la ponderación tf$\cdot$idf en ambos lenguajes tiene más o 
+menos el mismo efecto: los términos muy frecuentes como “*the*” se hacen menos importantes en comparación con las palabras menos 
+frecuentes como “*submit*”. Fíjate en las frecuencias brutas del discurso de Johnson de 1965: “*the*” aparece 355 veces, mientras que 
+“*submit*” solo una. En la matriz ponderada, el peso de “*submit*” es cuatro veces menor que el de “*the*”.
+
+Hay dos cosas más a tener en cuenta si se comparan los ejemplos de R y Python. En primer lugar, para que los dos casos sean comparables 
+tenemos que utilizar dos opciones de R, a saber, establecer la frecuencia de términos en “proporcional” ('scheme_tf='prop'') y añadir 
+suavizado a las frecuencias de los documentos ('smooth=1'). Sin estas opciones, los recuentos de las primeras columnas serían todos cero 
+(ya que aparecen en todos los documentos, y $\log \frac{85}{85}=0$), y los demás recuentos serían mayores que uno, ya que solo estarían 
+ponderados, no normalizados.
+
+Incluso con esas opciones, los resultados siguen siendo diferentes (en detalles o en proporciones), principalmente porque R normaliza las 
+frecuencias antes de la ponderación, mientras que Python normaliza después de la ponderación. Además, Python utiliza por defecto la 
+normalización L2, lo que significa que la longitud de los vectores de documentos será uno, mientras que R utiliza la normalización L1, 
+es decir, las sumas de las filas son uno (antes de la ponderación). Tanto R como Python disponen de varios parámetros para controlar 
+estas opciones, que se explican en sus respectivas páginas de ayuda. Sin embargo, aunque las diferencias en valores absolutos parecen 
+grandes, el efecto relativo de hacer que los términos más frecuentes sean menos importantes es el mismo, y el esquema de ponderación y 
+las opciones específicas probablemente no importarán mucho para los resultados finales. No obstante, siempre es bueno conocer las 
+opciones disponibles y probar cuáles funcionan mejor para cada pregunta de investigación específica.
+
+## Representación de textos avanzada {#sec-ngram}
+
+En todos los ejemplos anteriores se han creado matrices documento-término en las que cada columna representa una palabra. Sin embargo, en 
+un texto hay más información que el mero recuento de palabras. Las frases: “*the movie was not good, it was in fact quite bad*” (la 
+película no era buena, de hecho era bastante mala) y “*the movie was not bad, in fact it was quite good*” (la película no era mala, de 
+hecho era bastante buena) tienen exactamente las mismas frecuencias de palabras, pero su significado es muy diferente. Del mismo modo, 
+“los nuevos reyes de York” y “los reyes de Nueva York” se refieren a personas muy diferentes, aunque utilicen las mismas palabras.
+
+Por supuesto, qué aspecto del significado de un texto es importante y cuál no, depende de tu pregunta de investigación: si quieres 
+analizar los sentimientos hacia una película, es importante tener en cuenta una palabra como "no"; pero si te interesa el tema o el 
+género de la crítica, o lo extremo que es lenguaje utilizado, puede que no sea relevante.
+
+La idea principal de esta sección es que esta información puede reflejarse en una DTM haciendo que las columnas no representen 
+exclusivamente las palabras, sino combinaciones de palabras o grupos de palabras relacionadas. Esto suele denominarse ingeniería de 
+características (*feature engineering*), ya que estamos utilizando nuestra experiencia en el campo para encontrar las características 
+adecuadas (columnas, variables independientes) y así captar el significado relevante para nuestra pregunta de investigación. Si 
+utilizamos otras columnas además de palabras, también es más correcto, técnicamente, utilizar el nombre “matriz documento-característica”, 
+como hace 'quanteda', pero nosotros nos ceñiremos al nombre más común y seguiremos llamándolas DTM.
+
+### $n$-gramas {#sec-ngrams}
+
+La primera característica que analizaremos son los n-gramas. El caso más sencillo es un bigrama (o 2-grama), en el que cada 
+característica es un par de palabras adyacentes. El ejemplo anterior, “*the movie was not bad*”, se producen los siguientes bigramas: 
+the-movie, movie-was, was-not, y not-bad. Cada uno de esos bigramas se trata como un rasgo, es decir, un DTM contendría una columna por 
+cada par de palabras.
+
+Como se puede ver en este ejemplo, ahora podemos ver la diferencia entre *not-bad* y *not-good*. El inconveniente de utilizar n-gramas es 
+que hay muchos más pares de palabras que palabras individuales, por lo que la DTM resultante tendrá muchas más columnas. Además, hay un 
+mayor problema de dispersión de datos, ya que cada uno de esos pares será menos frecuente, por lo que será más difícil encontrar 
+suficientes ejemplos de cada uno sobre los que generalizar.
+
+Aunque los bigramas son el caso de uso más frecuente, también pueden utilizarse trigramas (3-gramas) y (raramente) n-gramas de orden 
+superior. Como te puedes imaginar, esto creará DTM aún mayores y peores problemas de dispersión de datos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-ngram}
+Creación de n-gramas
+
+::: {.panel-tabset}
+## Código Python
+```{python ngram-python}
+#| cache: true
+cv = CountVectorizer(ngram_range=(1, 3), tokenizer=mytokenizer.tokenize)
+cv.fit_transform(["This is a test"])
+cv.get_feature_names()
+
+```
+## Código R
+```{r ngram-r}
+#| cache: true
+text = "This is a test"
+tokens(text) %>% 
+  tokens_tolower() %>% 
+  tokens_ngrams(1:3)
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-ngram] muestra cómo se pueden crear y utilizar los n-gramas en Python y R. En Python, puedes aplicar la opción 
+'ngram_range=(n, m)' al vectorizador, mientras que R tiene una función 'tokens_ngrams(n:m)'. Ambas procesarán los tokens para crear todos 
+los n-gramas en el rango de 'n' a 'm'. En este ejemplo, pedimos unigramas (es decir, las palabras propiamente dichas), bigramas y 
+trigramas de una frase simple. R separa las palabras con un guión bajo, mientras que Python utiliza un espacio simple.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-ngram2}
+Palabras y bigramas que contienen "*government*"
+
+::: {.panel-tabset}
+## Código Python
+```{python ngram2-python}
+#| cache: true
+cv = CountVectorizer(
+    ngram_range=(1, 2), tokenizer=mytokenizer.tokenize, stop_words="english"
+)
+dfm = cv.fit_transform(sotu.text.values)
+ts = termstats(dfm, cv)
+ts.filter(like="government", axis=0).head(10)
+
+```
+## Código R
+```{r ngram2-r}
+#| cache: true
+sotu_tokens = corpus(sotu) %>% 
+  tokens(remove_punct=T)  %>%  
+  tokens_remove(stopwords("english")) %>% 
+  tokens_tolower()
+dfm_bigram = sotu_tokens %>% 
+  tokens_ngrams(1:2) %>% 
+  dfm()
+textstat_frequency(dfm_bigram) %>% 
+  filter(str_detect(feature, "government")) %>%
+  head(12)
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-ngram2] muestra cómo se pueden generar n-gramas para todo un corpus. En este caso, creamos una DTM de la matriz sobre 
+el Estado de la Unión con todos los bigramas incluidos. Un vistazo a la tabla de frecuencias de todas las palabras que contienen 
+"*government*" muestra que, además de la propia palabra y sus formas plural y posesiva (*government’s*), los bigramas incluyen palabras 
+compuestas (*federal and local government*), frases con el gobierno como sujeto (*the government can and must*, el gobierno puede y debe) 
+y sustantivos para los que el gobierno es un adjetivo (*government spending and government programs*, gasto gubernamental y programas 
+gubernamentales).
+
+Incluir todas estas palabras como características añadiría tantas posibilidades para el análisis de la DTM que no sería viable con un 
+enfoque normal de bolsa de palabras. Los términos "gobierno local" y "gobierno federal" pueden ser muy importantes para entender las 
+posturas políticas, pero, por ejemplo, un bigrama como "*not good*" también sería útil para el análisis del sentimiento (pero asegúrate de 
+que "no" no está en la lista de palabras vacías). Por lo que debemos decidir qué n-gramas nos son relevantes en función de nuestros 
+objetivos.
+
+### Colocaciones {#sec-collocations}
+
+Un caso especial de n-gramas son las colocaciones. En el sentido lingüístico estricto de la palabra, las colocaciones son pares de 
+palabras que aparecen con más frecuencia de la esperada en función de su aparición subyacente. Por ejemplo, la frase "*crystal clear*" 
+(claro como el agua) aparece presumiblemente con mucha más frecuencia de lo que cabría esperar por casualidad, dada la frecuencia con la 
+que *crystal* (cristal) y *clear* (claro) aparecen por separado. Las colocaciones son importantes para el análisis de textos, ya que a 
+menudo tienen un significado específico, por ejemplo, porque se refieren a nombres como Nueva York o desambiguan un término como *sound* 
+(sonido) en *sound asleep* (profundamente dormido), *a sound proposal* (una propuesta llamativa) o *loud sound* (sonido fuerte).
+
+El ejemplo [-@exm-colloc] muestra cómo identificar las colocaciones más innesperadas utilizando R y Python. Para Python, utilizamos el 
+paquete 'gensim', que también usaremos para el modelado de temas en la sección [-@sec-unsupervised]. Este paquete tiene una clase 'Phrases' 
+que puede identificar bigramas en una lista de tokens. En R, utilizamos la función 'textstat_collocations' de 'quanteda'. Cada uno de 
+estos paquetes utiliza una implementación diferente: 'gensim' utiliza la información mutua puntual, es decir, ¿Viendo la primera palabra, 
+cuánta información conseguimos para encontrar la segunda? 'Quanteda' calcula un parámetro de interacción en un modelo loglineal. No 
+obstante, ambos métodos arrojan resultados muy similares, con Sadam Husein, el Telón de Acero, Al Qaida y “*red tape*” encabezando la 
+lista de cada uno de ellos.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-colloc}
+Identificar y aplicar colocaciones en el Estado de la Unión de Estados Unidos.
+
+::: {.panel-tabset}
+## Código Python
+```{python colloc-python}
+#| results: hide
+tokenized_texts = [mytokenizer.tokenize(t) for t in sotu.text]
+tokens = [
+    [t.lower() for t in tokens if not regex.search("\P{letter}", t)]
+    for tokens in tokenized_texts
+]
+phrases_model = Phrases(tokens, min_count=10, scoring="npmi", threshold=0.5)
+score_dict = phrases_model.export_phrases()
+scores = pd.DataFrame(score_dict.items(), columns=["phrase", "score"])
+```
+```{python colloc-python2}
+scores.sort_values("score", ascending=False).head()
+```
+```{python colloc-python3}
+#| results: hide
+phraser = Phraser(phrases_model)
+tokens_phrases = [phraser[doc] for doc in tokens]
+cv = CountVectorizer(tokenizer=lambda x: x, lowercase=False)
+dtm = cv.fit_transform(tokens_phrases)
+```
+```{python colloc-python4}
+termstats(dtm, cv).filter(like="hussein", axis=0)
+```
+## Código R
+```{r colloc-r}
+#| cache: true
+sotu_tokens = corpus(sotu)  %>% 
+  tokens(remove_punct=T) %>% 
+  tokens_tolower()
+
+colloc = sotu_tokens %>% 
+  textstat_collocations(min_count=10) %>% 
+  as_tibble()
+
+colloc %>% arrange(-lambda)  %>% head()
+
+collocations = colloc  %>% 
+  filter(lambda > 8)  %>%  
+  pull(collocation)  %>%  
+  phrase()
+dfm = sotu_tokens %>% 
+  tokens_compound(collocations) %>% 
+  dfm()
+textstat_frequency(dfm) %>% 
+  filter(str_detect(feature, "hussein"))
+```
+:::
+:::
+:::
+
+El siguiente apartado muestra cómo utilizar estas colocaciones para el procesamiento. En R, filtramos la lista de colocaciones en 
+'lambda>8' y utilizamos la función 'tokens_compound' para componer bigramas a partir de esa lista. Como se puede ver en las frecuencias 
+de términos filtradas en "Hussein", los términos regulares (aparte del posesivo) se eliminan y el término compuesto tiene ahora 26 
+ocurrencias. Para Python, utilizamos la clase 'PhraseTransformer', que es una adaptación de la clase Phrases a la metodología 
+'scikit-learn'. Tras establecer un umbral estándar de 0,7, podemos utilizar 'fit_transform' para cambiar los tokens. Las estadísticas de 
+términos muestran de nuevo cómo los términos individuales se sustituyen ahora por su compuesto.
+
+### Encaje de palabras {#sec-wordembeddings}
+
+Los encajes léxicos o *embeddings* se han incorporado recientemente al conjunto de herramientas de análisis de texto. Aunque no nos 
+detendremos a dar una explicación completa de los algoritmos que hay detrás de los encajes de palabras, son relativamente fáciles de 
+entender y utilizar a un nivel intuitivo.
+
+La primera idea que subyace a los encajes léxicos es que el significado de una palabra puede expresarse mediante un vector de encaje 
+(*embedding vector*) relativamente pequeño, generalmente formado por unos 300 números que pueden interpretarse como dimensiones de 
+significado. La segunda idea es que estos vectores pueden obtenerse analizando el contexto de cada palabra en millones y millones de 
+documentos.
+
+Estos vectores de encaje pueden utilizarse como características o columnas de la DTM para análisis posteriores. Utilizar vectores de 
+encaje en lugar de frecuencias de palabras tiene la ventaja de reducir considerablemente la dimensionalidad de la DTM: en lugar de 
+(decenas de) miles de columnas para cada palabra única, solo necesitamos cientos de columnas para los vectores de encaje. Esto significa 
+que el procesamiento posterior puede ser más eficiente, ya que hay que ajustar menos parámetros, o, a la inversa, que se pueden utilizar 
+modelos más complicados sin que se dispare el espacio necesario para almacenar los parámetros. Otra ventaja es que un modelo también 
+puede dar un resultado para palabras que nunca ha visto antes, ya que lo más probable es que estas palabras tengan un vector de 
+incrustación y, por tanto, puedan introducirse en el propio modelo. Por último, dado que las palabras con significados similares deberían 
+tener vectores similares, un modelo que se ajuste a los vectores de encaje obtiene una ventaja sobre otros modelos, ya que los vectores 
+de palabras como "genial" y "fantástico" ya estarán relativamente próximos entre sí, mientras que todas las columnas de una DTM normal se 
+tratan de forma independiente.
+
+La suposición de que las palabras con significados similares tienen vectores similares también puede utilizarse para extraer sinónimos. 
+Esto puede ser muy útil, por ejemplo, para ampliar (semi)automáticamente un diccionario para un concepto. El ejemplo [-@exm-embedding] 
+muestra cómo descargar y utilizar vectores de encaje preentrenados para extraer sinónimos. En primer lugar, descargamos un subconjunto 
+muy pequeño de los vectores de encaje preentrenados de Glove[^1], envolviendo la orden de descarga en una condición para que solo se 
+descargue cuando sea necesario.
+
+Luego, para Python, utilizamos el excelente soporte del paquete 'gensim' para cargar los encajes en un objeto 'KeyedVectors'. Aunque no 
+es necesario para el resto del ejemplo, creamos un marco de datos Pandas a partir de los valores de incrustación internos para que la 
+estructura interna quede clara: cada fila es una palabra, y las columnas (en este caso 50) son las diferentes dimensiones (semánticas) 
+que caracterizan a esa palabra según el modelo de encaje. Este marco de datos está ordenado en la primera dimensión, lo que muestra que 
+los valores negativos en esa dimensión están relacionados con varios deportes. A continuación, volvemos al objeto 'KeyedVectors' para 
+obtener las palabras más similares a la palabra “*fraud*” (fraude), que aparentemente está relacionada con palabras similares como 
+“*bribery*” (soborno) y “*corruption*” (corrupción), pero también con palabras como “*charges*” (cargos) y “*alleged*” (presunto). Estas 
+similitudes son una buena forma de ampliar (semi)automáticamente un diccionario: se parte de una pequeña lista de palabras, se encuentran 
+todas las palabras que son similares a esas palabras y, si es necesario, se revisa manualmente esa lista. Por último, utilizamos los 
+encajes  para resolver las "analogías" que ponen de manifiesto la naturaleza geométrica de estos vectores: si tomamos el vector de “*king*” 
+(rey), restamos el de “*man*” (hombre) y añadimos el de “*woman*” (mujer), la palabra más parecida al vector resultante es “*queen*” 
+(reina). Curiosamente, resulta que “*soccer*” (fútbol europeo) es una forma femenina de “*football*” (fútbol americano), lo que 
+probablemente demuestra el origen cultural estadounidense del material de partida.
+
+En el caso de R, encontramos menos opciones entre los paquetes existentes, por lo que decidimos aprovechar la oportunidad para mostrar 
+tanto la simplicidad conceptual de los vectores de encaje como la potencia de la manipulación de matrices en R. Así, leemos directamente 
+el archivo de vectores de palabras que tiene una línea de cabecera y, a continuación, en cada línea una palabra seguida de sus 50 
+valores. Esto se convierte en una matriz con los nombres de las filas que muestran la palabra, que normalizamos a la longitud 
+(euclidiana) de uno para cada vector para facilitar el procesamiento. Para determinar la similitud, tomamos la distancia coseno entre el 
+vector que representa una palabra con todas las demás palabras de la matriz. Como recordarás de álgebra, la distancia coseno es el 
+producto escalar entre los vectores normalizados para que tengan longitud uno (igual que la correlación producto-momento de Pearson es el 
+producto escalar entre los vectores normalizados para puntuaciones z por dimensión). Por tanto, basta con multiplicar el vector objetivo 
+normalizado por la matriz normalizada para obtener las puntuaciones de similitud. A continuación, se ordenan, se renombran y se toman los 
+valores más altos utilizando las funciones básicas del capítulo 6. Por último, las analogías se resuelven simplemente sumando y restando 
+los vectores como se ha explicado anteriormente y, a continuación, enumerando las palabras más cercanas al vector resultante (excluyendo 
+las palabras de la propia analogía).
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-embedding}
+Utilización de encaje de palabras para encontrar palabras similares y análogas.
+
+::: {.panel-tabset}
+## Código Python
+```{python embeddings0-python}
+# Download the model if needed
+glove_fn = "glove.6B.50d.10k.w2v.txt"
+url = f"https://cssbook.net/d/{glove_fn}"
+if not os.path.exists(glove_fn):
+    urllib.request.urlretrieve(url, glove_fn)
+```
+```{python embeddings1-python}
+#| results: hide
+# Load the vectors
+wv = KeyedVectors.load_word2vec_format(glove_fn)
+wvdf = pd.DataFrame(wv.vectors, index=wv.index_to_key)
+```
+
+```{python embeddings2-python}
+wvdf.sort_values(0, ascending=False).head()
+# Find similar terms
+for term, similarity in wv.most_similar("fraud")[:5]:
+    print(f"{term}: {similarity:.2f}")
+# Find analogous terms
+def analogy(a, b, c):
+    result = wv.most_similar(positive=[b, c], negative=[a])
+    return result[0][0]
+
+words = ["king", "boy", "father", "pete", "football"]
+for x in words:
+    y = analogy("man", x, "woman")
+    print(f"Man is to {x} as woman is to {y}")
+```
+## Código R
+```{r embeddings0-r}
+#| cache: true
+glove_fn = "glove.6B.50d.10k.w2v.txt"
+url = glue("https://cssbook.net/d/{glove_fn}")
+if (!file.exists(glove_fn)) 
+    download.file(url, glove_fn)
+wv_tibble = read_delim(glove_fn, skip=1,
+                       delim=" ", quote="", 
+    col_names = c("word", paste0("d", 1:50)))
+wv = as.matrix(wv_tibble[-1])
+rownames(wv) = wv_tibble$word
+wv = wv / sqrt(rowSums(wv^2))
+wv[order(wv[,1])[1:5], 1:5]
+wvector = function(wv, word) wv[word,,drop=F]
+wv_similar = function(wv, target, n=5) {
+  similarities = wv %*% t(target)
+  similarities %>% 
+    as_tibble(rownames = "word") %>% 
+    rename(similarity=2) %>% 
+    arrange(-similarity) %>% 
+    head(n=n)  
+}
+wv_similar(wv, wvector(wv, "fraud"))
+wv_analogy = function(wv, a, b, c) {
+  result = (wvector(wv, b) 
+            + wvector(wv, c) 
+            - wvector(wv, a))
+  matches = wv_similar(wv, result) %>% 
+    filter(!word %in% c(a,b,c))
+  matches$word[1]
+}
+words=c("king","boy","father","pete","football")
+for (x in words) {
+  y = wv_analogy(wv, "man", x, "woman")
+  print(glue("Man is to {x} as woman is to: {y}"))
+}
+```
+:::
+:::
+:::
+
+### Preprocesamiento lingüístico {#sec-nlp}
+
+Una última técnica que queremos tratar es el uso de pasos de preprocesamiento lingüístico para enriquecer y filtrar una DTM. Hasta ahora, 
+todas las técnicas analizadas son independientes de la lengua. Sin embargo, también existen muchas herramientas específicas de cada 
+lengua para el enriquecimiento automático de textos, desarrolladas por comunidades de lingüística computacional de todo el mundo. En este 
+apartado se analizarán dos técnicas, ya que están relativamente disponibles para muchos idiomas y son fáciles y rápidas de aplicar: El 
+etiquetado de partes del discurso y la lematización.
+
+En el etiquetado POS (*part-of-speech tagging*, en inglés, o etiquetado de partes del discurso/etiquetado gramatical, en castellano), 
+cada palabra se enriquece con información sobre su función en la frase: verbo, sustantivo, determinante, etc. En la mayoría de las 
+lenguas, esto puede identificarse con gran exactitud, aunque a veces el texto puede ser ambiguo: en un ejemplo famoso, en inglés, la 
+palabra flies en fruit flies es generalmente un sustantivo (las fruit flies son un tipo de mosca), pero también puede ser un verbo (si la 
+fruta pudiera volar). En castellano, piensa en la palabra “camino”, que funciona tanto como verbo (“yo camino”) como sustantivo (“el 
+camino”). Aunque hay diferentes conjuntos de etiquetas POS utilizados por las distintas herramientas, existe un amplio acuerdo sobre el 
+conjunto básico de etiquetas que se enumeran en la Tabla [-@tbl-postags].
+
+|Parte de la oración | Ejemplo | UDPipe/Spacy Tag | Penn Treebank Tag|
+|-|-|-|-|
+|Sustantivo  | Manzana | NOUN | NN, NNS|
+|Nombre propio  | Carlos | PROPN | NNP|
+|Verbo | Escribir  | VERB | VB, VBD, VBP, ..|
+|Verbo auxiliar  | Haber | AUX |  (Igual que el verbo)|
+|Adjectivo | Rápido | ADJ | JJ, JJR, JJS|
+|Adverbio | Rápidamente | ADV | RB|
+|Pronombre | Yo, él | PRON | PRP|
+|Adposición (en castellano, solo existen preposiciones) | De, en  | ADP | IN|
+|Determinante  | El, una | DET | DT|
+: Resumen del etiquetado de partes del discurso (POS). {#tbl-postags}
+
+Las etiquetas POS son útiles porque nos permiten, por ejemplo, analizar solo los sustantivos si nos importan las cosas de las que se 
+habla, solo los verbos si nos importan las acciones que se describen, o solo los adjetivos si nos importan las características que se dan 
+a un sustantivo. Además, conocer la etiqueta POS de una palabra puede ayudar a desambiguarla. Por ejemplo, “*like*” como verbo, 
+(*I like books*, me gustan los libros) es generalmente positivo, pero como preposición (*a day like no other*, un día como ningún otro) 
+no tiene un sentimiento claro.
+
+La lematización es una técnica para reducir cada palabra a su raíz o lema (plural: lemmata). Por ejemplo, el lema del verbo *reads* (leer) 
+es *(to) read* y el lema del sustantivo *books* (libro) es *book*. En castellano, reduciríamos los verbos a su infinitivo (de salto, 
+saltar, por ejemplo), y eliminaríamos las partículas del resto de palabras (de mesas, mesa) para quedarnos solo con la raíz. La 
+lematización es útil, ya que para la mayoría de nuestras preguntas de investigación no nos interesan estas conjugaciones diferentes de la 
+misma palabra. Al lematizar los textos, no necesitamos incluir todas las conjugaciones en un diccionario y se reduce la dimensionalidad 
+de la DTM y, por tanto, también la dispersión de datos.
+
+Existe una técnica alternativa a la lematización, llamada “*stemming*”. Esta técnica elimina los sufijos (terminaciones) conocidos de las 
+palabras, para intentar reducirlas a su raíz. Por ejemplo, en inglés, elimina la "s" de *reads* y *books*. Sin embargo, el *stemming* es 
+mucho menos sofisticado que la lematización y suele fallar al encontrarse con conjugaciones irregulares (por ejemplo, “*are*” como forma 
+de “*to be*”, o, en castellano, sería incapaz de extraer “*ir*” de la conjugación “*voy*”) y terminaciones de palabras regulares que 
+parecen conjugaciones (por ejemplo, virus se convertirá en viru, tanto en inglés como en castellano). El inglés tiene conjugaciones 
+relativamente sencillas y limitadas, por lo que *stemming* puede producir resultados adecuados. Sin embargo, en el caso de lenguas más 
+ricas morfológicamente, como el alemán o el francés, se recomienda encarecidamente utilizar la lematización en lugar del *stemming*. 
+Incluso en el caso del inglés, en general aconsejamos la lematización, ya que hoy en día es muy fácil y da mejores resultados que el 
+*stemming*.
+
+Para el Ejemplo [-@exm-udpipe], utilizamos el conjunto de herramientas de procesamiento del lenguaje natural 'UDPipe' ([@udpipe]), un 
+"Pipeline" (flujo de trabajo) que analiza el texto en "Dependencias Universales", una representación de la estructura sintáctica del 
+texto. En R, contamos con la función 'udpipe' en el paquete del mismo nombre. Esta función analiza el texto dado y nos da el resultado 
+como un marco de datos con un token (palabra) por fila, y las distintas características en las columnas. Para Python, tenemos que dar 
+algunos pasos más. En primer lugar, descargamos los modelos en inglés, si no están presentes. En segundo lugar, cargamos el modelo y 
+creamos un pipeline con todos los ajustes por defecto, y lo utilizamos para analizar la misma frase. Por último, utilizamos el paquete 
+'conllu' para leer los resultados y convertirlos en un marco de datos.
+
+En ambos casos, los tokens resultantes muestran claramente algunas de las potenciales ventajas del tratamiento lingüístico: en la columna 
+de lemas vemos que los verbos irregulares y las formas plurales se tratan correctamente. Si nos fijamos en la columna 'upos' (*universal 
+part-of-speech*/categorías gramaticales universales), John es reconocido como nombre propio (PROPN), *bought* (compró) como verbo y 
+*knives* (cuchillos) como sustantivo. Por último, las columnas 'head_token_id' y 'dep_rel' representan la información sintáctica de la 
+frase: "*bought*" (token 2) es la raíz de la frase, y "John" es el sujeto (nsubj) mientras que "*knives*" es el objeto de la compra.
+
+::: {.callout-note appearance="simple" icon=false}
+
+```{python udipe0}
+#| echo: false
+udpipe_model = "english-ewt-ud-2.4-190531.udpipe"
+url=("https://raw.githubusercontent.com/jwijffels"
+  "/udpipe.models.ud.2.4/master/inst/udpipe-ud-"
+  "2.4-190531/english-ewt-ud-2.4-190531.udpipe")
+if not os.path.exists(udpipe_model):
+    urllib.request.urlretrieve(url, udpipe_model)
+```
+
+
+::: {#exm-udpipe}
+Uso de UDPipe para analizar una frase
+
+::: {.panel-tabset}
+## Código Python
+```{python udpipe-python}
+#| cache: true
+udpipe_model = "english-ewt-ud-2.4-190531.udpipe"
+m = Model.load(udpipe_model)
+pipeline = Pipeline(m, "tokenize", Pipeline.DEFAULT, Pipeline.DEFAULT, "conllu")
+text = "John bought new knives"
+tokenlist = conllu.parse(pipeline.process(text))
+pd.DataFrame(tokenlist[0])
+
+```
+## Código R
+```{r udpipe-r}
+#| cache: true
+udpipe("John bought new knives", "english") %>% 
+  select(token_id:upos, head_token_id:dep_rel)
+```
+:::
+:::
+:::
+
+Las relaciones sintácticas pueden ser útiles si se necesita diferenciar entre quién hace algo y a quién se lo hicieron. Por ejemplo, uno 
+de los autores de este libro utilizó relaciones sintácticas para analizar la cobertura de conflictos, en los que la diferencia entre 
+atacar y ser atacado es importante ([@clause]). Aunque lo más probable es que, en la mayoría de los casos, no necesites esta información 
+y, además, analizar gráficos de dependencia es relativamente complejo. Aun así, te aconsejamos que casi siempre consideres la posibilidad 
+de lematizar y etiquetar tus textos, ya que es un proceso mucho mejor que el *stemming* (especialmente para idiomas distintos del inglés), 
+y la *part-of-speech*/gramatización puede ser muy útil para analizar diferentes aspectos de un texto.
+
+Si solo necesitas hacer la lematización y el etiquetado, puedes acelerar el procesamiento configurando 'udpipe(.., parser='none')' (R) o 
+configurando el tercer argumento de Pipeline (el analizador sintáctico) a 'Pipeline.NONE' (Python). El ejemplo [-@exm-nouncloud] muestra 
+cómo se puede utilizar esto para extraer solo los sustantivos de los discursos más recientes del estado de la unión, crear una DTM con 
+estos sustantivos, y luego visualizarlos como una nube de palabras. Como puedes ver, estas palabras (como *student*, estudiante; *hero*, 
+héroe; *childcare*, guardería; *healthcare*, sanidad, y *terrorism*, terrorismo), son mucho más indicativas del tema de un texto que las 
+palabras generales utilizadas anteriormente. En el próximo capítulo mostraremos cómo se pueden seguir analizando estos datos, por 
+ejemplo, analizando los patrones de uso por persona o a lo largo del tiempo, o utilizando un modelado de temas no supervisado para 
+convertir clústeres de palabras en temas.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-nouncloud}
+Sustantivos utilizados en los últimos discursos sobre el Estado de la Unión
+
+::: {.panel-tabset}
+## Código Python
+```{python nouncloud-python}
+#| results: hide
+#| cache: true
+def get_nouns(text):
+    result = conllu.parse(pipeline.process(text))
+    for sentence in result:
+        for token in sentence:
+            if token["upos"] == "NOUN":
+                yield token["lemma"]
+
+parser = Pipeline.NONE
+pipeline = Pipeline(m, "tokenize", Pipeline.DEFAULT, Pipeline.NONE, "conllu")
+
+tokens = [list(get_nouns(text)) for text in sotu.text[-5:]]
+cv = CountVectorizer(tokenizer=lambda x: x, lowercase=False, max_df=0.7)
+dtm_verbs = cv.fit_transform(tokens)
+wc = wordcloud(dtm_verbs, cv, background_color="white")
+plt.imshow(wc)
+plt.axis("off")
+
+```
+## Código R
+```{r nouncloud-r}
+#| cache: true
+tokens = sotu %>% 
+  top_n(5, Date) %>% 
+  udpipe("english", parser="none")
+nouns = tokens %>% 
+  filter(upos == "NOUN") %>% 
+  group_by(doc_id)  %>% 
+  summarize(text=paste(lemma, collapse=" "))
+nouns %>% 
+  corpus() %>% 
+  tokens() %>%
+  dfm() %>% 
+  dfm_trim(max_docfreq=0.7,docfreq_type="prop")%>%
+  textplot_wordcloud(max_words=50)
+```
+:::
+:::
+:::
+
+Como alternativa a 'UDPipe', puedes utilizar 'Spacy', que es otro conjunto de herramientas de lenguaje natural gratuito y bastante 
+popular. Está escrito en Python, pero el paquete 'spacyr' lo adapta para R. Para los usuarios de R, la instalación de 'spacyr' en MacOS y 
+Linux es fácil, pero ten en cuenta que en Windows hay algunos pasos adicionales, consulta 
+[cran.r-project.org/web/packages/spacyr/readme/README.html](https://cran.r-project.org/web/packages/spacyr/readme/README.html).
+
+El ejemplo [-@exm-spacy] muestra cómo se puede utilizar 'Spacy' para analizar el proverbio "todos los caminos llevan a Roma" (este 
+ejemplo se realiza en castellano). En el primer bloque, se descarga el modelo de lengua castellana (esto solo es necesario una vez). El 
+segundo bloque carga el modelo lingüístico y analiza la frase. Puedes ver que el resultado es bastante similar al de 'UDPipe', pero una 
+característica adicional es la inclusión del Reconocimiento de Entidades Nombradas: 'Spacy' puede identificar automáticamente personas, 
+lugares, organizaciones y otras entidades. En este ejemplo, identifica "Roma" como un lugar. Esto puede ser muy útil para extraer 
+automáticamente, por ejemplo, todas las personas de un corpus de periódicos. Ten en cuenta que, en R, puedes utilizar la función 
+'as.tokens' de 'quanteda' para utilizar directamente el resultado de 'Spacy' en 'quanteda'.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-spacy}
+Utilizar Spacy para analizar una frase en castellano..
+
+::: {.panel-tabset}
+## Código Python
+
+First, download the model using the command below and restart python:
+(in jupyter, try `!python` or `!python3` instead of plain `python`)
+
+```{bash}
+#| eval: false
+python -m spacy download es_core_news_sm
+```
+
+## Código R
+```{r spacymodel-r}
+#| eval: false
+# Only needed once
+spacy_install()
+# Only needed for languages other than English:
+spacy_download_langmodel("es_core_news_sm")
+```
+:::
+
+::: {.panel-tabset}
+## Código Python
+```{python spacy-python}
+#| cache: true
+nlp = spacy.load("es_core_news_sm")
+tokens = nlp("Todos los caminos llevan a Roma")
+pd.DataFrame(
+    [
+        dict(
+            i=t.i,
+            word=t.text,
+            lemma=t.lemma_,
+            head=t.head,
+            dep=t.dep_,
+            ner=t.ent_type_,
+        )
+        for t in tokens
+    ]
+)
+
+```
+## Código R
+```{r spacy-r}
+#| eval: false
+# I couldn't get this to work properly in the renv environment
+spacy_initialize("es_core_news_sm")
+spacy_parse("Todos los caminos llevan a Roma")
+# To close spacy (or switch languages), use:
+spacy_finalize()
+```
+:::
+:::
+:::
+
+Como puedes ver, hoy en día hay una buena cantidad de herramientas lingüísticas buenas y relativamente fáciles de usar al alcance de la 
+mano. Nosotros recomendamos especialmente 'Stanza' ([@stanza]), ya que es una herramienta muy buena y flexible con soporte para múltiples 
+lenguajes (humanos) y buena integración, especialmente con Python. Si quieres aprender más sobre el procesamiento del lenguaje natural, 
+el libro *Speech and Language Processing* de Jurafsky y Martin es un muy buen punto de partida ([@jurafsky])[^2].
+
+## ¿Qué preprocesamiento utilizar?
+
+En este capítulo se ha mostrado cómo crear una DTM y, sobre todo, se han introducido diferentes maneras de limpiar y preprocesar la DTM 
+antes del análisis. Todos estos métodos son utilizados por los profesionales del análisis de texto y también en la literatura científica 
+pertinente. Sin embargo, ningún estudio utiliza todos uno detrás de otro. Esto plantea la cuestión de cómo saber qué pasos de 
+preprocesamiento utilizar para la pregunta de investigación.
+
+Antes de nada, hay una serie de cosas que (casi) siempre hay que hacer. Si los datos contienen ruido, como lenguaje repetitivo, código 
+HTML, etc., hay que eliminarlos antes de continuar. Además, el texto casi siempre tiene abundancia de palabras vacías y una gran cantidad 
+de palabras raras. Por lo tanto, casi siempre debemos utilizar una combinación de eliminación de palabras vacías, recorte basado en la 
+frecuencia del documento y/o ponderación 'tf.idf'. Ten en cuenta que cuando utilices una lista de palabras vacías, siempre debes 
+inspeccionar manualmente y/o ajustar la lista de palabras para asegurarte de que se ajusta a tu ámbito y a tu pregunta de investigación.
+
+Los demás pasos, como los n-gramas, las colocaciones y el etiquetado y la lematización, son más opcionales, pero pueden ser bastante 
+importantes en función de la investigación específica. Para ello (y para elegir una combinación específica de recorte y ponderación), 
+siempre es bueno conocer bien el ámbito en el que trabajamos, mirar los resultados y pensar si tienen sentido. Utilizando el ejemplo 
+anterior, los bigramas pueden tener más sentido para el análisis de sentimientos (ya que “nada bueno” es muy diferente de “bueno”), pero 
+para analizar el tema de los textos será menos útil.
+
+Sin embargo, al final, muchas de estas preguntas no tienen una respuesta teórica satisfactoria, y la única forma de encontrar un buen 
+preprocesamiento para la pregunta de investigación es probar muchas opciones diferentes y ver cuál funciona mejor. Desde el punto de 
+vista de las ciencias sociales, esto puede parecer "hacer trampas", ya que en general está mal visto probar muchos modelos estadísticos 
+diferentes y señalar el que funciona mejor. Sin embargo, como ya hablamos al principio de este libro, existe una diferencia entre el 
+modelado estadístico sustantivo, en el que realmente se desea comprender los mecanismos, y los pasos de procesamiento técnico, en los que 
+solo se desea obtener la mejor medición posible de una variable subyacente (presumiblemente para utilizarla en un modelo sustantivo 
+posterior). @mousetrap utiliza la analogía de la ratonera y la condición humana: en ingeniería se quiere hacer la mejor ratonera posible, 
+mientras que en ciencias sociales queremos entender la condición humana. En el caso de la ratonera, no pasa nada si se trata de una caja 
+negra cuyo funcionamiento desconocemos, siempre que estemos seguros de que funciona. En el caso del modelo de las ciencias sociales, no 
+es así, ya que lo que nos interesa es exactamente su funcionamiento interno.
+
+Los pasos técnicos de (pre)procesamiento, como los que se examinan en este capítulo, son principalmente dispositivos de ingeniería: no 
+nos interesa cómo funciona algo como 'tfc.idf', siempre que produzca la mejor medición posible de las variables que necesitamos para 
+nuestro análisis. En otras palabras, se trata de un reto de ingeniería, no de una cuestión de investigación en ciencias sociales. En 
+consecuencia, el criterio clave para juzgar estos pasos es la validez, no la explicabilidad. Así pues, está bien probar distintas 
+opciones, siempre que se validen los resultados adecuadamente. Si tienes muchas opciones diferentes que evaluar en función de alguna 
+métrica, como el rendimiento en una tarea de predicción posterior, el uso de las técnicas de validación cruzada o a medias comentadas en 
+el capítulo [-@sec-chap-introsml] también es pertinente para evitar sesgar la evaluación.
+
+[^1]: Los modelos de encajes léxicos o *embeddings* completos pueden descargarse de https://nlp.stanford.edu/projects/glove/. Para facilitar la descarga del archivo, hemos tomado solo las 10.000 palabras más frecuentes del archivo de encaje más pequeño (la versión de 50 dimensiones del modelo de 6B tokens). En nuestra experiencia, la versión de 300 dimensiones suele dar buenos resultados. Ten en cuenta que los archivos en ese sitio están en un formato ligeramente diferente que carece de la línea de encabezado inicial, por lo que si quieres utilizar otros vectores para los ejemplos, puedes convertirlos con la función 'glove2word2vec' en el paquete 'gensim'. Para R, puedes omitir el argumento 'skip=1' ya que, aparte de la línea de encabezado, los formatos son idénticos.︎ 
+
+[^2]: En [web.stanford.edu/~jurafsky/slp3/](https://web.stanford.edu/~jurafsky/slp3/) puede consultarse el borrador de una nueva edición, que (en el momento de escribir estas líneas) puede descargarse gratuitamente.︎
+

@@ -1,0 +1,1436 @@
+
+#  Análisis automático de texto {#sec-chap-text}
+
+::: {.callout-warning}
+# Update planned: R Tidymodels and tidytext
+
+At the time of writing this chapter for the published book, `quanteda` and `caret` were our packages of choice for machine learning and text analysis in R,
+even though (as noted below) we felt that especially supervised text analysis was much better supported in Python than in R.
+We now think that the `tidymodels` and `tidytext` packages are a better choice for text analysis, 
+especially for students who have just learned to work with the `tidyverse` data wrangling package.
+For this reason, we are planning to rewrite this chapter using those packages. 
+See the relevant github issues for [tidytext](https://github.com/vanatteveldt/cssbook/issues/5) and [tidymodels](https://github.com/vanatteveldt/cssbook/issues/5) for more information. 
+:::
+
+
+<!--# 
+Edit history 
+- Bugfix: txt_* -> text_* 
+- Adapt to new package version: keras.preprocessing -> keras_preprocessing 
+- eli5 adapt to non-jupyter
+-->
+
+{{< include common_setup.qmd >}}
+
+
+**Resumen.**
+En este capítulo analizaremos distintos enfoques del análisis automático de textos o análisis de contenido automatizado. Combinaremos 
+técnicas de capítulos anteriores, como la transformación de textos en una matriz de frecuencias de términos y el aprendizaje automático. 
+Trataremos en profundidad tres enfoques diferentes: análisis basados en diccionarios, aprendizaje automático supervisado, y aprendizaje 
+automático no supervisado. El capítulo ofrece orientaciones sobre cómo llevar a cabo estos análisis y sobre cómo decidir cuál de los 
+enfoques es el más adecuado para cada tipo de pregunta. 
+
+**Palabras clave.** enfoques basados en diccionarios, aprendizaje automático supervisado, aprendizaje automático no supervisado, modelado de temas, análisis automatizado de contenidos, análisis de sentimientos
+
+**Objetivos:**
+
+-  Comprender los distintos enfoques del análisis automático de textos
+-  Decidir si utilizar un diccionario, el aprendizaje automático supervisado o el aprendizaje automático no supervisado.
+-  Ser capaz de utilizar estas técnicas
+
+::: {.callout-note icon=false collapse=true}
+## Paquetes utilizados en este capítulo
+
+Este capítulo utiliza el texto básico y el manejo de datos que se describieron en el [@sec-chap-dtm] ('tidyverse', 'readtext' y 'quanteda' 
+para R, 'pandas' y 'nltk' para Python). Para el análisis de texto supervisado, utilizamos 'quanteda.textmodels' en R, y 'sklearn' y 'keras' 
+en Python. Para los modelado de temas utilizamos 'topicmodels' (R) y 'gensim' (Python). 
+Si es necesario, puedes instalar estos paquetes con el código que aparece a continuación (para más detalles, consulta la 
+[@sec-installing]):
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter11install-python}
+#| eval: false
+!pip3 install nltk scikit-learn pandas 
+!pip3 install gensim eli5 keras keras_preprocessing tensorflow
+```
+## Código R
+```{r chapter11install-r}
+#| eval: false
+install.packages(c("tidyverse", "readtext", 
+    "quanteda", "quanteda.textmodels", 
+    "topicmodels", "keras", "topicdoc", "MLmetrics"))
+```
+:::
+Una vez instalados, tienes que importar (activar) los paquetes en cada sesión:
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter11library-python}
+# General packages and dictionary analysis
+import os
+import tarfile
+import bz2
+import urllib.request
+import re
+import pickle
+import nltk
+import eli5
+import joblib
+import requests
+import pandas as pd
+import numpy as np
+from nltk.tokenize import TreebankWordTokenizer
+import matplotlib.pyplot as plt
+
+# Supervised text classification
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn import metrics
+import joblib
+import eli5
+from nltk.sentiment import vader
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+# Deep learning with Keras
+from keras.layers import Dense, Input, GlobalMaxPooling1D, Conv1D, Embedding
+from keras.models import Model
+from tensorflow.keras.optimizers import RMSprop
+from keras_preprocessing.sequence import pad_sequences
+from keras.preprocessing.text import Tokenizer
+from gensim.models.keyedvectors import KeyedVectors
+
+# Topic Modeling
+import gensim
+from gensim import matutils
+from gensim.models.ldamodel import LdaModel
+from gensim.models.coherencemodel import CoherenceModel
+
+```
+## Código R
+```{r chapter11library-r}
+# General packages and dictionary analysis
+library(glue)
+library(tidyverse)
+library(readtext)
+library(quanteda)
+
+# Supervised text classification
+library(quanteda.textmodels)
+library(MLmetrics)
+
+# Deep learning with Keras
+library(keras)
+
+# Topic Modeling
+library(topicmodels)
+library(topicdoc)
+```
+:::
+:::
+En capítulos anteriores, has aprendido sobre el aprendizaje automático supervisado y no supervisado, así como sobre el tratamiento de 
+textos. Este capítulo reúne estos elementos y explica cómo combinarlos para analizar automáticamente grandes corpus de textos. Tras 
+presentar las directrices para elegir un enfoque adecuado en la [@sec-deciding] y descargar un conjunto de datos de ejemplo en la 
+[@sec-reviewdataset], analizamos múltiples técnicas en detalle. Comenzamos con un enfoque descendente muy sencillo en la 
+[@sec-supervised], en el que contamos las apariciones de palabras a partir de una lista de palabras definida a priori. En la 
+[@sec-supervised], seguimos utilizando categorías predefinidas que queremos codificar, pero dejamos que la máquina "aprenda" por sí misma 
+las reglas de la codificación. Por último, en la [@sec-unsupervised], empleamos un enfoque ascendente en el que no utilizamos ninguna 
+lista o esquema de codificación definidos a priori, sino que extraemos inductivamente temas de nuestros datos.
+
+## Elegir el método adecuado {#sec-deciding}
+
+Al pensar en el análisis computacional de textos, es importante darse cuenta de que no existe un método perfecto para hacerlo. Aunque hay 
+buenas y malas elecciones, no podemos decir que un método sea total y absolutamente superior a otro. También debemos tener en cuenta que 
+incluso en la investigación hay modas: por ejemplo, en los últimos años ha crecido el interés por el modelado de temas (*topic modeling*) 
+(véase la [@sec-unsupervised]). Es cierto que hay aplicaciones muy buenas para estos modelos, pero a veces también se aplican a preguntas 
+de investigación y/o datos en los que no tienen mucho sentido. Como siempre, la elección del método debe seguir a la pregunta de 
+investigación y no al revés. Por tanto, te advertimos de que no leas el [@sec-chap-text] de forma selectiva porque quieras, por ejemplo, 
+aprender sobre aprendizaje automático supervisado o sobre modelado de temas no supervisado, sino que debes conocer los distintos enfoques 
+para tomar una decisión informada sobre qué utilizar y cuándo.
+
+@Boumans2016 ofrecen directrices útiles al respecto. Sitúan los enfoques de análisis automático de textos en un continuo que va de lo 
+deductivo (o descendente) a lo inductivo (o ascendente). En el extremo deductivo del espectro, sitúan los enfoques basados en 
+diccionarios ([@sec-dictionary]). En este caso, el investigador parte de sólidos supuestos a priori (teóricos) (por ejemplo, qué temas 
+existen en un conjunto de datos de noticias o qué palabras son positivas o negativas) y puede compilar listas de palabras o reglas 
+basadas en estos supuestos. El ordenador solo tiene que ejecutar esas reglas. En el extremo inductivo del espectro, en cambio, se sitúan 
+enfoques como el modelado de temas ([@sec-unsupervised]), en los que se hacen pocas o ninguna suposición a priori y se buscan patrones en 
+los datos. En este caso, no solemos saber de antemano qué temas existen. Los enfoques supervisados ([@sec-supervised]) pueden situarse en 
+un punto intermedio: en ellos sí definimos categorías a priori (sabemos qué temas existen y, dado un artículo, sabemos a qué tema 
+pertenece), pero no tenemos ningún conjunto de reglas: no sabemos qué palabras buscar ni qué reglas exactas seguir. Esas reglas las tiene 
+que "aprender" el ordenador a partir de los datos.
+
+Antes de entrar en detalles e implementaciones, vamos a discutir algunos casos de uso de los tres enfoques principales para el análisis 
+computacional de texto: enfoques de diccionario (o basados en reglas), aprendizaje automático supervisado y aprendizaje automático no 
+supervisado.
+
+Los enfoques basados en diccionarios son excelentes mientras se cumplan tres condiciones. La primera es que la variable que queremos 
+codificar sea manifiesta y concreta en lugar de latente y abstracta: nombres de actores, objetos físicos específicos, frases concretas, 
+etc., Y no sentimientos, marcos o temas. La segunda es que hay que conocer de antemano todos los sinónimos que se van a incluir. Y, la 
+tercera, que las entradas del diccionario no tengan múltiples significados. Por ejemplo, la codificación de la frecuencia con la que se 
+menciona el control de armas en los discursos políticos se ajusta a estos criterios. Solo hay un número limitado de formas de hablar de 
+ello, y es bastante improbable que los discursos sobre otros temas contengan una frase como "control de armas" que confunda al proceso. 
+Del mismo modo, si queremos encontrar referencias a Angela Merkel, Donald Trump o cualquier otro político conocido, podemos buscar 
+directamente sus nombres, aunque surgen problemas cuando las personas tienen apellidos muy comunes y se hace referencia a ellas solo por 
+sus apellidos (por ejemplo, intentar encontrar a Pedro Sánchez nos dará muchos problemas).
+
+Lamentablemente, la mayoría de los conceptos interesantes son más complejos de codificar. Tomemos un problema aparentemente sencillo: 
+distinguir si una noticia trata de economía o no. Para los humanos es realmente fácil: puede haber algunos casos extremos, pero en 
+general, la gente rara vez necesita más de unos segundos para comprender si un artículo trata de economía y no de deportes, cultura, 
+etc. Sin embargo, muchos de estos artículos no indican directamente de qué tratan utilizando explícitamente la palabra "economía".
+
+Podemos pensar en ampliar nuestro diccionario utilizando 'econom.+' (una expresión regular que incluye economistas, económico, etc.), y 
+con otras palabras como "bolsa", "mercado", "empresa"... Desgraciadamente, nos encontraremos rápidamente con un problema al que ya nos 
+enfrentamos cuando hablamos de la compensación precisión-exhaustividad en la [@sec-validation]: cuantos más términos añadamos a nuestro 
+diccionario, más falsos positivos obtendremos: artículos sobre condiciones laborales en las “empresas”, la importancia cultural del 
+“mercado” artesanal, las ventajas de tener una “bolsa” de tela…
+
+A partir de este ejemplo, podemos concluir que a menudo (1) es fácil para los humanos decidir a qué clase pertenece un texto, pero (2), 
+a la vez, es muy difícil para los humanos elaborar una lista de palabras (o reglas) en las que se base su juicio. Una situación así es 
+perfecta para aplicar el aprendizaje automático supervisado: al fin y al cabo, no nos llevará mucho tiempo clasificar, digamos, 1.000 
+artículos en función de si tratan de economía o no (probablemente nos lleve menos tiempo que perfeccionar una lista de palabras a incluir 
+o excluir). Además, la parte más difícil, decidir las reglas exactas en las que se basa la decisión de clasificar un artículo como 
+económico, lo hace el ordenador en cuestión de segundos. El aprendizaje automático supervisado, por tanto, ha sustituido a los enfoques 
+basados en diccionarios en muchos ámbitos.
+
+Tanto los enfoques basados en diccionarios (o en reglas) como el aprendizaje automático supervisado presuponen que se sabe de antemano 
+qué categorías existen (positivas frente a negativas; deportes frente a economía frente a política; &hellip;). La gran ventaja de los 
+enfoques no supervisados, como el modelado de temas es que también se pueden aplicar sin este conocimiento. Por lo tanto, permiten 
+encontrar patrones en los datos que no se esperaban y pueden generar nuevos conocimientos. Esto los hace especialmente adecuados para 
+cuestiones de investigación exploratoria. En cambio, su uso para pruebas de confirmación es menos defendible: al fin y al cabo, si nos 
+interesa saber si, por ejemplo, el sitio de noticias A publica más sobre economía que el sitio de noticias B, sería un poco raro fingir 
+no saber que el tema "economía" existe. Además, en la práctica, la asignación de los temas resultantes del modelo temático a las 
+categorías existentes a priori puede suponer un reto.
+
+A pesar de las diferencias, todos los enfoques comparten un requisito: hay que "Validar. Validar. Validar" ([@Grimmer2013]). Aunque se ha 
+hecho en el pasado, aplicar un diccionario sin comparar el rendimiento con la codificación manual de los mismos conceptos no es 
+aceptable; tampoco lo es utilizar un clasificador de aprendizaje automático supervisado sin hacer lo mismo; o confiar ciegamente en un 
+modelo temático sin comprobar al menos manualmente que las puntuaciones que el modelo asigna a los documentos captan realmente de qué 
+tratan.
+
+## Obtener un conjunto de datos de revisión {#sec-reviewdataset}
+
+Para las secciones sobre diccionarios y enfoques supervisados utilizaremos un conjunto de datos de críticas de películas de la base de 
+datos IMDB [@aclimdb]. Este conjunto de datos se publica como un conjunto comprimido de carpetas, con carpetas separadas para los 
+conjuntos de datos de entrenamiento y prueba y subcarpetas para las críticas positivas y negativas. Hay muchos otros conjuntos de datos 
+de reseñas disponibles en línea, por ejemplo, datos de reseñas de Amazon ([jmcauley.ucsd.edu/data/amazon/](https://jmcauley.ucsd.edu/data/amazon/)).
+
+El conjunto de datos IMDB que utilizaremos es un archivo relativamente grande y requiere un poco de procesamiento, por lo que 
+recomendamos almacenar los datos en caché en lugar de descargarlos y procesarlos cada vez que los necesites. Esto se hace en el 
+[@exm-reviewdata], que también sirve como un buen ejemplo de cómo descargar y procesar archivos. Tanto R como Python siguen el mismo 
+patrón básico. En primer lugar, comprobamos si el archivo almacenado en caché existe, y si es así leemos los datos de ese archivo. Para 
+R, utilizamos el formato estándar 'RDS', mientras que para Python utilizamos un archivo 'pickle' comprimido. El formato de los datos 
+también es ligeramente diferente, siguiendo la convención de cada lenguaje: En R utilizamos el marco de datos de 'readtext', que puede 
+leer ficheros de una carpeta o archivo zip y crear un marco de datos que contiene un texto por fila; en Python, tenemos listas 
+separadas para los conjuntos de datos de entrenamiento y de prueba y para los textos completos y las etiquetas ('text_train' son los 
+textos de entrenamiento e 'y_train' son las etiquetas correspondientes).
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-reviewdata}
+Descarga y almacenamiento en caché de datos de reseñas de IMDB.
+
+::: {.panel-tabset}
+## Código Python
+```{python data-python}
+filename = "reviewdata.pickle.bz2"
+if os.path.exists(filename):
+    print(f"Using cached file {filename}")
+    with bz2.BZ2File(filename, "r") as zipfile:
+        data = pickle.load(zipfile)
+    text_train, text_test, y_train, y_test = data
+else:
+    url = "https://cssbook.net/d/aclImdb_v1.tar.gz"
+    print(f"Downloading from {url}")
+    fn, _headers = urllib.request.urlretrieve(url, filename=None)
+    t = tarfile.open(fn, mode="r:gz")
+    text_train, text_test = [], []
+    y_train, y_test = [], []
+    for f in t.getmembers():
+        m = re.match("aclImdb/(\w+)/(pos|neg)/", f.name)
+        if not m:
+            # skip folder names, other categories
+            continue
+        dataset, label = m.groups()
+        text = t.extractfile(f).read().decode("utf-8")
+        if dataset == "train":
+            text_train.append(text)
+            y_train.append(label)
+        elif dataset == "test":
+            text_test.append(text)
+            y_test.append(label)
+    data = text_train, text_test, y_train, y_test
+    print(f"Saving to {filename}")
+    with bz2.BZ2File(filename, "w") as zipfile:
+        pickle.dump(data, zipfile)
+```
+## Código R
+```{r data-r}
+#| cache: true
+filename = "reviewdata.rds"
+if (file.exists(filename)) {
+    print("Using cached data")
+    reviewdata= readRDS(filename)
+} else {
+    print("Downloading data")
+    fn = "aclImdb_v1.tar.gz"
+    url = glue("https://cssbook.net/d/{fn}")
+    download.file(url, fn)
+    untar(fn)
+    reviewdata = readtext(
+      file.path("aclImdb", "*", "*", "*.txt"), 
+      docvarsfrom = "filepaths", dvsep="[/\\]",
+      docvarnames=c("i","dataset","label","fn"))
+    unlink(c("aclImdb", fn), recursive=TRUE)
+    reviewdata = reviewdata %>% 
+      filter(label %in% c("pos", "neg")) %>% 
+      select(-i) %>% 
+      corpus()
+    saveRDS(reviewdata, filename)
+}
+```
+:::
+:::
+:::
+
+Si el archivo de datos en caché aún no existe, el archivo se descarga de Internet. En R, extraemos el archivo y ejecutamos 'readtext' en 
+la carpeta resultante. Esto crea automáticamente columnas para las subcarpetas, en este caso para el conjunto de datos y las etiquetas. 
+Después de esto, eliminamos el archivo de descarga y la carpeta extraída, limpiamos el 'reviewdata', y lo guardamos en el archivo 
+'reviewdata.rds'. En Python, podemos conseguir los archivos del archivo descargado directamente, por lo que no necesitamos extraerlo. 
+Hacemos un bucle sobre todos los archivos del archivo y utilizamos una expresión regular para seleccionar solo los archivos de texto y 
+extraer la etiqueta y el nombre del conjunto de datos (consulta la [@sec-regular] para obtener más información sobre expresiones 
+regulares). A continuación, extraemos el texto del archivo y añadimos el texto y la etiqueta a la lista correspondiente. Por último, los 
+datos se guardan como un archivo 'pickle' comprimido, de modo que la próxima vez que ejecutemos esta celda no sea necesario volver a 
+descargar el archivo.
+
+## Enfoque de diccionarios en el análisis de textos {#sec-dictionary}
+
+Una forma sencilla de analizar automáticamente un texto es elaborar una lista de los términos que te interesan y contar con qué 
+frecuencia aparecen en cada documento. Por ejemplo, si buscas averiguar si las menciones a partidos políticos en artículos de noticias 
+cambian a lo largo de los años, solo tienes que hacer una lista de todos los nombres de partidos y escribir un sencillo *script* para 
+contarlos.
+
+Históricamente, así es como se hacía el análisis de sentimientos. El ejemplo [-@exm-sentsimple] muestra cómo hacer un análisis de 
+sentimientos sencillo basado en una lista de palabras positivas y negativas. El proceso es sencillo: se cuenta la frecuencia con la que 
+cada palabra positiva aparece en un texto, se hace lo mismo con las palabras negativas y se determina cuáles aparecen con más frecuencia.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-sentsimple}
+Diferentes enfoques para un análisis de sentimientos sencillo basado en un diccionario: contar y sumar todas las palabras utilizando un 
+bucle *for* sobre todas las reseñas (Python) frente a construir una matriz documento-término y buscar las palabras en ella (R). Ten en 
+cuenta que ambos enfoques serían posibles en cualquiera de los lenguajes.
+
+::: {.panel-tabset}
+## Código Python
+```{python sentsimple-python}
+#| cache: true
+poswords = "https://cssbook.net/d/positive.txt"
+negwords = "https://cssbook.net/d/negative.txt"
+pos = set(requests.get(poswords).text.split("\n"))
+neg = set(requests.get(negwords).text.split("\n"))
+sentimentdict = {word: +1 for word in pos}
+sentimentdict.update({word: -1 for word in neg})
+
+scores = []
+mytokenizer = TreebankWordTokenizer()
+# For speed, we only take the first 100 reviews
+for review in text_train[:100]:
+    words = mytokenizer.tokenize(review)
+    # we look up each word in the sentiment dict
+    # and assign its value (with default 0)
+    scores.append(sum(sentimentdict.get(word, 0) for word in words))
+print(scores)
+```
+## Código R
+```{r sentsimple-r}
+#| cache: true
+poswords = "https://cssbook.net/d/positive.txt"
+negwords = "https://cssbook.net/d/negative.txt"
+pos = scan(poswords, what="list")
+neg = scan(negwords, what="list")
+sentimentdict = dictionary(list(pos=pos, neg=neg))
+
+# For speed, we only take the first 100 reviews
+scores = corpus_sample(reviewdata, 100)  %>% 
+  tokens() %>%
+  dfm() %>% 
+  dfm_lookup(sentimentdict) %>% 
+  convert(to="data.frame")  %>% 
+  mutate(sent = pos - neg)
+head(scores)
+```
+:::
+:::
+:::
+
+Como ya habrás notado, este enfoque tiene muchas desventajas. La más notable es que nuestro enfoque de bolsa de palabras no nos permite 
+tener en cuenta la negación: "no es bueno" se contará como positivo. Tampoco podemos tratar modificadores como "muy bueno". Además, todas 
+las palabras son positivas o negativas, aunque "estupendo" debería ser más positivo que "bueno". Los paquetes más avanzados de análisis 
+de sentimientos basados en diccionarios, como Vader (@Hutto2014) o SentiStrength (@Thelwall2012), incluyen estas funciones. Sin embargo, 
+como veremos en la sección [-@sec-supervised], estos paquetes comerciales tienen un rendimiento muy pobre en muchas tareas de análisis de 
+sentimientos, especialmente fuera de los dominios para los que fueron desarrollados. Se ha demostrado que el análisis de sentimientos 
+basado en diccionarios es deficiente cuando se analizan contenidos de noticias (por ejemplo, @Gonzalez-Bailon2015;@Boukes2019]). Dan 
+problemas cuando la exactitud a nivel de frase es importante, pero pueden ser satisfactorios con textos largos para tareas sencillas, 
+como la clasificación de reseñas de películas ([@Reagan2017]), donde hay verdaderos y claros datos de base, la convención de una reseña 
+es que todo el texto es evaluativo y, por lo tanto, evalúa un objeto (la película).
+
+Aun así, hay muchos casos en los que los diccionarios funcionan muy bien. Dado que la lista de palabras puede contener cualquier cosa, no 
+solo palabras positivas o negativas, los enfoques de diccionario se han utilizado, por ejemplo, para medir el uso de palabras racistas o 
+dañinas en foros en línea (p. ej., [@Tulkens2016]). Los enfoques de diccionario son fáciles de entender y directos, lo que puede ser 
+un buen argumento para utilizarlos cuando es importante que el método no sea una caja negra, sino totalmente transparente incluso sin 
+conocimientos técnicos. Además, cuando el diccionario ya existe o es fácil de crear, también es un método muy barato. Sin embargo, como 
+ya hemos mencionado, el precio a pagar es su limitación de medir solo conceptos fáciles de operacionalizar. Por decirlo sin rodeos: es 
+estupendo para medir la visibilidad de partidos u organizaciones en las noticias, pero es menos eficaz para medir conceptos como 
+emociones o encuadres.
+
+Lo que dio mala fama a los enfoques basados en diccionarios es que muchos investigadores los aplicaron sin validarlos. Esto es 
+especialmente problemático cuando un diccionario se aplica en un contexto distinto de aquel para el que se hizo originalmente.
+
+Si quieres utilizar un enfoque basado en diccionarios, te aconsejamos el siguiente procedimiento:
+
+- Construye un diccionario basándote en consideraciones teóricas y leyendo atentamente una muestra de textos de ejemplo.
+   -  Codifica manualmente algunos artículos y compáralos con la codificación automatizada.
+   -  Mejora el diccionario y vuelve a comprobarlo.
+   -  Codifica manualmente un conjunto de datos de validación de tamaño suficiente. El tamaño necesario depende un poco de lo equilibrados que sean los datos: si un código aparece con muy poca frecuencia, harán falta más datos.
+   -  Calcula el grado de acuerdo. Puedes utilizar las medidas estándar de fiabilidad interjueces que se emplean en el análisis de contenido manual, pero también te aconsejamos que calcules la precisión y la exhaustividad (véase el apartado 8.[-@sec-validation]5).
+
+Los diccionarios muy extensos tendrán una exhaustividad elevada (siendo menos probable que se "pierda" un documento relevante), pero a 
+menudo sufrirán de baja precisión (muchos documentos contendrán una de las palabras aunque no sean relevantes). A la inversa, un 
+diccionario muy corto suele ser muy preciso, pero omite muchos documentos. Cuál es el equilibrio adecuado depende de la pregunta de 
+investigación que se plantee, pero para interpretar los resultados de forma sustancial, es necesario poder cuantificar el rendimiento del 
+enfoque basado en diccionarios.
+
+::: {.callout-note icon=false collapse=true}
+## ¿Cuántos documentos necesitas para calcular el acuerdo con los codificadores humanos?
+
+Para determinar el número de documentos que se necesitan para determinar el acuerdo entre un humano y una máquina, se pueden seguir las 
+mismas normas que se recomiendan para el análisis de contenido manual tradicional.
+
+Por ejemplo, @Krippendorff2004 proporciona una tabla de conveniencia para buscar los tamaños de muestra necesarios para determinar el 
+acuerdo entre dos codificadores humanos (p. 240). @Riffe2019 ofrecen sugerencias similares (p. 114). En resumen, el tamaño de la muestra 
+depende del nivel de significación estadística que el investigador considere aceptable, así como de la distribución de los datos. En un 
+caso extremo, si solo 5 de cada 100 ítems deben ser codificados como $x$, puede pasar que, en una muestra de 20 ítems, $x$ no aparezca. Para 
+determinar el acuerdo entre el método automatizado y un humano, sugerimos que se utilicen tamaños de muestra que también se utilizarían 
+para el cálculo de la concordancia entre codificadores humanos. Para cálculos específicos, nos remitimos a libros de análisis de 
+contenido como los dos aquí citados. Para dar una cifra aproximada (¡Que no debería sustituir a un cálculo cuidadoso!), aproximadamente 
+entre 100 y 200 elementos cubrirán muchos escenarios (suponiendo una pequeña cantidad de clases razonablemente equilibradas).
+
+:::
+
+## Análisis de texto supervisado: Clasificación automática y análisis de sentimientos {#sec-supervised}
+
+En muchas ocasiones, encontramos muy buenas razones para utilizar el enfoque de diccionarios presentado en la sección anterior. En primer 
+lugar, es comprensible de una manera bastante intuitiva y los resultados pueden (a veces) incluso verificarse a mano, lo que es una 
+ventaja cuando la transparencia o la comunicabilidad son de gran importancia. En segundo lugar, es muy fácil de utilizar. Sin embargo, 
+como hemos visto en el [@sec-deciding], los enfoques basados en diccionarios funcionan peor cuanto más abstracto, no manifiesto o 
+complejo es un concepto. En la siguiente sección, argumentaremos que los temas, pero también los sentimientos, son conceptos bastante 
+complejos que a menudo son difíciles de capturar con diccionarios (o que, por lo menos, elaborar un diccionario adecuado sería difícil). 
+Por ejemplo, mientras que "positivo" y "negativo" parecen categorías sencillas a primera vista, cuanto más pensamos en ello, más evidente 
+se hace que dependen completamente del contexto: en un conjunto de datos sobre la economía y los rendimientos del mercado de valores, 
+"incremento" puede indicar algo positivo pero en un conjunto de datos sobre las tasas de desempleo la misma palabra sería algo negativo. 
+Por eso, el aprendizaje automático puede ser una técnica más adecuada para este tipo de tareas.
+
+### Organizar el flujo de trabajo {#sec-workflow}
+
+Con los conocimientos adquiridos en los capítulos anteriores, no es difícil configurar un clasificador de aprendizaje automático 
+supervisado para determinar automáticamente, por ejemplo, el tema de un artículo de noticias.
+
+Recapitulemos los elementos básicos que necesitamos. En el capítulo 8 aprendimos a utilizar distintos clasificadores, a evaluarlos y a 
+elegir la mejor configuración. Sin embargo, en estos ejemplos, utilizamos datos numéricos como características, no texto. Por suerte, 
+en el [@sec-chap-dtm], aprendiste a convertir texto en características numéricas: vamos a empezar con eso.
+
+Los ejemplos típicos de aprendizaje automático supervisado en el análisis de la comunicación incluyen la clasificación de temas (por 
+ejemplo, @Scharkow2011), marcos (por ejemplo, @Burscher201), características del usuario como el género o la ideología, o los sentimientos.
+
+Veamos el caso del análisis de sentimientos con más detalle. El análisis de sentimientos clásico se realiza con un enfoque de 
+diccionario: se toma una lista de palabras positivas, una lista de palabras negativas, y se cuenta cuáles aparecen con más frecuencia. 
+También se puede asignar un peso a cada palabra, de forma que "perfecto" tenga un peso mayor que "bueno", por ejemplo. Aunque un 
+inconveniente obvio es que estos enfoques puros de bolsa de palabras es que no pueden hacer frente a la negación ("no es bueno") y a los 
+intensificadores ("muy bueno"), se han desarrollado extensiones que tienen en cuenta estas y otras características, como la puntuación 
+[@Thelwall2012;@Hutto2014;@DeSmedt2012].
+
+Pese a que los paquetes disponibles que implementan estos métodos basados en diccionarios extendidos son muy fáciles de usar (de hecho, 
+nos dan una puntuación de sentimientos con una sola línea de código), es cuestionable lo bien que funcionan en la práctica. Después de 
+todo, los "sentimientos" no son exactamente un concepto claro y manifiesto para el que podamos enumerar una lista de palabras. Se ha 
+demostrado que los resultados obtenidos con varios de estos paquetes se correlacionan muy mal entre sí y con las anotaciones humanas 
+(@Boukes2019;@Chan2021, en prensa).
+
+En consecuencia, se ha sugerido que es mejor utilizar el aprendizaje automático supervisado para codificar automáticamente los 
+sentimientos de los textos [@Gonzalez-Bailon2015;@vermeer2019seeing]. Sin embargo, es posible que necesite anotar documentos de su propio 
+conjunto de datos: entrenar un clasificador en, por ejemplo, críticas de películas y luego usarlo para predecir el sentimiento en textos 
+políticos viola el supuesto de que el conjunto de entrenamiento, el conjunto de prueba y los datos no etiquetados que se van a clasificar 
+se extraen (al menos en principio y aproximadamente) de la misma población.
+
+Para ilustrar el flujo de trabajo, utilizaremos ACL IMDB, un gran conjunto de datos que consta de un set de entrenamiento de 25.000 
+críticas de películas (de las cuales 12.500 son positivas y 12.500 negativas) y un set de prueba del mismo tamaño ([@aclimdb]). Puede 
+descargarse en [ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz](https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz)
+
+Estos datos no se encuentran en un único archivo, sino en un conjunto de archivos de texto que están ordenados en diferentes carpetas 
+denominadas según el conjunto de datos al que pertenecen ('test' o 'train') y su etiqueta ('pos' y 'neg'). Esto significa que no podemos 
+utilizar una función predefinida para leerlos, sino que tenemos que pensar en una forma de leer el contenido en una estructura de datos 
+que podamos utilizar. Estos datos se cargaron en el [@exm-reviewdata].
+
+
+::: {.callout-note icon=false collapse=true}
+## Matrices dispersas frente a matrices densas en Python y R
+
+En una matriz documento-término, lo normal es encontrar muchos ceros: la mayoría de las palabras no aparecen en casi ningún documento. 
+Por ejemplo, las reseñas del conjunto de datos IMDB contienen más de 100.000 palabras únicas. Por tanto, la matriz tiene más de 100.000 
+columnas. Sin embargo, la mayoría de las reseñas solo contienen un par de cientos de palabras. Como consecuencia, más del 99% de las 
+celdas de la tabla contienen un cero. En una matriz dispersa, no almacenamos todos estos ceros, sino solo los valores de las celdas que 
+realmente contienen un valor. Esto reduce drásticamente la memoria necesaria. Pero incluso si se dispone de una gran cantidad de memoria, 
+esto no resuelve el problema: en R, el número de celdas de una matriz está limitado a 2.147.483.647. Por lo tanto, es imposible almacenar 
+una matriz con 100.000 características y 25.000 documentos como una matriz densa. Lamentablemente, muchos modelos que se pueden ejecutar 
+mediante 'caret' en R convertirán la matriz documento-término dispersa en una matriz densa, por lo que solo se pueden utilizar para 
+conjuntos de datos muy pequeños. Una alternativa es utilizar el paquete quanteda, que utiliza matrices dispersas. Sin embargo, en el 
+momento de escribir este libro, 'quanteda' solo ofrece un número muy limitado de modelos. Ninguno de estos problemas surgen en 
+'scikit-learn', por lo que te recomendamos que consideres el uso de Python para muchas tareas de clasificación de texto.
+
+:::
+
+Vamos a entrenar nuestro primer clasificador. Elegimos un clasificador Naive Bayes con un vectorizador de recuento simple 
+([@exm-imdbbaseline]). En el ejemplo de Python, presta atención al ajuste del vectorizador: ajustamos en los datos de entrenamiento y 
+transformamos los datos de entrenamiento con él, pero solo transformamos los datos de prueba sin volver a ajustar el vectorizador. Lo 
+ajustamos decidiendo qué palabras incluir (evidentemente, las palabras que no están presentes en los datos de entrenamiento se excluyen, 
+pero también podemos añadir restricciones adicionales, como excluir palabras muy raras o muy comunes), también podríamos asignar un 
+identificador de uso interno (el nombre de la variable) a cada palabra. Si ajustamos de nuevo el clasificador, éstas ya no serían 
+compatibles. En R, se consigue lo mismo de una forma ligeramente diferente: se crean dos matrices documento-término de forma 
+independiente y se emparejan de tal forma que solo las características que están presentes en la matriz de entrenamiento se conserven en 
+la matriz de prueba.
+
+::: {.callout-note icon=false collapse=true}
+
+Una palabra que no está presente en los datos de entrenamiento, pero sí en los datos de prueba, se ignora. Si quieres utilizar la 
+información que estas palabras pueden aportar (por ejemplo, pueden ser sinónimos), deberás utilizar un método de encaje de palabras 
+(véase el [@sec-wordembeddings]).
+
+:::
+
+No contamos con que este primer modelo sea el mejor clasificador posible, pero nos proporciona una base de referencia razonable. De 
+hecho, incluso sin más ajustes, funciona razonablemente bien: la precisión es mayor para las reseñas positivas y la exhaustividad es 
+mayor para las negativas (clasificar una reseña positiva como negativa ocurre el doble que lo contrario), pero ninguno de los valores es 
+preocupantemente bajo.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-imdbbaseline}
+Entrenamiento de un clasificador Naive Bayes con recuentos de palabras simples como características
+
+::: {.panel-tabset}
+## Código Python
+```{python imdbbaseline-python}
+#| cache: true
+vectorizer = CountVectorizer(stop_words="english")
+X_train = vectorizer.fit_transform(text_train)
+X_test = vectorizer.transform(text_test)
+
+nb = MultinomialNB()
+nb.fit(X_train, y_train)
+
+y_pred = nb.predict(X_test)
+
+rep = metrics.classification_report(y_test, y_pred)
+print(rep)
+```
+## Código R
+```{r imdbbaseline-r}
+#| cache: true
+dfm_train = reviewdata %>% 
+  corpus_subset(dataset == "train") %>% 
+  tokens() %>%
+  dfm() %>% 
+  dfm_trim(min_docfreq=0.01, docfreq_type="prop")
+
+dfm_test = reviewdata %>% 
+  corpus_subset(dataset == "test") %>% 
+  tokens() %>%
+  dfm() %>% 
+  dfm_match(featnames(dfm_train))
+
+myclassifier = textmodel_nb(dfm_train, 
+                  docvars(dfm_train, "label"))
+
+predicted = predict(myclassifier,newdata=dfm_test)
+actual = docvars(dfm_test, "label")
+
+results = list()
+for (label in c("pos", "neg")) {
+  results[[label]] = tibble(
+    Precision=Precision(actual, predicted, label),
+    Recall=Recall(actual, predicted, label),
+    F1=F1_Score(actual, predicted, label))
+}
+bind_rows(results, .id="label")
+```
+:::
+:::
+:::
+
+### Encontrar el mejor clasificador {#sec-bestclassifier}
+
+Empecemos comparando los dos clasificadores simples que conocemos: Naive Bayes y Regresión Logística (véase la [@sec-nb2dnn]). Y los dos 
+vectorizadores que transforman nuestros textos en representaciones numéricas que conocemos: recuento de palabras y ponderaciones 'tf.idf' 
+(véase el [@sec-chap-dtm]).
+
+También podemos ajustar algunas cosas en el vectorizador, como filtrar las palabras vacías, especificar un número mínimo (o proporción) 
+de documentos en los que debe aparecer una palabra para ser incluida o el número máximo (o proporción) de documentos en los que se 
+permite que aparezca. Por ejemplo, una palabra que aparece en menos de $n=5$ probablemente sea error ortográfico o es tan inusual que solo 
+infla innecesariamente nuestra matriz de características, y una palabra que aparece en más del 50\% de todos los documentos es tan común 
+que no nos ayuda a distinguir entre diferentes clases.
+
+Podemos probar todo esto a mano volviendo a ejecutar el código del [@exm-imdbbaseline] y cambiando solo la línea en la que se especifica 
+el vectorizador y la línea en la que se especifica el clasificador. Sin embargo, copiar y pegar el mismo código no es una buena idea, ya 
+que hace el código innecesariamente largo y aumenta la probabilidad de errores cuando, por ejemplo, tienes que aplicar los mismos cambios 
+a múltiples copias del código. En el [@exm-basiccomparisons] se describe un enfoque más elegante: Definimos una función que nos da un 
+breve resumen solo de los resultados que nos interesan, y luego usamos un bucle *for* para iterar sobre todas las configuraciones que 
+queremos evaluar, ajustarlas y llamar a la función que definimos antes. Así, con solo 23 líneas de código, conseguimos comparar cuatro 
+modelos diferentes, mientras que de la otra manera necesitábamos 15 líneas (en el [@exm-imdbbaseline]) para evaluar solo un modelo.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-basiccomparisons}
+Ejemplo de función personalizada para ofrecer una visión general del rendimiento de cuatro combinaciones simples de vectorizador-clasificador.
+
+```{python shortclassification-python}
+def short_classification_report(y_test, y_pred):
+    print("    \tPrecision\tRecall")
+    for label in set(y_pred):
+        pr = metrics.precision_score(y_test, y_pred, pos_label=label)
+        re = metrics.recall_score(y_test, y_pred, pos_label=label)
+        print(f"{label}:\t{pr:0.2f}\t\t{re:0.2f}")
+```
+```{python basiccomparisons-python}
+#| cache: true
+configs = [
+    ("NB-count", CountVectorizer(min_df=5, max_df=0.5), MultinomialNB()),
+    ("NB-TfIdf", TfidfVectorizer(min_df=5, max_df=0.5), MultinomialNB()),
+    (
+        "LR-Count",
+        CountVectorizer(min_df=5, max_df=0.5),
+        LogisticRegression(solver="liblinear"),
+    ),
+    (
+        "LR-TfIdf",
+        TfidfVectorizer(min_df=5, max_df=0.5),
+        LogisticRegression(solver="liblinear"),
+    ),
+]
+
+for name, vectorizer, classifier in configs:
+    print(name)
+    X_train = vectorizer.fit_transform(text_train)
+    X_test = vectorizer.transform(text_test)
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    short_classification_report(y_test, y_pred)
+    print("\n")
+```
+:::
+:::
+
+El resultado de este pequeño ejemplo nos da una idea de cómo abordar nuestras tareas de clasificación: en primer lugar, vemos que un 
+clasificador $tf\cdot idf$ parece ser ligeramente superior a un clasificador de recuento (esto ocurre a menudo, pero no siempre). En 
+segundo lugar, vemos que la regresión logística funciona mejor que el clasificador Naive Bayes (de nuevo, esto ocurre a menudo, pero no 
+siempre). En concreto, en nuestro caso, la regresión logística mejoró la excesiva clasificación errónea de las reseñas positivas como 
+negativas, y logra un rendimiento muy equilibrado.
+
+Puede haber casos en los que quieras utilizar un vectorizador de recuento con un clasificador Naive Bayes en su lugar (especialmente si 
+calcular el otro modelo es computacionalmente demasiado costoso), pero nosotros vamos a quedarnos con la mejor combinación de rendimiento: 
+la regresión logística con un vectorizador $tf\cdot idf$. También podrías intentar ajustar una máquina de vectores de soporte en su lugar, 
+pero tenemos pocas razones para pensar que nuestros datos no son linealmente separables, así que la SVM no debería darte un mejor 
+rendimiento. Dado el buen rendimiento que ya hemos logrado, decidimos seguir con la regresión logística por ahora.
+
+Hecho esto, podemos ir tan lejos como queramos: incluir más modelos, utilizar validación cruzada y gridsearch (véase la 
+[@sec-crossvalidation]), etc. Sin embargo, nuestro trabajo consiste ahora en dos tareas: ajustar/transformar nuestros datos de entrada 
+usando un vectorizador, y ajustar un clasificador. Para hacer las cosas más fáciles, en 'scikit-learn', ambos pasos se pueden combinar en 
+una llamada *pipe* (tubería). El [@exm-basicpipe] muestra cómo el bucle del [@exm-basiccomparisons] puede ser reescrito usando *pipes* 
+(el resultado sigue siendo el mismo).
+
+We can now go as far as we like, include more models, use
+crossvalidation and gridsearch (see
+[@sec-crossvalidation]), etc. However, our workflow now
+consists of *two* steps: fitting/transforming our input data
+using a vectorizer, and fitting a classifier. To make things easier,
+in scikit-learn, both steps can be combined into a so-called
+pipe. [@exm-basicpipe] shows how the loop in
+[@exm-basiccomparisons] can be re-written using pipes (the
+result stays the same).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-basicpipe}
+En lugar de ajustar el vectorizador y el clasificador por separado, pueden combinarse en una *pipeline*.
+```{python basicpipe-python}
+#| cache: true
+for name, vectorizer, classifier in configs:
+    print(name)
+    pipe = make_pipeline(vectorizer, classifier)
+    pipe.fit(text_train, y_train)
+    y_pred = pipe.predict(text_test)
+    short_classification_report(y_test, y_pred)
+    print("\n")
+
+```
+:::
+:::
+
+Una *pipeline* de este tipo se presta muy bien a realizar una gridsearch. El [@exm-gridsearchlogreg] ofrece un ejemplo. Con 
+'LogisticRegression?' y 'TfIdfVectorizer?', obtenemos una lista de todos los posibles hiperparámetros que queramos ajustar: la frecuencia 
+mínima y máxima de las palabras que se van a incluir, si queremos utilizar solo unigramas (palabras sueltas) o también bigramas 
+(combinaciones de dos palabras, véase el [@sec-ngram]). Para la regresión logística, podemos ver el hiperparámetro de regularización C, 
+que aplica una penalización a los modelos demasiado complejos. Podemos poner todos los valores de todos los parámetros que queramos 
+considerar en un diccionario, con una clave descriptiva (es decir, una cadena con el paso del *pipeline* seguido de dos guiones bajos y el 
+nombre del hiperparámetro) y una lista de todos los valores que queramos considerar como valor correspondiente.
+
+A continuación, el procedimiento 'gridsearch' calculará todas las combinaciones de todos los valores, utilizando la validación cruzada 
+(véase el [@sec-validation]). En nuestro ejemplo, tenemos $2 x 2 x 2 x 2 x 3 = 24$ modelos diferentes y $24 models x 5 folds = 120$ 
+modelos que calcular. Puede que el código tarde en ejecutarse.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-gridsearchlogreg}
+Una gridsearch para encontrar los mejores hiperparámetros para un *pipeline* compuesto por un vectorizador y un clasificador. Observa que podemos ajustar cualquier parámetro que el vectorizador o el clasificador acepten como entrada, no solo los cuatro hiperparámetros que elegimos en este ejemplo.
+
+```{python gridsearchlogreg-python}
+#| cache: true
+pipeline = Pipeline(
+    steps=[
+        ("vectorizer", TfidfVectorizer()),
+        ("classifier", LogisticRegression(solver="liblinear")),
+    ]
+)
+grid = {
+    "vectorizer__ngram_range": [(1, 1), (1, 2)],
+    "vectorizer__max_df": [0.5, 1.0],
+    "vectorizer__min_df": [0, 5],
+    "classifier__C": [0.01, 1, 100],
+}
+search = GridSearchCV(
+    estimator=pipeline, n_jobs=-1, param_grid=grid, scoring="accuracy", cv=5
+)
+search.fit(text_train, y_train)
+print(f"Best parameters: {search.best_params_}")
+pred = search.predict(text_test)
+print(short_classification_report(y_test, pred))
+```
+:::
+:::
+
+Observa que podríamos mejorar aún más nuestro modelo hasta alcanzar valores de precisión y exhaustividad de 0,90, si excluimos las 
+palabras extremadamente infrecuentes y extremadamente frecuentes, e incluimos tanto unigramas como bigramas (lo que, podemos especular, 
+nos ayuda a tener en cuenta el problema de "nada bueno" frente a "nada", "bueno"), y cambiando la penalización por defecto de $C=1$ a 
+$C=100$.
+
+Comparemos el rendimiento de nuestro modelo con un paquete de análisis de sentimientos estándar, en este caso Vader [@Hutto2014]. Para 
+cualquier texto, se calcularán directamente las puntuaciones de los sentimientos (más concretamente, una puntuación de positividad, una 
+puntuación de negatividad, una puntuación de neutralidad y una medida compuesta que las combina), sin necesidad de tener datos de 
+entrenamiento. Como puedes ver en el Ejemplo [-@exm-vader], este método es claramente inferior a un enfoque de aprendizaje automático 
+supervisado. Mientras que en casi todos los casos (excepto en $n=11$ casos), Vader fue capaz de hacer una elección (obtener puntuaciones 
+de 0 es un problema notorio en textos muy cortos), la precisión y la exhaustividad son claramente peores incluso que los del modelo base 
+simple con el que empezamos, y mucho peores que los del modelo final con el que terminamos. De hecho, pasamos por alto ¡la mitad! de las 
+críticas negativas. Hay muy pocas aplicaciones en el análisis de la comunicación en las que esto sería aceptable. Es importante destacar 
+que esto no se debe a que el paquete estándar que elegimos sea particularmente malo (al contrario, es comparativamente bueno), sino a las 
+limitaciones inherentes al análisis de sentimientos basado en diccionarios.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-vader}
+A modo de comparación, calculamos cómo se habría comportado un paquete de análisis de sentimientos estándar en esta tarea.
+
+```{python vader-python}
+#| cache: true
+nltk.download("vader_lexicon")
+analyzer = SentimentIntensityAnalyzer()
+pred = []
+for review in text_test:
+    sentiment = analyzer.polarity_scores(review)
+    if sentiment["compound"] > 0:
+        pred.append("pos")
+    elif sentiment["compound"] < 0:
+        pred.append("neg")
+    else:
+        pred.append("dont know")
+
+print(metrics.confusion_matrix(y_test, pred))
+print(metrics.classification_report(y_test, pred))
+```
+:::
+:::
+
+Debemos tener en cuenta, no obstante, que con este conjunto de datos elegimos una de las tareas de análisis de sentimientos más 
+sencillas: un conjunto de textos largos y bastante formales (en comparación con los mensajes cortos informales de las redes sociales), 
+que evalúan exactamente una entidad (una película) y que no son ambiguos en absoluto. Muchas de las aplicaciones que interesan a los 
+científicos de la comunicación son mucho menos sencillas. Por eso, por muy tentador que resulte utilizar un paquete estándar, es 
+necesario realizar una prueba exhaustiva basada, al menos, en algunos datos anotados por humanos.
+
+### Utilización del modelo {#sec-usingmodel}
+
+Hasta ahora, nos hemos centrado en entrenar y evaluar los modelos, casi olvidando por qué lo hacíamos en primer lugar: para predecir la 
+etiqueta de datos nuevos que no hemos anotado.
+
+Podríamos volver a entrenar el modelo cuando necesitemos utilizarlo, pero eso tiene dos inconvenientes: en primer lugar, como habrás 
+visto, puede llevar un tiempo considerable entrenarlo y, en segundo lugar, necesitas disponer de los datos de entrenamiento, lo que puede 
+ser un problema tanto en términos de espacio de almacenamiento como de derechos de autor y/o privacidad si quieres compartir tu 
+clasificador con otros.
+
+Por lo tanto, tiene sentido guardar tanto nuestro clasificador como nuestro vectorizador en un fichero, para poder recargarlos más tarde 
+(Ejemplo [-@exm-reuse]). Ten en cuenta que tienes que reutilizar ambos: las columnas de tu matriz de características serán diferentes (y 
+por lo tanto, completamente inútiles para el clasificador) cuando ajustes un nuevo vectorizador. Por lo tanto, ya no necesitas hacer 
+ningún ajuste, y solo tienes que ejecutar el método '.transform()' del vectorizador (ya ajustado) y el método '.predict()' del 
+clasificador (ya ajustado).
+
+En R, no existe un vectorizador que puedas guardar, pero, a diferencia de  Python, tanto tu DTM como tu clasificador incluyen los nombres 
+de las características, por lo que basta con guardar el clasificador (usando 'saveRDS(myclassifier, "myclassifier.rds")') y usarlo en una 
+nueva DTM más tarde. Sin embargo, debes recordar cómo construiste la DTM (por ejemplo, qué pasos de preprocesamiento seguiste), para 
+asegurarte de que las características son comparables.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-reuse}
+Guardar y cargar un vectorizador y un clasificador
+
+```{python reuse-python}
+#| cache: true
+# Make a vectorizer and train a classifier
+vectorizer = TfidfVectorizer(min_df=5, max_df=0.5)
+classifier = LogisticRegression(solver="liblinear")
+X_train = vectorizer.fit_transform(text_train)
+classifier.fit(X_train, y_train)
+
+# Save them to disk
+with open("myvectorizer.pkl", mode="wb") as f:
+    pickle.dump(vectorizer, f)
+with open("myclassifier.pkl", mode="wb") as f:
+    joblib.dump(classifier, f)
+
+# Later on, re-load this classifier and apply:
+new_texts = ["This is a great movie", "I hated this one.", "What an awful fail"]
+
+with open("myvectorizer.pkl", mode="rb") as f:
+    myvectorizer = pickle.load(f)
+with open("myclassifier.pkl", mode="rb") as f:
+    myclassifier = joblib.load(f)
+
+new_features = myvectorizer.transform(new_texts)
+pred = myclassifier.predict(new_features)
+
+for review, label in zip(new_texts, pred):
+    print(f"'{review}' is probably '{label}'.")
+
+```
+:::
+:::
+
+Llegará un momento en el que quieras comprender qué características utiliza el modelo para llegar a su predicción: en nuestro ejemplo, lo 
+que realmente diferencia a las mejores y a las peores reseñas. El ejemplo [-@exm-eli5] muestra cómo se puede hacer esto en una línea de 
+código utilizando 'eli5', un paquete que "explica [el modelo] como si tuvieras 5 años". Reutilizaremos la *pipeline* que construimos 
+anteriormente para proporcionar tanto el vectorizador como el clasificador a 'eli5' (si solo proporcionáramos el clasificador, los 
+nombres de las características serían identificadores internos en lugar de palabras legibles para humanos).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-eli5}
+Utilización de eli5 para obtener las características más predictivas
+
+```{python eli5-python}
+#| cache: true
+pipe = make_pipeline(
+    TfidfVectorizer(min_df=5, max_df=0.5),
+    LogisticRegression(solver="liblinear"),
+)
+pipe.fit(text_train, y_train)
+print(eli5.format_as_text(eli5.explain_weights(pipe)))
+
+```
+:::
+:::
+
+También podemos utilizar 'eli5' para explicar cómo ha llegado el clasificador a una predicción para un documento concreto, utilizando 
+distintos tonos de verde y rojo para explicar en qué medida han contribuido las distintas características a la clasificación, y en qué 
+dirección (Ejemplo [-@exm-eli5b]).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-eli5b}
+Uso de eli5 para explicar una predicción 
+## Python code
+```{python eli5b-python}
+#| cache: true
+# WvA: This doesn't work outside a notebook, should probably call other functions 
+# eli5.show_prediction(classifier, text_test[0], vec=vectorizer, targets=["pos"])
+```
+:::
+:::
+
+### Aprendizaje profundo {#sec-deeplearning}
+
+Los modelos de aprendizaje profundo se introdujeron en la [@sec-deeplearning] como una clase (relativamente) nueva de modelos en el 
+aprendizaje automático supervisado. Con el paquete 'keras' de Python se pueden definir varias arquitecturas de modelos, como las redes 
+neuronales convolucionales o recurrentes. Aunque está fuera del alcance de este capítulo dar un tratamiento detallado de la construcción 
+y el entrenamiento de modelos de aprendizaje profundo, en esta sección damos un ejemplo de uso de una red neuronal convolucional 
+utilizando encajes de palabras pre-entrenados. Instamos a todos los interesados en el aprendizaje automático para el análisis de textos a 
+que sigan estudiando el aprendizaje profundo, empezando por el excelente libro de @goldberg2017).
+
+Queremos destacar que ahora también se puede utilizar el paquete 'keras' para entrenar modelos de aprendizaje profundo en R, como se 
+muestra en el ejemplo. De forma similar a cómo funciona 'spacyr' ([@sec-nlp]), el paquete en realidad instala y ejecuta Python por debajo 
+de R, utilizando el paquete 'reticulate'. Aunque los modelos resultantes son bastante similares, es menos fácil construir y depurar los 
+modelos en R porque la mayor parte de la documentación y los ejemplos de la comunidad están escritos en Python. Por lo tanto, seguimos 
+recomendando a las personas que quieran sumergirse en el aprendizaje profundo que elijan Python en lugar de R.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-rnndata}
+Carga de los datos de sentimiento en holandés [de @vanatteveldt2021]
+
+::: {.panel-tabset}
+## Código Python
+```{python rnndata-python}
+url = "https://cssbook.net/d/dutch_sentiment.csv"
+h = pd.read_csv(url)
+h.head()
+```
+## Código R 
+```{r rnndata-r}
+#| cache: true
+url="https://cssbook.net/d/dutch_sentiment.csv"
+d = read_csv(url)
+head(d)
+```
+:::
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-rnnmodel}
+Aprendizaje profundo: Definición de una red neuronal convolucional
+
+::: {.panel-tabset}
+## Código Python
+```{python rnnmodel-python}
+# Tokenize texts
+tokenizer = Tokenizer(num_words=9999)
+tokenizer.fit_on_texts(h.lemmata)
+word_index = tokenizer.word_index
+sequences = tokenizer.texts_to_sequences(h.lemmata)
+tokens = pad_sequences(sequences, maxlen=1000)
+
+# Prepare embeddings layer
+fn = "w2v_320d_trimmed"
+if not os.path.exists(fn):
+    url = f"https://cssbook.net/d/{fn}"
+    print(f"Downloading embeddings from {url}")
+    urllib.request.urlretrieve(url, fn)
+embeddings = KeyedVectors.load_word2vec_format(fn)
+emb_matrix = np.zeros((len(tokenizer.word_index) + 1, embeddings.vector_size))
+for word, i in tokenizer.word_index.items():
+    if word in embeddings:
+        emb_matrix[i] = embeddings[word]
+embedding_layer = Embedding(
+    emb_matrix.shape[0],
+    emb_matrix.shape[1],
+    input_length=tokens.shape[1],
+    trainable=True,
+    weights=[emb_matrix],
+)
+
+# Configure the CNN model
+sequence_input = Input(shape=(tokens.shape[1],), dtype="int32")
+seq = embedding_layer(sequence_input)
+m = Conv1D(filters=128, kernel_size=3, activation="relu")(seq)
+m = GlobalMaxPooling1D()(m)
+m = Dense(64, activation="relu")(m)
+preds = Dense(1, activation="tanh")(m)
+m = Model(sequence_input, preds)
+m.summary()
+```
+## Código R
+```{r rnnmodel-r}
+#| cache: true
+text_vectorization = layer_text_vectorization(
+    max_tokens=10000, output_sequence_length=50)
+adapt(text_vectorization, d$lemmata)
+
+input = layer_input(shape=1, dtype = "string")
+output = input %>% 
+  text_vectorization() %>% 
+  layer_embedding(input_dim = 10000 + 1, 
+                  output_dim = 16) %>%
+  layer_conv_1d(filters=128, kernel_size=3, 
+                activation="relu") %>%
+  layer_global_max_pooling_1d() %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 1, activation = "tanh")
+
+model = keras_model(input, output)
+model
+```
+:::
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-rnn}
+Aprendizaje profundo: Entrenamiento y prueba del modelo
+
+::: {.panel-tabset}
+## Código Python
+```{python rnn-python}
+#| cache: true
+# Split data into train and test
+train_data = tokens[:4000]
+test_data = tokens[4000:]
+train_labels = h.value[:4000]
+test_labels = h.value[4000:]
+
+# Train model (note: remove 'verbose=0' to see progress)
+m.compile(loss="mean_absolute_error", optimizer=RMSprop(learning_rate=0.004))
+labels = np.asarray([[x] for x in train_labels])
+m.fit(train_data, labels, epochs=5, batch_size=128, verbose=0)
+
+output = m.predict(test_data, verbose=0)
+
+# Bin output into -1, 0, 1
+pred = [1 if x[0] > 0.3 else (0 if x[0] > -0.3 else -1) for x in output]
+correct = [x == y for (x, y) in zip(pred, test_labels)]
+acc = sum(correct) / len(pred)
+print(f"Accuracy: {acc}")
+
+```
+## Código R
+```{r rnn-r}
+#| cache: true
+# Split data into train and test
+d_train = d %>% slice_sample(n=4000)
+d_test = d %>% anti_join(d_train)
+
+# Train model
+compile(model, loss = "binary_crossentropy",
+        optimizer = "adam", metrics = "accuracy")
+fit(model, d_train$lemmata, d_train$value,
+  epochs = 10, batch_size = 512, 
+  validation_split = 0.2)
+# Validate against test data
+eval=evaluate(model, d_test$lemmata, d_test$value)
+print(glue("Accuracy: {eval['accuracy']}"))
+```
+:::
+:::
+:::
+
+Primero, en el [@exm-rnndata] se carga el conjunto de datos descrito por @vanatteveldt202, que consiste en titulares de noticias 
+económicas en holandés con el valor de los sentimientos. A continuación, en el [@exm-rnnmodel] se define un modelo que consta de varias 
+capas, que se corresponden aproximadamente con la [@fig-cnn]. En él, una capa de encaje transforma la entrada textual en un vector 
+semántico para cada palabra. Después, la capa convolucional define características (filtros) sobre ventanas de vectores, que luego se 
+agrupan en la capa de agrupación máxima. El resultado es un vector de rasgos detectados para cada documento, que se utiliza en una capa 
+densa (oculta) seguida de una capa de salida.
+
+Por último, en el [@exm-rnn] entrenamos el modelo con 4.000 documentos y lo probamos con los documentos restantes. El modelo de Python, 
+que utiliza incrustaciones de palabras preentrenadas (el archivo 'w2v_320d' descargado en la parte superior), alcanza una exactitud 
+mediocre de alrededor del 56\% (probablemente debido al bajo número de frases de entrenamiento). El modelo R, que entrena la capa de 
+incrustación como parte del modelo, obtiene peores resultados con un 44\%, ya que este modelo depende aún más de grandes datos de 
+entrenamiento para calcular correctamente la capa de encaje.
+
+## Análisis de texto no supervisado: Modelado de temas {#sec-unsupervised}
+
+En el [@sec-clustering] hemos visto cómo se pueden utilizar las técnicas de clústeres para encontrar patrones en los datos, como qué 
+casos o encuestados son más similares. Del mismo modo, en ámbitos como la investigación con encuestas, es habitual utilizar el análisis 
+factorial para descubrir (o confirmar) variables que forman una escala.
+
+En esencia, la idea que subyace a estas técnicas es similar: al comprender las regularidades de los datos (qué casos o variables se 
+comportan de forma similar), se puede describir la información relevante con menos datos. Además, suponiendo que las regularidades capten 
+información interesante y que las desviaciones de estas regularidades sean en su mayoría ruido sin interés, estos clústeres de casos o 
+variables pueden ser muy relevantes.
+
+Dado que una matriz documento-término (DTM) es "solo" una matriz, puedes aplicar estas técnicas de clustering a la DTM para encontrar 
+grupos de palabras o documentos. Puedes utilizar cualquiera de las técnicas descritas en el [@sec-chap-eda], y, en particular, técnicas 
+de clústeres como *k-means* (véase la [@sec-clustering]) para agrupar documentos que utilizan palabras similares.
+
+Te animamos a que juegues con este tipo de técnicas, para que descubras y comprendas cómo funcionan realmente. Sin embargo, también 
+debemos señalar que, en los últimos años, un conjunto de modelos denominados “modelos temáticos” (*topic models*) se han hecho 
+especialmente populares para el análisis no supervisado de textos. Muy parecido a lo que se haría con otras técnicas no supervisadas, en 
+el modelado de temas se agrupan palabras y documentos en "temas", formados por palabras y documentos que covarían. Si en una noticia 
+aparece la palabra "agricultura", es muy probable que aparezcan palabras como "granja" o "ganado", y es menos probable que aparezca una 
+palabra como "soldado". En otras palabras, las palabras "agricultura" y "granja" suelen aparecer en el mismo tipo de documentos, por lo 
+que puede decirse que forman parte del mismo tema. Del mismo modo, dos documentos que comparten muchas palabras probablemente traten del
+ mismo tema, y si sabes de qué tema trata uno (por ejemplo, un tema agrícola), podrás adivinar mejor qué palabras pueden aparecer en ese 
+documento (por ejemplo, "ganado").
+
+Así, podemos formular el objetivo del modelado de temas como: dado un corpus, encontrar un conjunto de $n$ temas, formado por palabras 
+y/o documentos específicos, que minimice los errores que cometeríamos si intentáramos reconstruir el corpus a partir de los temas. Esto 
+es similar a la regresión, en la que intentamos encontrar una línea que minimice el error de predicción.
+
+En las primeras investigaciones sobre clústeres de documentos, una técnica llamada Análisis Semántico Latente (LSA, por sus siglas en 
+inglés) utilizaba esencialmente una técnica de análisis factorial llamada Descomposición de Valores Singulares (véase el [@sec-pcasvd]) 
+sobre la DTM. Esta técnica ha dado resultados prometedores en la recuperación de información (es decir, en la búsqueda de documentos) y 
+en el estudio de la memoria humana y el uso del lenguaje. Sin embargo, presenta una serie de inconvenientes, como que las cargas 
+factoriales pueden ser difíciles de interpretar de forma sustantiva y que no es una buena forma de tratar palabras que pueden tener 
+múltiples significados [@lsa].
+
+### Asignación Latente de Dirichlet (LDA) {#sec-lda}
+
+La técnica más utilizada para el modelado de temas es la Asignación Latente de Dirichlet (LDA, por sus siglas en inglés, 
+*Latent Dirichlet Allocation*) [LDA, @blei03]. Aunque el objetivo de LDA es el mismo que el de las técnicas de clústeres, parte del otro 
+extremo con lo que se denomina un modelo generativo. Un modelo generativo es un modelo formal (simplificado) de cómo se supone que se han 
+generado los datos. Por ejemplo, si tuviéramos un modelo de regresión estándar que predijera los ingresos en función de la edad y el 
+nivel educativo, el modelo generativo implícito es que, para determinar los ingresos de alguien, se toman su edad y su nivel educativo, 
+se multiplican ambos por sus parámetros de regresión y, a continuación, se añade el intercepto y algún error aleatorio. Por supuesto, 
+sabemos que en realidad no es así como la mayoría de las empresas determinan los salarios, pero puede ser un punto de partida útil para 
+analizar, por ejemplo, la discriminación en el mercado laboral.
+
+El modelo generativo en el que se basa LDA funciona de la siguiente manera. Supongamos que eres periodista y escribes una noticia de 500 
+palabras. En primer lugar, elegirás uno o varios temas sobre los que escribir, por ejemplo, un 70\% sobre sanidad y un 30\% sobre 
+economía. A continuación, para cada palabra del artículo, eliges al azar uno de estos temas en función de su respectivo peso. Por último, 
+tomas una palabra al azar de entre las palabras asociadas a ese tema, donde de nuevo cada palabra tiene una cierta probabilidad para ese 
+tema. Por ejemplo, "hospital" puede tener una alta probabilidad en el caso de la asistencia sanitaria, mientras que "eficacia" puede 
+tener una probabilidad menor, pero aun así puede aparecer.
+
+Como hemos dicho, sabemos (o al menos sospechamos firmemente) que no es así como los periodistas escriben realmente sus artículos. Sin 
+embargo, este modelo generativo ayuda a comprender la interpretación sustantiva de los temas. Además, LDA es un modelo mixto, es decir, 
+permite que cada documento trate de varios temas y que cada palabra aparezca en varios temas. Esto concuerda con el hecho de que, en 
+muchos casos, nuestros documentos tratan múltiples temas, desde un artículo de prensa sobre los efectos económicos del virus COVID hasta 
+una respuesta a una encuesta abierta que contiene múltiples razones para apoyar a un determinado candidato. Además, como la asignación de 
+temas se basa en qué otras palabras aparecen en un documento, la palabra "pupila" podría asignarse a un tema de "biología" o a un tema de 
+"educación", dependiendo de si el documento habla de ojos y lentes o de profesores y aulas.
+
+![Asignación Latente de Dirichlet en notación ``Plate Model'' (fuente: Blei et al, 2003)](img/lda.png){#fig-lda}
+
+La figura [-@fig-lda] es una notación más formal del mismo modelo generativo. Empezando por la izquierda, para cada documento se elige un 
+conjunto de temas $\Theta$. Este conjunto de temas se extrae de una distribución de Dirichlet que a su vez tiene un parámetro $\alpha$ 
+(véase la nota). A continuación, para cada palabra se selecciona un único tema $z$ de los temas de ese documento. Por último, se elige 
+una palabra $w$ de entre las palabras de ese tema, controlada por un parámetro $\beta$.
+
+Ahora, si sabemos qué palabras y documentos pertenecen a qué temas, podemos empezar a generar los documentos del corpus. En realidad, la 
+situación es la contraria: conocemos los documentos y queremos conocer los temas. Por lo tanto, la tarea de LDA es encontrar los 
+parámetros que tienen la mayor probabilidad de generar estos documentos. Dado que solo se observan las frecuencias de palabras, se trata
+de un modelo de variable latente en el que queremos encontrar los valores más probables para el tema (latente) $z$ para cada palabra de 
+cada documento.
+
+Por desgracia, no existe una solución analítica sencilla para calcular estas asignaciones temáticas como en el caso de la regresión OLS. 
+Por lo tanto, al igual que otros modelos estadísticos más complicados, como la regresión multinivel, tenemos que utilizar una estimación 
+iterativa que optimice progresivamente la asignación para mejorar el ajuste hasta que converja.
+
+Un método de cálculo que se utiliza a menudo para LDA es el muestreo de Gibbs. En pocas palabras, comienza con una asignación aleatoria 
+de temas a las palabras. A continuación, en cada iteración, se reconsidera cada palabra y se vuelven a calcular los temas probables para 
+esa palabra teniendo en cuenta los demás temas de ese documento y los temas en los que aparece esa palabra en otros documentos. Así, si 
+un documento ya contiene varias palabras situadas en un tema determinado, es más probable que una palabra nueva se sitúe también en ese 
+tema. Tras un número suficiente de iteraciones, se llega a una solución.
+
+::: {.callout-note icon=false collapse=true}
+## La distribución Dirichlet y sus hiperparámetros
+
+La distribución de Dirichlet puede verse como una distribución sobre distribuciones multinomiales, es decir, cada extracción de una 
+distribución de Dirichlet da como resultado una distribución multinomial. Una forma fácil de visualizar esto es entender la distribución 
+de Dirichlet como una bolsa de dados. Se saca un dado de la bolsa, y cada dado es una distribución sobre los números del uno al seis.
+
+Esta distribución está controlada por un parámetro llamado alfa ($\alpha$), que a menudo se denomina hiperparámetro ya que controla cómo 
+se calculan otros parámetros (las distribuciones temáticas reales), de forma similar a, por ejemplo, la velocidad de aprendizaje en 
+muchos modelos de aprendizaje automático. Este hiperparámetro alfa controla qué tipo de dados hay en la bolsa. Un alfa alto significa que 
+los dados son generalmente justos, es decir, dan una distribución multinomial uniforme. Para los modelos temáticos, esto significa que 
+los documentos contendrán en general una distribución uniforme de múltiples temas. Un alfa bajo significa que cada dado es injusto en el 
+sentido de tener una fuerte preferencia por algún(os) número(s), como si estos números estuvieran ponderados. De esta manera se puede 
+dibujar un dado que prefiera doses, o un dado que prefiera seises. Para los modelos temáticos, esto significa que cada documento tiende a 
+tener uno o dos temas dominantes. Por último, los alfa pueden ser simétricos (es decir, los dados son injustos, pero al azar, por lo que 
+al final cada tema tiene las mismas posibilidades) o asimétricos (siguen siendo injustos, y ahora también favorecen más a unos temas que 
+a otros). Esto correspondería a que algunos temas tienen más probabilidades de aparecer en todos los documentos.
+
+En nuestra experiencia, la mayoría de los documentos tienen uno o dos temas dominantes, y algunos temas son más frecuentes en muchos 
+documentos que otros, sobre todo si se tiene en cuenta que a las palabras de procedimiento y los textos repetitivos también se las asigna 
+un tema, a menos que se filtren de antemano. Por lo tanto, generalmente recomendamos un alfa relativamente bajo y asimétrico, y para ello 
+'gensim' proporciona un algoritmo para encontrar, basándose en los datos, un alfa que corresponda a esta recomendación (especificando 
+`alpha='auto'`). En R, recomendaríamos escoger un alfa más bajo que el valor por defecto, probablemente alrededor de $\alpha=5/K$ y, 
+opcionalmente, intentar utilizar un alfa asimétrico si se encuentran palabras que aparecen en varios temas.
+
+Para comprender de forma más intuitiva los efectos del alfa, consulta [cssbook.net/lda](https://cssbook.net/lda), donde encontrarás 
+material adicional y visualizaciones.
+
+:::
+
+### Ajuste de un modelo LDA {#sec-ldafit}
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-lda}
+Modelo temático LDA de los discursos de Obama sobre el Estado de la Unión.
+
+::: {.panel-tabset}
+## Código Python
+```{python lda1-python}
+#| results: hide
+url = "https://cssbook.net/d/sotu.csv"
+sotu = pd.read_csv(url)
+p_obama = sotu[sotu.President == "Obama"].text.str.split("\n\n").explode()
+
+cv = CountVectorizer(min_df=0.01, stop_words="english")
+dtm = cv.fit_transform(p_obama)
+dtm
+corpus = matutils.Sparse2Corpus(dtm, documents_columns=False)
+vocab = dict(enumerate(cv.get_feature_names()))
+lda = LdaModel(
+    corpus, id2word=vocab, num_topics=10, random_state=123, alpha="asymmetric"
+)
+```
+```{python lda1-python-output}
+pd.DataFrame(
+    {
+        f"Topic {n}": [w for (w, tw) in words]
+        for (n, words) in lda.show_topics(formatted=False)
+    }
+)
+```
+## Código R
+```{r lda1-r}
+#| cache: true
+url = "https://cssbook.net/d/sotu.csv"
+sotu = read_csv(url) 
+p_obama = sotu %>% 
+  filter(President == "Obama") %>% 
+  corpus() %>% 
+  corpus_reshape("paragraphs")
+dfm = p_obama %>% 
+  tokens(remove_punct=T) %>%
+  dfm() %>% 
+  dfm_remove(stopwords("english")) %>%
+  dfm_trim(min_docfreq=.01,docfreq_type = "prop")
+dfm
+lda = dfm %>% 
+  convert(to = "topicmodels") %>%
+  LDA(k=10,control=list(seed=123, alpha = 1/1:10))
+
+terms(lda, 10)
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-lda] muestra cómo se puede ajustar un modelo LDA en Python o R. Como datos de ejemplo, utilizamos los discursos del 
+Estado de la Unión de Obama usando el corpus introducido en el capítulo [-@sec-chap-dtm]. Dado que un discurso de este tipo suele tocar 
+muchos temas diferentes, optamos por dividirlo primero por párrafos, ya que éstos serán más coherentes semánticamente (al menos en el 
+caso de Obama). En R, es tan fácil como utilizar la función 'corpus_reshape' para dividir los párrafos. En Python, tenemos que utilizar 
+'str.split' de pandas, que crea una lista o párrafos para cada texto y luego convertimos cada párrafo en una fila utilizando 'explode'. 
+Convirtiendo esto en una DTM obtenemos una matriz de tamaño razonable de 738 párrafos y 746 
+
+A continuación, ajustamos el modelo LDA real utilizando el paquete 'gensim' (Python) y 'topicmodels' (R). Antes de poder hacerlo, 
+necesitamos convertir el formato DTM a un formato aceptado por ese paquete. En Python, esto se hace utilizando la función de ayuda 
+'Sparse2Corpu's, mientras que en R se hace con la función 'convert' de 'quanteda'. A continuación, ajustamos el modelo, pidiendo que se 
+identifiquen 10 temas en estos párrafos. Hay tres cosas a tener en cuenta en esta línea. En primer lugar, especificamos una 'random seed' 
+de 123 para asegurarnos de que el análisis es replicable. En segundo lugar, especificamos una "asimetría" de '1/1:10', lo que significa 
+que el primer tema tiene alfa 1, el segundo 0,5, etc. (en R). En Python, en lugar de utilizar el valor predeterminado de 
+'alpha='symmetric'', establecemos 'alpha='asymmetric'', que utiliza la fórmula $\frac{1}{topic\_index + \sqrt{num\_topics}}$ para 
+determinar las *priors* (distribuciones de probabilidad a priori). Si no nos importa que el procesamiento tarde algo más, podemos 
+pincluso especificar 'alpha='auto'', que aprenderá una prioridad asimétrica a partir de los datos. Véase la nota sobre hiperparámetros 
+para más información. En tercer lugar, para Python también necesitamos especificar los nombres de los vocabularios, ya que no están 
+incluidos en la DTM.
+
+La última línea genera un marco de datos de las palabras más importantes de cada tema para una primera inspección (en Python deberás 
+utilizar una compresión de lista para separar las palabras de sus pesos y, después, convertirla en un marco de datos para facilitar su 
+visualización). Como puedes ver, la mayoría de los temas son interpretables y algo coherentes: por ejemplo, el tema 1 parece tratar sobre 
+educación y empleo, mientras que el tema 2 es la sanidad. También se ve que la palabra “*job*” (trabajo) aparece en varios temas 
+(probablemente porque el desempleo fue una preocupación generalizada durante el mandato de Obama). Por otra parte, algunos temas, como el 
+3, son relativamente más difíciles de interpretar a partir de esta tabla. Una posible razón es que no todos los párrafos tienen contenido 
+político. Por ejemplo, el primer párrafo de su primer Estado de la Unión fue: “*Madam Speaker, Mr. Vice President, Members of Congress, 
+the First Lady of the United States – she’s around here somewhere.*” (Señora Presidenta, señor Vicepresidente, miembros del Congreso, la 
+Primera Dama de los Estados Unidos... está por aquí en alguna parte.). Ninguna de estas palabras encaja realmente en un "tema" en el 
+sentido normal de ese término, pero a todas ellas hay que asignarles un tema en LDA. Por lo tanto, a menudo se ven temas "de 
+procedimiento" o "repetitivos" como el tema 3 en los resultados de LDA.
+
+Por último, ten en cuenta que también mostramos los resultados de R. Como 'gensim' utiliza un algoritmo de cálculo diferente (y 
+'scikit-learn' utiliza un tokenizador y una lista de palabras vacías diferentes), los resultados no serán idénticos, aunque deberían ser 
+mayormente similares.
+
+### Análisis de los resultados del modelo temático {#sec-ldainspect}
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-ldaresults}
+Análisis e inspección de resultados LDA.
+
+::: {.panel-tabset}
+## Código Python
+```{python ldaresults1-python}
+#| cache: true
+topics = pd.DataFrame(
+    [
+        dict(lda.get_document_topics(doc, minimum_probability=0.0))
+        for doc in corpus
+    ]
+)
+meta = sotu.iloc[p_obama.index].drop(columns=["text"]).reset_index(drop=True)
+tpd = pd.concat([meta, topics], axis=1)
+tpd.head()
+for docid in [622, 11, 322]:
+    print(f"{docid}: {list(p_obama)[docid]}")
+```
+## Código R
+```{r ldaresults1-r}
+#| cache: true
+topics = posterior(lda)$topics %>% 
+  as_tibble() %>% 
+  rename_all(~paste0("Topic_", .))
+meta = docvars(p_obama) %>% 
+  select(President:Date) %>%
+  add_column(doc_id=docnames(p_obama),.before=1)
+tpd = bind_cols(meta, topics) 
+head(tpd)
+for (id in c("text7.73", "text5.1", "text2.12")) {
+  text = as.character(p_obama)[id]
+  print(glue("{id}: {text}"))
+}
+```
+:::
+:::
+:::
+
+El ejemplo [-@exm-ldaresults] muestra cómo combinar los resultados del LDA (temas por documento) con los metadatos del documento 
+original. Este podría ser el punto de partida para análisis sustantivos de los resultados, por ejemplo, para investigar las relaciones 
+entre temas o entre, por ejemplo, la fecha o la afiliación a un partido, y el uso de temas.
+
+También puedes utilizarlo para buscar documentos específicos para leer. Por ejemplo, antes hemos señalado que el tema 3 es difícil de 
+interpretar. Como se puede ver en la tabla del ejemplo [-@exm-ldaresults] (que está ordenada por el valor del tema 3), la mayoría de los 
+documentos con mayor puntuación son el primer párrafo de cada discurso, que de hecho contiene el texto "*Madam Speaker*” 
+(Señora Presidenta) mencionado anteriormente. Los otros tres documentos son llamamientos al bipartidismo y al apoyo. Como puedes ver en 
+este ejemplo, inspeccionar cuidadosamente los documentos más importantes para cada tema es muy útil para entender los resultados.
+
+### Validación e inspección de modelos temáticos {#sec-ldavalidate}
+
+Como hemos visto en la subsección anterior, ejecutar un modelo temático es relativamente fácil. Sin embargo, eso no significa que el 
+modelo temático resultante sea siempre útil. Como ocurre con todas las técnicas de análisis de texto, la validación es la clave de un 
+buen análisis: ¿Está midiendo lo que quiere medir? ¿Y cómo se sabe?
+
+Para el modelado de temas (y podría decirse que para todos los análisis de texto), el primer paso después de ajustar un modelo es 
+inspeccionar los resultados y establecer la validez aparente. Las palabras más importantes por tema, como las enumeradas anteriormente, 
+son un buen punto de partida, pero te animamos a que también examines los documentos más importantes por tema para comprender mejor cómo 
+se utilizan las palabras en su contexto. Además, es recomendable inspeccionar las relaciones entre temas y examinar los documentos que 
+ocupan los primeros puestos en varios temas para comprender la relación.
+
+Si el único objetivo es obtener una comprensión exploratoria del corpus, por ejemplo, como primer paso antes de realizar un análisis de 
+diccionario o una codificación manual, quizá sea suficiente con la validez aparente. Para una validación más formal, sin embargo, depende 
+de la razón por la que se esté utilizando el modelado de temas.
+
+Si se utiliza el modelado de temas de forma totalmente no supervisada, es decir, sin un esquema analítico predefinido en mente, es 
+difícil evaluar si el modelo mide lo que se quiere medir, porque la cuestión es que no se sabe lo que se quiere medir. Dicho esto, sin 
+embargo, sí se puede tener el criterio general de que el modelo necesita lograr coherencia e interpretabilidad, es decir, que las 
+palabras y documentos que comparten un tema deben ser también similares semánticamente.
+
+En su excelente artículo sobre el tema, @chang09 proponen dos tareas formales para juzgarlo mediante codificación manual (o colectiva): 
+para la “intrusión de palabras”, se presenta una lista de palabras relacionadas con un mismo tema en la que se ha incluido una intrusa y 
+se pide a un codificador que identifique la palabra "extraña”. En la “intrusión temática”, se presenta al codificador un documento y un 
+conjunto de temas que aparecen en él, y se le pide que localice el tema que no estaba presente según el modelo. En ambas tareas, si el 
+codificador no es capaz de identificar la palabra o el tema intrusos, parece que el modelo no se ajusta a nuestra noción intuitiva de 
+"de qué va" o similitud semántica. Quizá la conclusión más interesante sea que las medidas de bondad de ajuste, como la perplejidad[^1], 
+no predicen bien la interpretabilidad de los modelos resultantes.
+
+Si utilizas los modelos temáticos de una forma más confirmatoria, es decir, si deseas que los temas coincidan con algún tipo de 
+categorización predefinida, deberías utilizar las técnicas por excelencia habituales para la validación: codifica una muestra aleatoria 
+suficientemente grande de documentos con tus categorías predefinidas y comprueba si los temas LDA coinciden con esas categorías. Sin 
+embargo, en estos casos suele ser mejor utilizar un diccionario o una técnica de análisis supervisado, ya que los modelos de temas a 
+menudo no capturan exactamente nuestras categorías. Al fin y al cabo, las técnicas no supervisadas destacan principalmente en los 
+análisis ascendentes y exploratorios (Sección [-@sec-deciding]).
+
+### Más allá del LDA {#sec-beyondlda}
+
+Este capítulo se ha centrado en el modelado de temas LDA básico o "vainilla". Sin embargo, desde su publicación, se han propuesto una 
+gran cantidad de variaciones y extensiones del LDA. Entre ellas se incluyen, por ejemplo, los modelos temáticos dinámicos (que incorporan 
+el tiempo; @dynamiclda) y los modelos temáticos correlacionados (que modelan explícitamente la correlación entre temas; @correlatedlda). 
+Aunque la descripción detallada de estos modelos queda fuera del alcance de este libro, se recomienda al lector interesado que se informe 
+sobre ellos.
+
+Destacamos especialmente los modelos temáticos estructurales (paquete 'stm' de R; @stm), que permiten modelar covariables como 
+predictores de temas o palabras. Esto permite, por ejemplo, modelar cambios de tema a lo largo del tiempo o palabras diferentes para el 
+mismo tema en función de, por ejemplo, presidentes republicanos o demócratas.
+
+Los usuarios de Python deberían consultar *Hierarchical Topic Modeling* [@hierarchicallda]. En el modelado de temas jerárquico, en lugar 
+de que el investigador especifique un número fijo de temas, el modelo devuelve una jerarquía de temas, desde unos pocos temas generales 
+hasta un gran número de temas específicos, lo que permite una exploración y un análisis más flexibles de los datos.
+
+[^1]: La perplejidad es una medida para comparar y evaluar modelos temáticos utilizando la log-verosimilitud con el fin de calcular lo bien que un modelo predice una muestra. Consulte la nota "cuántos temas" a continuación para ver un código de ejemplo sobre cómo calcular la perplejidad.
+
+::: {.callout-note icon=false collapse=true}
+## ¿Cuántos temas?
+
+En el modelado de temas, las opciones más importantes para el investigador son el número de temas y el valor de alfa. Estas opciones se 
+denominan hiperparámetros, ya que determinan cómo se encuentran los parámetros del modelo (por ejemplo, palabras por tema).
+
+No existe una buena solución teórica para determinar el número "correcto" de temas para un corpus y una pregunta de investigación 
+determinados. Así pues, un enfoque sensato puede ser pedir al ordenador que pruebe muchos modelos y ver cuál funciona mejor. 
+Lamentablemente, al tratarse de un método no supervisado (inductivo), no existe una métrica única que determine la calidad de un modelo 
+temático.
+
+Existen varias métricas de este tipo propuestas en la literatura, de las que presentaremos dos. La “perplejidad” (*perplexity*) es una 
+puntuación que mide lo bien que el modelo LDA puede ajustarse (predecir) a la distribución real de palabras (o en otras palabras: lo 
+"perplejo" que está el modelo viendo el corpus). La coherencia (*coherence*) es una medida de la coherencia semántica de los temas 
+mediante la comprobación de la frecuencia con la que el token principal aparece en los documentos de cada tema [@mimno11].
+
+El código de más abajo muestra cómo pueden calcularse para un rango de recuentos de temas, y el mismo código podría usarse para probar 
+diferentes valores de alfa. Para ambas medidas, los valores más bajos son mejores, y , esencialmente, ambos van disminuyendo a medida que 
+se añaden más temas. Lo que estás buscando es el punto de inflexión (o "punto de codo") donde se pasa de una fuerte disminución a una 
+disminución más gradual. En el caso de la coherencia, este punto parece situarse en 10 temas, mientras que en el caso de la perplejidad 
+se sitúa en 20 temas.
+
+Sin embargo, debemos hacer dos advertencias muy importantes. En primer lugar, estas métricas no sustituyen a la validación humana y el 
+mejor modelo según estas métricas no siempre es el modelo más interpretable o coherente. Según nuestra experiencia, la mayoría de las 
+métricas dan un número de temas superior al que sería óptimo desde el punto de vista de la interpretabilidad, pero, por supuesto, eso 
+también depende de cómo operacionalicemos la interpretabilidad. No obstante, estos números de temas son probablemente más indicativos de 
+un rango de recuentos que deberían inspeccionarse manualmente, en lugar de dar una respuesta definitiva.
+
+En segundo lugar, el código que se muestra a continuación se ha escrito para que sea fácil de entender y rápido de ejecutar. Para un uso 
+real en un proyecto de investigación, aconsejamos incluir una gama más amplia de recuentos de temas y también variar el α. Además, es 
+conveniente ejecutar cada recuento varias veces para obtener una indicación de la varianza, así como un único punto (es muy probable que 
+el mínimo local para la coherencia en k=10 sea un valor atípico que desaparecerá si se promedian más ejecuciones). Por último, 
+especialmente para una medida de bondad de ajuste como la perplejidad, es mejor dividir los datos en un conjunto de entrenamiento y otro 
+de prueba (para más información, consulte la sección [-@sec-workflow]).
+
+::: {.panel-tabset}
+## Código Python
+```{python ldacoherence-python}
+#| cache: true
+#| results: hide
+result = []
+for k in [5, 10, 15, 20, 25, 30]:
+    m = LdaModel(
+        corpus,
+        num_topics=k,
+        id2word=vocab,
+        random_state=123,
+        alpha="asymmetric",
+    )
+    perplexity = m.log_perplexity(corpus)
+    coherence = CoherenceModel(
+        model=m, corpus=corpus, coherence="u_mass"
+    ).get_coherence()
+    result.append(dict(k=k, perplexity=perplexity, coherence=coherence))
+
+result = pd.DataFrame(result)
+result.plot(x="k", y=["perplexity", "coherence"])
+plt.show()
+
+```
+## Código R
+```{r ldacoherence-r}
+#| cache: true
+results = list()
+dtm = convert(dfm, to="topicmodels")
+for (k in c(5, 10, 15, 20, 25, 30)) {
+    alpha = 1/((1:k)+sqrt(k))
+    lda = LDA(dtm,k=k,control=list(seed=99,alpha=alpha))
+    results[[as.character(k)]] = data.frame(
+      perplexity=perplexity(lda),
+      coherence=mean(topic_coherence(lda,dtm)))
+}
+bind_rows(results, .id="k") %>% 
+  mutate(k=as.numeric(k)) %>%
+  pivot_longer(-k) %>% 
+  ggplot() + 
+  geom_line(aes(x=k, y=value)) + 
+  xlab("Number of topics") + 
+  facet_grid(name ~ ., scales="free")
+```
+:::
+:::
+
+
+```{bash cleanup}
+#| echo: false
+rm -f myclassifier.pkl myvectorizer.pkl
+```

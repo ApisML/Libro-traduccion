@@ -1,0 +1,53 @@
+::: {.callout-note icon=false collapse=true}
+## ¿Te importan los niños?
+
+Independientemente de si utiliza XPATHS o selectores CSS para especificar qué parte de la página le interesa, a menudo ocurre que hay 
+otros elementos dentro de ella. Dependiendo de si deseas recuperar también el texto de estos elementos o no, tendrás que utilizar 
+diferentes enfoques. Los siguientes ejemplos de código muestran algunas de estas diferencias.
+
+Añadiendo '/text()' al XPATH se obtiene exactamente el texto que hay en el propio elemento, incluidos los saltos de línea que haya en el 
+código fuente. En Python, la misma información está presente en la propiedad '.text' de los elementos (pero sin los saltos de línea):
+
+::: {.panel-tabset}
+
+## Código Python
+```{python htmlparse2-python1}
+print(tree.xpath("//div[@class='restaurant']/text()"))
+print([e.text for e in tree.xpath("//div[@class='restaurant']")])
+```
+## Código R
+```{r htmlparse2-r1}
+page %>% html_nodes(xpath="//div[@class='restaurant']/text()")
+```
+:::
+
+También puedes utilizar la propiedad '.text_content' (en Python) o la función 'html_text' (en R) para acceder al texto completo de un 
+elemento, incluidos los hijos:
+
+::: {.panel-tabset}
+
+## Código Python
+```{python htmlparse2-python2}
+print([e.text_content() for e in tree.xpath("//div[@class='restaurant']")])
+print([e.text_content() for e in tree.getroot().cssselect(".restaurant")])
+```
+## Código R
+```{r htmlparse2-r2}
+page %>% html_nodes(xpath="//div[@class='restaurant']") %>% html_text()
+page %>% html_nodes(".restaurant") %>% html_text()
+```
+:::
+Y puedes hacer lo mismo pero utilizando CSS en lugar de XPATH:
+
+::: {.panel-tabset}
+
+## Código Python
+```{python htmlparse2-python3}
+print([e.text_content() for e in tree.getroot().cssselect(".restaurant")])
+```
+## Código R
+```{r htmlparse2-r3}
+page %>% html_nodes(".restaurant") %>% html_text()
+```
+:::
+:::

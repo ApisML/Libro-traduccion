@@ -1,0 +1,1257 @@
+# Datos de redes {#sec-chap-network}
+
+{{< include common_setup.qmd >}}
+
+
+**Resumen.**
+
+Muchos tipos de datos, especialmente los datos de medios sociales, pueden representarse como redes o grafos. Este capítulo presenta 
+igraph (R y Python) y networkx (Python) para mostrar cómo tratar este tipo de datos, realizar análisis de redes sociales (ARS) y 
+representarlos visualmente.
+
+**Palabras clave.** Grafos, análisis de redes sociales
+
+**Objetivos:**
+
+-  Comprender cómo se pueden representar y visualizar las redes
+-  Realizar una descripción básica de redes
+-  Realizar análisis de redes sociales
+
+::: {.callout-note icon=false collapse=true}
+## Paquetes utilizados en este capítulo
+
+Este capítulo utiliza funciones del paquete 'igraph' en R y del paquete 'networkx' en Python. En Python también utilizaremos los paquetes 
+'python-louvain' que introduce las funciones de agrupamiento de Louvain en 'community'.
+
+Puedes instalar estos paquetes con el código de abajo si es necesario (ver Sección  [-@sec-installing] para más detalles):
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter13install-python}
+#| eval: false
+!pip3 install networkx matplotlib python-louvain community
+```
+## Código R
+```{r chapter13install-r}
+#| eval: false
+# Common packages used in this book
+install.packages(c("glue", "tidyverse"))
+# Packages for network analysis
+install.packages(c("igraph"))
+```
+:::
+Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter13library-python}
+import urllib.request
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import networkx.algorithms.community as nxcom
+import community
+import community.community_louvain as community_louvain
+
+```
+## Código R
+```{r chapter13library-r}
+library(glue)
+library(igraph)
+library(tidyverse)
+```
+:::
+:::
+
+## Representación y visualización de redes {#sec-graph}
+
+¿Cómo pueden ayudarnos las redes a comprender y representar los problemas sociales? ¿Cómo podemos utilizar las redes sociales como fuente 
+de análisis de redes a pequeña y gran escala? Dada la enorme cantidad de datos que se producen cada minuto en las redes sociales, estas 
+preguntas adquieren una gran relevancia para el análisis computacional de la comunicación. De hecho, aunque la teoría de grafos y el 
+Análisis de Redes Sociales (ARS o, en inglés, *Social Network Analisys* o SNA) ya se utilizaban durante las dos últimas décadas del siglo 
+XX, podemos decir que la adopción generalizada de Internet y, en especial, de servicios de redes sociales como Twitter y Facebook, desató 
+realmente su potencial. En primer lugar, los ordenadores facilitaron el cálculo de las medidas de los grafos y la visualización de sus 
+estructuras generales y comunitarias. En segundo lugar, la aparición de un gran espectro de sitios de redes sociales (es decir, Facebook, 
+Twitter, Sina Weibo, Instagram, Linkedin, etc.) produjo un número sin precedentes de interacciones sociales en línea, lo que sin duda 
+sigue siendo un escenario excelente para aplicar este marco. Así pues, el uso de las redes sociales como fuente para el ARS se ha 
+convertido en una de las áreas más apasionantes y prometedoras en el campo de las ciencias sociales computacionales.
+
+Esta sección presenta un breve resumen de las estructuras de grafos (nodos y aristas) y tipos (dirigidos, ponderados, etc.), junto con 
+sus representaciones en R y Python. También se incluyen representaciones visuales y análisis básico de grafos.
+
+
+Un grafo es una estructura derivada de un conjunto de elementos y sus relaciones. El elemento puede ser una neurona, una persona, una 
+organización, una calle o incluso un mensaje, y la relación puede ser una sinapsis, un viaje, un acuerdo comercial, una conexión motriz o 
+una transmisión de contenidos. Se trata de una forma diferente de representar, modelar y analizar el mundo: en lugar de tener filas y 
+columnas como en un marco de datos típico, en un grafo tenemos nodos (componentes) y aristas (relaciones). La representación matemática 
+de un grafo $G=(V,E)$ se basa en un conjunto de nodos (también llamados “vértices”) $\{v_{1}, v_{2},\ldots v_{n}\}$ y de aristas o pares 
+de nodos: $\{(v_{1}, v_{2}), (v_{1}, v_{3}), (v_{2},v_{3}) \ldots (v_{m}, v_{n}) \in E\}$. Como puedes imaginar, es un procedimiento muy 
+versátil para representar muchos tipos de situaciones que incluyen interacciones sociales, mediáticas o políticas. De hecho, si nos 
+remontamos a 1934 podemos ver cómo la teoría de grafos (establecida originalmente en el siglo XVIII) se aplicó por primera vez a la 
+representación de interacciones sociales [@moreno1934shall] para medir la atracción y repulsión de los individuos de un grupo social[^1].
+
+El enfoque de redes en ciencias sociales tiene un enorme potencial para modelar y predecir acciones sociales. Existen pruebas empíricas 
+de que podemos aplicar con éxito este marco para explicar distintos fenómenos como las opiniones políticas, la obesidad y la felicidad, 
+dada la influencia de nuestros amigos (o incluso de los amigos de nuestros amigos) sobre nuestro comportamiento [@christakis2009connected]. 
+La red creada por esta sofisticada estructura de conexiones humanas y sociales es un escenario ideal para comprender lo cerca que estamos 
+unos de otros en términos de grados de separación [@watts2004six] en dinámicas sociales a pequeña (por ejemplo, una escuela) y gran (por 
+ejemplo, una pandemia mundial) escala. Además, el enfoque de red puede ayudarnos a rastrear la propagación, ya sea de un virus en 
+epidemiología, o de una noticia falsa en ciencias políticas y sociales, como en el trabajo de @vosoughi2018spread.
+
+Ahora, vamos a mostrarte cómo crear y visualizar estructuras de grafos en R y Python. Como hemos mencionado anteriormente, la estructura 
+de un grafo se basa en nodos y aristas, que son los componentes fundamentales de cualquier red. Supongamos que queremos modelar la 
+estructura social de cinco políticos estadounidenses en 2017 (Donald Trump, Bernie Sanders, Hillary Clinton, Barack Obama y John McCain), 
+basándonos en sus conexiones imaginarias en Facebook (*friending*) y Twitter (*following*)[^2]. Técnicamente, la base de cualquier grafo 
+es una lista de aristas (escritas como pares de nodos que indican las relaciones) y una lista de nodos (¡Algunos pueden estar aislados y 
+sin ninguna conexión!). Por ejemplo, la amistad en Facebook entre dos políticos se expresaría normalmente como dos cadenas separadas por 
+comas (por ejemplo, "Hillary Clinton", "Donald Trump"). En el ejemplo [-@exm-graph] utilizamos las bibliotecas 'igraph' (R)[^3] y 
+'networkx' (Python) para crear desde cero un grafo sencillo con cinco nodos y cinco aristas, utilizando la estructura de pares de nodos 
+antes mencionada (fíjate en que solo incluimos las aristas, mientras que los vértices se generan automáticamente).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-graph}
+Red imaginaria de Facebook de 5 políticos estadounidenses
+
+::: {.panel-tabset}
+
+## Código Python
+```{python graph-python}
+edges = [
+    ("Hillary Clinton", "Donald Trump"),
+    ("Bernie Sanders", "Hillary Clinton"),
+    ("Hillary Clinton", "Barack Obama"),
+    ("John McCain", "Donald Trump"),
+    ("Barack Obama", "Bernie Sanders"),
+]
+g1 = nx.Graph()
+g1.add_edges_from(edges)
+print("Nodes:", g1.number_of_nodes(), "Edges: ", g1.number_of_edges())
+print(g1.edges)
+```
+## Código R
+```{r graph-r}
+edges=c("Hillary Clinton", "Donald Trump", 
+        "Bernie Sanders","Hillary Clinton", 
+        "Hillary Clinton",  "Barack Obama", 
+        "John McCain", "Donald Trump", 
+        "Barack Obama", "Bernie Sanders")
+g1 = make_graph(edges, directed = FALSE)
+g1
+```
+:::
+:::
+:::
+
+En ambos casos generamos un objeto grafo 'g1' que contiene la estructura del grafo y diferentes atributos (como 'number_of_nodes()' en 
+'networkx'). Se pueden añadir y eliminar nodos y aristas al o de este grafo inicial, o incluso modificar los nombres de los vértices. Una 
+de las funciones más útiles es la visualización del grafo ('plot' en 'igraph' y 'draw' o 'draw_networkx' en 'networkx'). El ejemplo 
+[-@exm-visgraph] muestra una visualización básica de la red imaginaria de amistades de cinco políticos estadounidenses en Facebook.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-visgraph}
+Visualización de un grafo simple.
+
+::: {.panel-tabset}
+## Código Python
+```{python visgraph-python}
+#| results: hide
+nx.draw_networkx(g1)
+
+pos = nx.shell_layout(g1)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r visgraph-r}
+plot(g1)
+```
+:::
+:::
+:::
+
+Utilizando la terminología de redes, tanto los nodos como las aristas pueden ser adyacentes o no. En la figura podemos decir que los 
+nodos que representan a Donald Trump y John McCain son adyacentes porque están conectados por una arista que representa su amistad. 
+Además, las aristas que representan las amistades entre John McCain y Donald Trump, y Hillary Clinton y Donald Trump, también son 
+adyacentes porque comparten un nodo (Donald Trump).
+
+Ahora que ya conoces la terminología pertinente y los fundamentos del trabajo con grafos, quizá te preguntes: ¿Y si quiero hacer lo mismo 
+con Twitter? ¿Puedo representar las relaciones entre usuarios de la misma forma que Facebook? Pues bien, cuando se modelan grafos es 
+sumamente importante tener una definición clara de lo que se quiere decir con los nodos y aristas, para mantener una interpretación 
+coherente. Tanto en Facebook como en Twitter, los nodos representan a los usuarios, pero las aristas pueden no significar lo mismo. En 
+Facebook, una arista representa la amistad entre dos usuarios y este vínculo no tiene dirección (una vez que un usuario acepta una 
+solicitud de amistad, ambos usuarios se convierten en amigos). En el caso de Twitter, una arista puede representar varias relaciones. Por 
+ejemplo, puede significar que dos usuarios se siguen mutuamente, o que un usuario sigue a otro, ¡Pero no al revés! En este último caso, 
+la arista tiene una dirección, que puedes marcar en el grafo. Si das direcciones a las aristas, estarás creando un grafo dirigido. En el 
+Ejemplo [-@exm-directed] las direcciones se declaran con el orden del par de nodos: la primera posición es para el "desde" y la segunda 
+para el "hacia". En 'igraph' (R) establecemos el argumento 'directed' de la función 'make_graph' en 'TRUE'. En 'networkx' (Python), se 
+utiliza la clase 'DiGraph' en lugar de 'Graph' para crear el objeto 'g2'.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-directed}
+Creación de un grafo dirigido
+
+::: {.panel-tabset}
+## Código Python
+```{python directed-python}
+edges += [
+    ("Hillary Clinton", "Bernie Sanders"),
+    ("Barack Obama", "Hillary Clinton"),
+]
+g2 = nx.DiGraph()
+g2.add_edges_from(edges)
+print("Nodes:", g2.number_of_nodes(), "Edges: ", g2.number_of_edges())
+print(g2.edges)
+
+```
+## Código R
+```{r directed-r}
+edges = c(edges, 
+          "Hillary Clinton", "Bernie Sanders",
+          "Barack Obama","Hillary Clinton")
+g2 = make_graph(edges, directed = TRUE)
+print(g2)
+```
+:::
+:::
+:::
+
+En el nuevo grafo, las aristas representan la acción de seguir a un usuario en Twitter. La primera arista que definimos indica que 
+Hillary Clinton sigue a Donald Trump, pero no al contrario. Para dotar al grafo dirigido de más flechas incluimos en 'g2' dos nuevas 
+aristas (Obama sigue a Clinton y Clinton sigue a Sanders), con lo que podemos tener un par de relaciones recíprocas además de las 
+unidireccionales. Puedes visualizar el grafo dirigido en el Ejemplo [-@exm-visdirected] y ver cómo las aristas contienen ahora flechas 
+útiles.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-visdirected}
+Visualización de un grafo dirigido.
+
+::: {.panel-tabset}
+## Código Python
+```{python visdirected-python}
+#| results: hide
+nx.draw_networkx(g2)
+
+pos = nx.shell_layout(g2)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r visdirected-r}
+plot(g2)
+```
+:::
+:::
+:::
+
+Las aristas y los nodos de nuestro grafo también pueden tener pesos, además de características o atributos. Cuando las aristas tienen 
+valores específicos que representan una característica de cada par de nodos (por ejemplo, la distancia entre dos ciudades) decimos que 
+tenemos un grafo ponderado. Este tipo de grafo es extremadamente útil para crear una representación más precisa de una red. Por ejemplo, 
+en nuestra hipotética red de políticos estadounidenses en Twitter ('g2') podemos asignar pesos a las aristas incluyendo el número de “me 
+gusta” que cada político ha dado al usuario seguido. Este valor puede servir como medida de la distancia entre los nodos (es decir, 
+cuanto mayor sea el número de "me gusta", menor será la distancia social). En el ejemplo [-@exm-weighted] incluimos los pesos de cada arista: 
+Clinton ha dado 5 me gusta a los tuits de Trump, Sanders 20 a los mensajes de Clinton, y así sucesivamente. En el gráfico se puede ver 
+cómo cambia el tamaño de las líneas entre los nodos en función de los pesos.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-weighted}
+Visualización de un grafo ponderado
+
+::: {.panel-tabset}
+## Código Python
+```{python weighted-python}
+#| results: hide
+edges_w = [
+    ("Hillary Clinton", "Donald Trump", 5),
+    ("Bernie Sanders", "Hillary Clinton", 20),
+    ("Hillary Clinton", "Barack Obama", 30),
+    ("John McCain", "Donald Trump", 40),
+    ("Barack Obama", "Hillary Clinton", 50),
+    ("Hillary Clinton", "Bernie Sanders", 10),
+    ("Barack Obama", "Bernie Sanders", 15),
+]
+g2 = nx.DiGraph()
+g2.add_weighted_edges_from(edges_w)
+
+edge_labels = dict(
+    [
+        (
+            (
+                u,
+                v,
+            ),
+            d["weight"],
+        )
+        for u, v, d in g2.edges(data=True)
+    ]
+)
+
+nx.draw_networkx_edge_labels(g2, pos, edge_labels=edge_labels)
+nx.draw_networkx(g2, pos)
+
+pos = nx.spring_layout(g2)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r weighted-r}
+E(g2)$weight = c(5, 20, 30, 40, 50, 10, 15)
+plot(g2, edge.label = E(g2)$weight)
+```
+:::
+:::
+:::
+
+Puedes incluir más propiedades a los componentes de tu grafo. Imagina que quieres utilizar el número de seguidores de cada político para 
+determinar el tamaño de los nodos, o el género del usuario para establecer un color. En el Ejemplo [-@exm-weighted2] añadimos la variable 
+seguidores a cada uno de los nodos y pedimos a los paquetes que utilizaran este valor como parámetro de tamaño (de hecho, multiplicamos 
+los valores por 0.001 para hacerlo realista en la pantalla, pero también podrías normalizar estos valores cuando fuera necesario). 
+También incluimos la variable 'party' (partido) que posteriormente se recodificó como 'color' para representar a los republicanos con el 
+rojo y a los demócratas con el azul. Puede que necesites añadir otras características a los nodos o aristas, pero con este ejemplo tienes 
+una visión general de lo que puedes hacer.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-weighted2}
+Visualización de un grafo ponderado incluyendo el tamaño de los vértices.
+
+::: {.panel-tabset}
+## Código Python
+```{python weighted2-python}
+#| results: hide
+attrs = {
+    "Hillary Clinton": {"followers": 100000, "party": "Democrat"},
+    "Donald Trump": {"followers": 200000, "party": "Republican"},
+    "Bernie Sanders": {"followers": 50000, "party": "Democrat"},
+    "Barack Obama": {"followers": 500000, "party": "Democrat"},
+    "John McCain": {"followers": 40000, "party": "Republican"},
+}
+nx.set_node_attributes(g2, attrs)
+size = nx.get_node_attributes(g2, "followers")
+size = list(size.values())
+
+colors = nx.get_node_attributes(g2, "party")
+colors = list(colors.values())
+colors = [w.replace("Democrat", "blue") for w in colors]
+colors = [w.replace("Republican", "red") for w in colors]
+
+nx.draw_networkx_edge_labels(g2, pos, edge_labels=edge_labels)
+nx.draw_networkx(
+    g2, pos, node_size=[x * 0.002 for x in size], node_color=colors
+)
+
+pos = nx.spring_layout(g2)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r weighted2-r}
+V(g2)$followers = c(100000, 200000,
+                    50000,500000, 40000)
+V(g2)$party = c("Democrat", "Republican",
+            "Democrat", "Democrat", "Republican")
+V(g2)$color = V(g2)$party
+V(g2)$color = gsub("Democrat", "blue", 
+                   V(g2)$color)
+V(g2)$color = gsub("Republican", "red",
+                   V(g2)$color)
+plot(g2, edge.label = E(g2)$weight,
+     vertex.size = V(g2)$followers*0.0001)
+
+```
+:::
+:::
+:::
+
+Podemos mencionar un tercer tipo de grafos: los subgrafos inducidos, que son de hecho subconjuntos de nodos y aristas de un grafo mayor. 
+Podemos representar estos subconjuntos como $G' = V', E'$. En el ejemplo [-@exm-subgraph] extraemos dos subgrafos inducidos de nuestro 
+grafo original de políticos estadounidenses en Facebook ('g1'): el primero ('g3') se construye con las aristas que contienen solo nodos 
+demócratas, y el segundo ('g4') con aristas formadas por nodos republicanos. También existe un caso especial de subgrafo inducido, 
+denominado *clique* (clan o camarilla), que es un subconjunto independiente o completo de un grafo no dirigido (cada nodo de la camarilla 
+debe estar conectado al resto de nodos del subgrafo).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-subgraph}
+Subgrafos inducidos de demócratas y republicanos
+
+::: {.panel-tabset}
+## Código Python
+```{python subgraph-python}
+# Democrats:
+g3 = g1.subgraph(["Hillary Clinton", "Bernie Sanders", "Barack Obama"])
+print("Nodes:", g3.number_of_nodes(), "Edges: ", g3.number_of_edges())
+print(g3.edges)
+
+# Republicans:
+g4 = g1.subgraph(["Donald Trump", "John McCain"])
+print("Nodes:", g4.number_of_nodes(), "Edges: ", g4.number_of_edges())
+print(g4.edges)
+
+```
+## Código R
+```{r subgraph-r}
+# Democrats:
+g3 = induced_subgraph(g1, c(1,3,4))
+print(g3)
+
+# Republicans:)
+g4 = induced_subgraph(g1, c(2,5))
+print(g4)
+```
+:::
+:::
+:::
+
+Ten en cuenta que en la visualización de redes siempre puedes configurar el tamaño, la forma y el color de tus nodos o aristas. Queda 
+fuera del alcance de este libro entrar en detalles más técnicos, pero puedes consultar la documentación en línea de las bibliotecas 
+recomendadas.
+
+Hasta ahora hemos creado redes desde cero, pero la mayoría de las veces crearás el grafo a partir de un archivo de datos existente. Esto 
+significa que necesitarás un archivo de datos de entrada con la estructura del grafo y algunas funciones para cargarlos como objetos en 
+tu espacio de trabajo en R o Python. Puedes importar datos de grafos desde diferentes formatos específicos (por ejemplo, 
+*Graph Modeling Language* (GML), GraphML, JSON, etc.), pero un procedimiento popular y estandarizado es obtener los datos desde un 
+archivo de texto que contenga una lista de aristas o una matriz. En el Ejemplo [-@exm-read] ilustramos cómo leer datos de grafos en 
+'igraph' y 'networkx' utilizando una simple lista de adyacencia que corresponde a nuestra red imaginaria original de Twitter de políticos 
+estadounidenses ('g2').
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-read}
+Lectura de un grafo desde un fichero
+
+::: {.panel-tabset}
+## Código Python
+```{python read-python}
+url = "https://cssbook.net/d/poltwit.csv"
+fn, _headers = urllib.request.urlretrieve(url)
+g2 = nx.read_adjlist(fn, create_using=nx.DiGraph, delimiter=",")
+print("Nodes:", g2.number_of_nodes(), "Edges: ", g2.number_of_edges())
+
+```
+## Código R
+```{r read-r}
+edges = read_csv(
+"https://cssbook.net/d/poltwit.csv",
+    col_names=FALSE)
+g2 = graph_from_data_frame(d=edges) 
+glue("Nodes: ", gorder(g2),
+     "  Edges: ", gsize(g2))
+plot(g2)
+```
+:::
+:::
+:::
+
+## Análisis de redes sociales {#sec-sna}
+
+Esta sección ofrece una visión general de las medidas existentes para realizar ARS. Entre otras funciones, se explica cómo examinar 
+caminos y accesibilidad, cómo calcular las medidas de centralidad (grado, cercanía, intermediación, autovector) para cuantificar la 
+importancia de un nodo en un grafo, y cómo detectar comunidades en el grafo utilizando la agrupación.
+
+### Rutas y accesibilidad {#sec-paths}
+
+Lo primero que debemos hacer al analizar un grafo es comprender cómo están conectados sus nodos. En una red formada por varias aristas, 
+los vértices crean uno o varios caminos que pueden describirse. En este sentido, una 'secuence' (secuencia) entre el nodo 'x' y el nodo 
+'y' es un camino en el que cada nodo es adyacente al anterior. En nuestra red social imaginaria de amistad entre políticos estadounidenses 
+(contenida en el grafo no dirigido 'g1'), podemos determinar las secuencias o caminos simples entre cualquier par de políticos. Como se 
+muestra en el Ejemplo [-@exm-path], podemos utilizar la función 'all_simple_paths' contenida tanto en 'igraph' (R) como en 'networkx' 
+(Python), para obtener los dos posibles caminos entre Barack Obama y John McCain. El camino más corto incluye los nodos Hillary Clinton y 
+Donald Trump; y el más largo incluye Sanders, Clinton y Trump.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-path}
+Posibles caminos entre dos nodos de la red imaginaria de Facebook entre políticos estadounidenses
+
+::: {.panel-tabset}
+## Código Python
+```{python path-python}
+for path in nx.all_simple_paths(
+    g1, source="Barack Obama", target="John McCain"
+):
+    print(path)
+
+```
+## Código R
+```{r path-r}
+all_simple_paths(g1, "Barack Obama","John McCain",
+                 mode = c("all"))
+```
+:::
+:::
+:::
+
+Un tipo específico de camino es aquel en el que el nodo inicial es el mismo que el nodo final. Este camino cerrado se denomina “circuito”. 
+Para entender mejor este concepto, recuperemos el subgrafo inducido entre los políticos demócratas ('g3') en el que solo tenemos tres 
+nodos. Si representamos este grafo, como hacemos en el Ejemplo [-@exm-circuit], podemos visualizar claramente cómo funciona un circuito.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-circuit}
+Visualización de un circuito.
+
+::: {.panel-tabset}
+## Código Python
+```{python circuit-python}
+#| results: hide
+nx.draw_networkx(g3)
+pos = nx.shell_layout(g3)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r circuit-r}
+plot(g3)
+```
+:::
+:::
+:::
+
+En el ARS es muy importante poder describir los posibles caminos, ya que nos ayudan a estimar la accesibilidad de los vértices. Por 
+ejemplo, si volvemos a nuestro grafo original sobre políticos estadounidenses en Facebook ('g1'), visualizado en el ejemplo 
+[-@exm-visgraph], podemos ver que Sanders es accesible desde McCain porque existe un camino entre ellos (McCain-Trump-Clinton-Sanders). 
+Además, observamos que esta red social está totalmente conectada porque se puede llegar a cualquier nodo dado desde cualquier otro nodo 
+del grafo. Pero puede que no siempre sea así. Imagina que eliminamos la amistad de Clinton y Trump borrando esa arista concreta. Como 
+puedes observar en el Ejemplo [-@exm-component], cuando creamos y visualizamos el grafo g6 sin esta arista podemos ver que el grafo ya no 
+está completamente conectado y tiene dos componentes. Técnicamente hablando, podríamos decir que el subgrafo de los republicanos es un 
+componente conectado del grafo de los políticos estadounidenses, dado que este subgrafo conectado forma parte del grafo mayor, aunque no 
+está conectado a él.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-component}
+Visualización de componentes conectados.
+
+::: {.panel-tabset}
+## Código Python
+```{python component-python}
+#| results: hide
+# Remove the friendship between Clinton and Trump
+g6 = g1.copy()
+g6.remove_edge("Hillary Clinton", "Donald Trump")
+nx.draw_networkx(g6)
+pos = nx.shell_layout(g6)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r component-r}
+#Remove the friendship between Clinton and Trump
+g6 = delete.edges(g1, E(g1, P=
+            c("Hillary Clinton","Donald Trump")))
+plot(g6)
+```
+:::
+:::
+:::
+
+Al analizar los caminos y la accesibilidad, puede interesarte conocer las distancias en tu grafo. Una pregunta habitual es cuál es la 
+longitud media de los caminos de una red social o, en otras palabras, cuál es la media de la distancia más corta entre cada par de 
+vértices del grafo. Esta distancia media puede decir mucho sobre lo cerca que están los nodos de la red: cuanto más corta es la distancia, 
+más cerca están los nodos. También puedes calcular la distancia específica (camino más corto) entre dos nodos concretos. Como se muestra 
+en el Ejemplo [-@exm-distance], podemos conseguir la longitud media del camino (1,7) en nuestra red imaginaria de Facebook de políticos 
+estadounidenses utilizando las funciones 'mean_distance' en 'igraph' y 'average_shortest_path_length' en 'networkx'. En este ejemplo 
+también calculamos la distancia específica en la red entre Obama y McCain (3) utilizando la función distances en 'igraph' y calculando la 
+longitud ('len') del camino más corto (primer resultado de 'shortest_simple_paths' menos 1) en 'networkx'.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-distance}
+Cálculo de distancias en la red
+
+::: {.panel-tabset}
+## Código Python
+```{python distance-python}
+print(
+    "Average path length in Facebook network: ",
+    nx.average_shortest_path_length(g1),
+)
+paths = list(nx.shortest_simple_paths(g1, "Barack Obama", "John McCain"))
+print("Distance between Obama and McCain", len(paths[0]) - 1)
+
+```
+## Código R
+```{r distance-r}
+glue("Average path length in Facebook network: ",
+     mean_distance(g1, directed = T))
+glue("Distance between Obama and McCain",
+     "in Facebook network: ", 
+     distances(g1, v="Barack Obama", 
+               to="John McCain", weights=NA))
+```
+:::
+:::
+:::
+
+Siguiendo con la distancia, también podemos preguntarnos cuáles son las aristas o nodos que comparten frontera con un vértice 
+determinado. En el primer caso, podemos identificar las aristas incidentes que salen o entran en un vértice. Como se muestra en el 
+ejemplo [-@exm-incident], utilizando las funciones 'incident' en 'igraph' y 'edges' en 'networkx' podemos obtener fácilmente las aristas 
+incidentes de John McCain en la red de Facebook ('g1'), que resulta ser una única arista que une a Trump con McCain. En el segundo caso, 
+también podemos identificar sus nodos adyacentes, o lo que es lo mismo, sus vecinos. En el mismo ejemplo, utilizamos vecinos (la misma 
+función en 'igraph' y 'networkx') para obtener todos los nodos situados a un paso de McCain (en este caso, solo Trump).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-incident}
+Aristas incidentes y vecinos de J. McCain en la red imaginaria de Facebook.
+
+::: {.panel-tabset}
+## Código Python
+```{python incident-python}
+print("Incident edges of John McCain:", g1.edges("John McCain"))
+print("Neighbors of John McCain", [n for n in g1.neighbors("John McCain")])
+
+```
+## Código R
+```{r incident-r}
+#mode: all, out, in
+glue("Incident edges of John McCain in",
+     "Facebook Network:")
+incident(g1, V(g1)["John McCain"], mode="all")
+glue("Neighbors of John McCain in",
+     "Facebook Network:")
+neighbors(g1, V(g1)["John McCain"], mode="all")
+```
+:::
+:::
+:::
+
+Existen otros descriptores interesantes de las redes sociales. Una de las medidas más comunes es la densidad del grafo, que nos indica la 
+proporción de aristas en relación con todos los vínculos posibles en la red. Dicho llanamente, la densidad nos dice de 0 a 1 lo conectados 
+que están los nodos de un grafo. Se puede calcular tanto para grafos no dirigidos como dirigidos. Utilizando las funciones 'edge_density' 
+en 'igraph' y 'density' en 'networkx' obtenemos una densidad de 0,5 (nivel medio) en la red imaginaria de Facebook de los políticos 
+estadounidenses (grafo no dirigido) y de 0,35 en la red de Twitter (grafo dirigido).
+
+En los grafos no dirigidos también podemos medir la transitividad (también conocida como coeficiente de agrupamiento) y el diámetro. El 
+primero es una propiedad clave de las redes sociales que se refiere a la proporción de triángulos sobre la cantidad total de tríos 
+conectados. Es decir, nos preguntamos qué probabilidad hay de que dos nodos estén conectados si comparten un vecino común. Aplicando la 
+función 'transitivity' (incluida en 'igraph' y 'networkx') a 'g1' podemos ver que esta tendencia es de 0,5 en la red Facebook (hay un 50% 
+de probabilidad de que dos políticos sean amigos cuando tienen un contacto común). El segundo descriptor, el diámetro, representa la 
+longitud de la red en términos de la distancia geodésica más larga[^4]. Utilizamos la función 'diameter' (incluida en 'igraph' y 
+'networkx') en la red Facebook y obtenemos un diámetro de 3, que también puedes comprobar si vuelves a la visualización de 'g1' en el 
+Ejemplo [-@exm-visgraph].
+
+Además, en los grafos dirigidos podemos calcular la reciprocidad, que no es más que la proporción de vínculos recíprocos en una red 
+social y puede calcularse con la función 'reciprocity' (incluida en 'igraph' y 'networkx'). Así, para la red imaginaria de Twitter (grafo 
+dirigido) obtenemos una reciprocidad de 0,57 (que no está nada mal para un grafo de Twitter, teniendo en cuenta que las personas 
+importantes suelen tener muchos más seguidores que seguidos).
+
+En el Ejemplo [-@exm-density] mostramos cómo calcular estas cuatro medidas en R y Python. Observa que en algunos de los descriptores de 
+red tienes que decidir si incluir o no los pesos de las aristas para el cálculo (en los ejemplos proporcionados no los tuvimos en cuenta).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-density}
+Cálculo de densidad, transitividad, diámetro y reciprocidad
+
+::: {.panel-tabset}
+## Código Python
+```{python density-python}
+# Density in Facebook network:
+nx.density(g1)
+```
+```{python density-python2}
+# Density in Twitter network:
+nx.density(g2)
+```
+```{python density-python3}
+# Transitivity in Facebook network:
+nx.transitivity(g1)
+```
+```{python density-python4}
+# Diameter in Facebook network
+nx.diameter(g1, e=None, usebounds=False)
+```
+```{python density-python5}
+# Reciprocity in Twitter network:
+nx.reciprocity(g2)
+
+```
+## Código R
+```{r density-r}
+# Density in Facebook network:
+edge_density(g1)
+# Density in Twitter network:
+ecount(g2)/(vcount(g2)*(vcount(g2)-1))
+# Transitivity in Facebook network:
+transitivity(g1, type="global")
+# Diameter in Facebook network
+diameter(g1, directed = F, weights = NA)
+# Reciprocity in Twitter network:
+reciprocity(g2)
+```
+:::
+:::
+:::
+
+### Medidas de centralidad {#sec-centrality}
+
+Pasemos ahora a las medidas de centralidad. La centralidad es probablemente la medida más común, popular o conocida en el análisis de 
+redes sociales porque te da una idea clara de la importancia de cualquiera de los nodos dentro de un grafo. Utilizando sus medidas se 
+pueden plantear muchas preguntas como cuál es la persona más central de una red de amigos en Facebook, quién puede considerarse un líder 
+de opinión en Twitter o quién es un *influencer* en Instagram. Además, conocer la importancia específica de cada nodo de la red puede 
+ayudarnos a visualizar o etiquetar solo los vértices que superan un umbral previamente determinado, o a utilizar el color o el tamaño 
+para distinguir los nodos más centrales de los demás. Existen cuatro medidas típicas de centralidad: grado, cercanía, autovector e 
+intermediación.
+
+El grado de un nodo se refiere al número de enlaces de ese vértice, o lo que es lo mismo, al número de aristas que inciden en ese nodo. 
+Esta definición es constante para grafos no dirigidos en los que no se declaran las direcciones de los enlaces. En el caso de los grafos 
+dirigidos, tendrás tres opciones para medir el grado. En primer lugar, según el número de aristas que apuntan hacia un nodo, lo que 
+llamamos “*indegree*” (grado de entrada); en segundo lugar, según el número de aristas que apuntan hacia fuera de un nodo, o “*outdegree*” 
+(grado de salida); por último, según el número total de aristas que apuntan (dentro y fuera) de cualquier nodo. El grado, así como otras 
+medidas de centralidad que se mencionan a continuación, pueden expresarse en números absolutos, pero también podemos normalizar[^5] estas 
+medidas para una mejor interpretación y comparación. En nuestros ejemplos aplicamos este último enfoque, que también es la opción por 
+defecto en muchos paquetes de ARS.
+
+Entendiendo esto, podemos pasar a calcular el grado de dos de nuestras redes de ejemplo. En el Ejemplo [-@exm-centrality1], primero 
+estimamos el grado de cada uno de los cinco políticos estadounidenses en la red imaginaria de Facebook, que es un grafo no dirigido; y 
+después el grado total en la red de Twitter, que es un grafo dirigido. Para ambos casos, utilizamos las funciones 'degree' en 'igraph' (R) 
+y 'degree_centrality' en 'networkx' (Python). A continuación, calculamos los grados de entrada y salida de la red de Twitter. Usando 
+'igraph', utilizamos de nuevo la función 'degree', pero ajustando el parámetro 'mode' a 'in' o 'out', respectivamente. Usando 'networkx', 
+empleamos las funciones 'in_degree_centrality' y 'out_degree_centrality'.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-centrality1}
+Cálculo de centralidades de grado en grafos dirigidos y no dirigidos
+
+::: {.panel-tabset}
+## Código Python
+```{python centrality1-python}
+# Degree centrality of Facebook network (undirected):
+print(nx.degree_centrality(g1))
+```
+```{python centrality1-python2}
+# Degree centrality of Twitter network (directed):
+print(nx.degree_centrality(g2))
+```
+```{python centrality1-python3}
+# In degree centrality of Twitter network (directed):
+print(nx.in_degree_centrality(g2))
+```
+```{python centrality1-python4}
+# Out degree centrality of Twitter network (directed):
+print(nx.out_degree_centrality(g2))
+```
+## Código R
+```{r centrality1-r}
+# Degree centrality of Facebook network (undirected):
+print(degree(g1, normalized = T))
+
+# Degree centrality of Twitter network (directed):
+print(degree(g2, normalized = T, mode="all"))
+
+# In degree centrality of Twitter network (directed):
+print(degree(g2, normalized = T, mode="in"))
+
+# Out degree centrality of Twitter network (directed):
+print(degree(g2, normalized = T, mode="out"))
+```
+:::
+:::
+:::
+
+Existen otros tres tipos de medidas de centralidad. La centralidad de proximidad se refiere a la distancia geodésica de un nodo al resto 
+de nodos del grafo. En concreto, indica lo cerca que está un nodo de los demás tomando la longitud de los caminos más cortos entre los 
+vértices. La centralidad de autovector tiene en cuenta la importancia de los nodos circundantes y calcula la centralidad de un vértice en 
+función de la centralidad de sus vecinos. En palabras técnicas, la medida es proporcional a la suma de centralidades de conexión. Por 
+último, la centralidad de intermediación indica hasta qué punto el nodo se encuentra en las rutas que conectan otros nodos. 
+Matemáticamente se calcula como la suma de la fracción de cada par de caminos (los más cortos) que pasan por el nodo analizado.
+
+Como se muestra en el Ejemplo [-@exm-centrality2], podemos obtener estas tres medidas a partir de grafos no dirigidos utilizando las 
+funciones 'closeness', 'eigen_centrality' y 'betweenness' en 'igraph', y 'closeness_centrality', 'autovector_centrality' y 
+'betweenness_centrality' en 'networkx'. Si echamos un vistazo a las medidas de centralidad para cada político de la red imaginaria de 
+Facebook, vemos que Clinton parece ser un nodo muy importante y central del gráfico, coincidiendo con las conclusiones anteriores basadas 
+en el grado. No vamos a obtener, necesariamente, la misma tendencia en cada una de las medidas de centralidad, pero es probable que 
+tengan resultados similares, aunque busquen dimensiones diferentes del mismo constructo.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-centrality2}
+Cálculo de las centralidades de proximidad, de autovector y de intermediación
+
+::: {.panel-tabset}
+## Código Python
+```{python centrality2-python}
+# Closeness centrality of Facebook network (undirected):
+print(nx.closeness_centrality(g1))
+```
+```{python centrality2-python2}
+# Eigenvector centrality of Facebook network (undirected):
+print(nx.eigenvector_centrality(g1))
+```
+```{python centrality2-python3}
+# Betweenness centrality of Facebook network (undirected):
+print(nx.betweenness_centrality(g1))
+```
+## Código R
+```{r centrality2-r}
+# Closeness centrality of Facebook network (undirected):
+print(closeness(g1, normalized = T))
+# Eigenvector centrality of Facebook network (undirected):
+print(eigen_centrality(g1, scale=F)$vector)
+# Betweenness centrality of Facebook network (undirected):
+print(betweenness(g1, normalized = T))
+```
+:::
+:::
+:::
+
+Podemos utilizar estas medidas de centralidad de muchas maneras. Por ejemplo, se puede tomar la centralidad de grado como parámetro para 
+el tamaño y etiquetado de los nodos al trazar la red. Esto puede ser de gran utilidad ya que permite al lector identificar visualmente 
+los nodos más importantes de la red a la vez que minimiza el impacto visual de los que son menos centrales. En el Ejemplo [-@exm-plotsize] 
+decidimos especificar el tamaño de los nodos (parámetros 'vertex.size' en 'igraph' y 'node_size' en 'networkx') con la centralidad de 
+grado de cada uno de los políticos estadounidenses en la red Twitter (grafo dirigido) contenida en 'g2'. También utilizamos la 
+centralidad de grado para filtrar las etiquetas en el gráfico, y luego incluimos solo aquellas que superaban un umbral de 0,5 (parámetros 
+'vertex.label' en 'igraph' y 'labels' en 'networkx'). Estos dos sencillos parámetros del gráfico dan una imagen justa del potencial de 
+las medidas de centralidad para describir y comprender la red social.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-plotsize}
+Utilizar la centralidad de grado para cambiar el tamaño y las etiquetas de los nodos
+
+::: {.panel-tabset}
+## Código Python
+```{python plotsize-python}
+#| results: hide
+size = list(nx.degree_centrality(g2).values())
+size = [x * 1000 for x in size]
+labels_filtered = {k: v for k, v in nx.degree_centrality(g2).items() if v > 0.5}
+labels = {}
+for k, v in labels_filtered.items():
+    labels[k] = k
+
+nx.draw_networkx(g2, node_size=size, labels=labels)
+
+pos = nx.shell_layout(g2)
+x_values, y_values = zip(*pos.values())
+x_max = max(x_values)
+x_min = min(x_values)
+x_margin = (x_max - x_min) * 0.40
+plt.xlim(x_min - x_margin, x_max + x_margin)
+plt.box(False)
+plt.show()
+
+```
+## Código R
+```{r plotsize-r}
+plot(g2, vertex.label.cex = 2, 
+     vertex.size= degree(g2, normalized = T)*40,
+     vertex.label = ifelse(degree(g2, 
+        normalized = T) > 0.5, V(g2)$name, NA))
+```
+:::
+:::
+:::
+
+### Agrupación y detección de comunidades {#sec-communitydetection}
+
+Uno de los mayores potenciales del ARS es la capacidad de identificar cómo están interconectados los nodos y definir así comunidades 
+dentro de un grafo. En otras palabras, la mayoría de las veces los nodos y aristas de nuestra red no se distribuyen de forma homogénea, 
+sino que tienden a formar grupos que luego se pueden interpretar. En una red social se puede pensar, por ejemplo, en el principio de 
+homofilia, que es la tendencia de los seres humanos a asociarse e interactuar con individuos similares; o en factores extrínsecos (como 
+económicos o legales) que pueden generar la cohesión de pequeños grupos de ciudadanos que pertenecen a una estructura social más amplia.
+ Aunque, por supuesto, es difícil hacer afirmaciones rotundas sobre las causas subyacentes, podemos utilizar distintos enfoques 
+computacionales para modelizar y detectar las posibles comunidades que surgen de las redes sociales e, incluso, interpretar y etiquetar 
+esos grupos. La creación de grupos como técnica de aprendizaje automático no supervisado se introdujo en la Sección [-@sec-clustering] 
+para datos estructurados y en la Sección [-@sec-unsupervised] para análisis de texto (modelado de temas). Utilizaremos algunos enfoques 
+no supervisados similares para la detección de comunidades en las redes sociales.
+
+Al agrupar una red pueden surgir muchas preguntas sociales y de comunicación. La identificación de subgrupos puede indicarnos lo diversa 
+y fragmentada que es una red, o cómo se relaciona el comportamiento de una comunidad concreta con otros grupos y con el grafo en su 
+conjunto. De la misma manera, la concentración de aristas en algunos nodos del grafo nos permite conocer la estructura social de las 
+redes, lo que a su vez supone una mejor comprensión de su dinámica interna. No olvides que un analista computacional necesita algo más 
+que los algoritmos proporcionados a la hora de etiquetar los grupos para comprender las comunidades, lo que significa que deberá 
+familiarizarse con la forma en que se ha construido el grafo y lo que representan los nodos, las aristas o los pesos.
+
+Un primer paso hacia el análisis de subgrupos dentro de una red es encontrar los subgrafos disponibles en un grafo no dirigido. Como 
+explicamos brevemente al final de la [@sec-graph], estos subgrafos independientes se llaman cliques y se refieren a subgrupos en los que 
+cada vértice está conectado a todos los demás vértices. Podemos encontrar los cliques máximos (un clique es máximo cuando no puede 
+extenderse a un clique mayor) en el grafo no dirigido imaginario de los políticos estadounidenses en Facebook ('g1') utilizando las 
+funciones 'max_cliques' en 'igraph' [@eppstein2010listing] y 'max_cliques' en 'networkx' [@cazals2008note]. Como se puede ver en el 
+[@exm-cliques], obtenemos un total de tres subgrafos, uno que representa a los demócratas, otro a los republicanos y uno que hace de 
+conector de los dos partidos (Clinton-Trump).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-cliques}
+Encontrar todos los cliques máximos en un grafo no dirigido
+
+::: {.panel-tabset}
+## Código Python
+```{python cliques-python}
+print(f"Number of cliques: {nx.graph_number_of_cliques(g1)}")
+print(f"Cliques: {list(nx.find_cliques(g1))}")
+```
+## Código R
+```{r cliques-r}
+glue("Number of cliques: {clique_num(g1)}")
+max_cliques(g1)
+```
+:::
+:::
+:::
+
+Ahora intentaremos detectar correctamente las comunidades aplicando algunos algoritmos comunes, obteniendo los subgrupos más probables en 
+una red social. El primero de estos modelos es el llamado algoritmo *edge-between* o Girvan-Newman [@newman2004finding]. Este algoritmo 
+se basa en la agrupación jerárquica divisiva (explicada en la [@sec-clustering]), y funciona dividiendo el grafo en trozos y eliminando 
+iterativamente aristas del original. Específicamente, el enfoque Girvan-Newman utiliza la medida de centralidad por intermediación para 
+eliminar la arista más central en cada iteración. Puedes ver fácilmente este proceso de división en un dendograma, como hacemos en el 
+[@exm-girvan], donde calculamos 'cl_girvan' para detectar posibles comunidades en la red de Facebook. Utilizamos las funciones 
+'cluster_edge_betweenness' en 'igraph' y 'girvan_newman' en 'networkx'.
+
+::: {.callout-note appearance="simple" icon=false}
+::: {#exm-girvan}
+Agrupar subgrupos usando Girvan-Newman.
+
+::: {.panel-tabset}
+## Código Python
+```{python girvan-python}
+cl_girvan = nxcom.girvan_newman(g1)
+# Note: see R output for a nice visualization
+```
+## Código R
+```{r girvan-r}
+cl_girvan = cluster_edge_betweenness(g1) 
+dendPlot(cl_girvan, mode="hclust")
+```
+:::
+:::
+:::
+
+Si observamos la figura, nos daremos cuenta de que las ramas finales corresponden a los nodos (los políticos). Tenemos también distintos 
+niveles de división (del 1 al 4) que nos indican distintas posibilidades de subgrupos. En la agrupación de Girvan-Newman, la gran 
+pregunta es qué nivel de partición elegir o, en otras palabras, cuál de las divisiones es mejor. El concepto de modularidad surge como 
+una buena medida ($-1$ a 1) para evaluar lo buena que es la división (técnicamente se mide como la fracción de aristas que caen dentro de 
+unos grupos dados, digamos el grupo 1 y el grupo 2, menos el número esperado de aristas dentro de esos grupos distribuidos al azar). Así, 
+podemos elegir cuál de las cuatro divisiones propuestas es la mejor basándonos en el valor más alto de sus modularidades: cuanto mayor 
+sea la modularidad, más densas serán las conexiones dentro de la comunidad y más dispersas las conexiones entre comunidades. En el caso 
+de 'cluster_edge_betweenness' en 'igraph', se calcula automáticamente que la mejor división (en modularidad) es la primera con dos 
+comunidades.
+
+Con los algoritmos de detección de comunidades podemos estimar la longitud (número de grupos sugeridos), la pertenencia (a qué grupo 
+pertenece cada nodo) y la modularidad (cómo de buena es la agrupación). En el caso de 'igraph' (R), aplicamos las funciones 'length' 
+(base), 'membership' y 'modularity' sobre el objeto agrupado producido (es decir, 'cl_girvan'). En el caso de 'networkx' (Python), 
+primero tenemos que especificar que queremos usar el primer componente de las divisiones (de entre las cuatro posibles que vemos en el 
+dendograma del @exm-girvan) usando la función 'next'. A continuación, podemos aplicar las funciones 'len' (base) y 'modularity' para 
+obtener los descriptores y mostrar la primera división (almacenada como 'communities1') para obtener la pertenencia.
+
+Estas funciones se muestran en el @exm-girvan2. Ten en cuenta que, dado que vamos a mostrar estas propiedades para múltiples algoritmos 
+de agrupamiento, hemos creado una función de conveniencia 'summarize_clustering'.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-girvan2}
+Detección de comunidades con Girvan-Newman
+
+::: {.panel-tabset}
+## Código Python
+```{python girvan2-python}
+def summarize_clustering(graph, clustering):
+    print(f"Length {len(clustering)}")
+    print(f"Modularity: {nxcom.modularity(graph, clustering):.2f}")
+    print("Membership:")
+    for cluster in clustering:
+        print(f" - {cluster}")
+
+c1 = next(cl_girvan)
+summarize_clustering(g1, c1)
+```
+## Código R
+```{r girvan2-r}
+summarize_clustering = function(clustering) {
+    print(glue("Length {length(clustering)}"))
+    print(glue("Modularity: {modularity(clustering)}"))
+    print(glue("Membership:"))
+    membership_list = membership(clustering)
+    for (cluster in unique(membership_list)) {
+        members = names(membership_list)[membership_list==cluster]
+        print(glue(" - {paste(members, collapse=', ')}"))
+    }
+}
+summarize_clustering(cl_girvan)
+```
+:::
+:::
+:::
+
+Podemos calcular las comunidades para nuestra red utilizando muchos otros algoritmos de agrupación, como el algoritmo de Louvain, el 
+*propagating Label algorithm* y la *Greedy Optimization*, entre otros. De forma similar a Girvan-Newman, el algoritmo de Louvain utiliza 
+la medida de modularidad para obtener una optimización multinivel [@blondel2008fast] y su objetivo es obtener grupos optimizados que 
+minimicen el número de aristas entre las comunidades y maximicen el número de aristas dentro de la misma comunidad. Por su parte, el 
+algoritmo *Greedy Optimization* también se basa en el indicador de modularidad [@clauset2004finding], pero este no tiene en cuenta los 
+pesos de las aristas. Funciona estableciendo cada vértice en su propia comunidad, luego va uniendo comunidades para aumentar la 
+modularidad hasta obtener la modularidad máxima. Por último, el algoritmo *Propagating Label*, que sí tiene en cuenta los pesos de las 
+aristas, inicializa cada nodo con una etiqueta única y luego, de forma iterativa, cada vértice adopta la etiqueta de sus vecinos hasta 
+que todos los nodos tienen la etiqueta más común de sus vecinos [@raghavan2007near]. El proceso puede llevarse a cabo de forma asíncrona 
+(como se hace en nuestro ejemplo), síncrona o semisíncrona (aunque podrían producir resultados diferentes).
+
+En el ejemplo [@exm-clustalgo] utilizamos 'cluster_louvain', 'cluster_fast_greedy' y 'cluster_label_prop' en 'igrapgh' (R) y 
+'best_partition', 'greedy_modularity_communities' y 'asyn_lpa_communities' en 'networkx' (Python). Se puede ver que los resultados son 
+bastante similares[^6] y está bastante claro que hay dos comunidades en la red de Facebook: Demócratas y republicanos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-clustalgo}
+Detección de comunidades con Louvain, Propagating Label y Greedy Optimization
+
+::: {.panel-tabset}
+## Código Python
+```{python clustalgo-python}
+# Louvain:
+# (Note that the Louvain output is a dict of {member: cluster} rather than a 
+#  list of clusters, so we convert the output first)
+cl_louvain = community_louvain.best_partition(g1)
+cl_louvain= [{k for (k,v) in cl_louvain.items() if v == cluster} 
+             for cluster in set(cl_louvain.values())]
+summarize_clustering(g1, cl_louvain)
+```
+```{python clustalgo-python2}
+# Greedy optimization:
+# (Note that the nxcom output is a generator, sorting it turns it into a list)
+cl_greedy = nxcom.greedy_modularity_communities(g1)
+cl_greedy = sorted(cl_greedy, key=len, reverse=True)
+summarize_clustering(g1, cl_greedy)
+```
+```{python clustalgo-python3}
+# Propagating label:
+cl_propagation = nxcom.asyn_lpa_communities(g1)
+# (Note that the nxcom output is a generator, sorting it turns it into a list)
+cl_propagation = sorted(cl_propagation, key=len, reverse=True)
+summarize_clustering(g1, cl_propagation)
+```
+## Código R
+```{r clustalgo-r}
+# Louvain:
+cl_louvain = cluster_louvain(g1) 
+summarize_clustering(cl_louvain)
+
+# Greedy optimization:
+cl_greedy = cluster_fast_greedy(g1) 
+summarize_clustering(cl_greedy)
+
+# Label propagation:
+cl_propagation = cluster_label_prop(g1) 
+summarize_clustering(cl_propagation)
+```
+:::
+:::
+:::
+
+Podemos dibujar cada uno de esos grupos para conseguir una mejor visualización de las comunidades. En el Ejemplo [-@exm-plotcluster] 
+generamos los gráficos con el algoritmo *Greedy Optimization* en R y el algoritmo Louvain en Python, con lo que obtenemos dos resultados 
+idénticos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-plotcluster}
+Dibujar grupos con con Louvain en Python y Greedy Optimization en R
+
+::: {.panel-tabset}
+## Código Python
+```{python plotcluster-python}
+#| results: hide
+# From which cluster does each node originate?
+# (note that for Louvain clustering, this actually reverses the preprocessing we did above
+#  so we could also have used the original community_louvain(.) output directly. 
+#  For the networkx community functions this conversion is needed in any case)
+clusters = [next(i for (i, members) in enumerate(cl_louvain) if x in members) 
+            for x in g1.nodes]
+
+pos = nx.spring_layout(g1)
+plt.figure(figsize=(6, 3))
+plt.axis("off")
+nx.draw_networkx_labels(g1, pos, font_size=6)
+nx.draw_networkx_nodes(g1, pos, cmap=plt.cm.RdYlBu, node_color=clusters)
+nx.draw_networkx_edges(g1, pos, alpha=0.3)
+plt.show(g1)
+
+```
+## Código R
+```{r plotcluster-r}
+plot(cl_louvain, g1)
+```
+:::
+:::
+:::
+
+Hay otras formas de obtener subgrafos de la red (como 'K-core decomposition') o de evaluar la homofilia de su grafo (utilizando el 
+indicador 'assortativity' (asortatividad) que mide el grado en que los nodos se asocian a vértices similares). De hecho, hay muchas otras 
+medidas y técnicas que puedes utilizar para realizar ARS y que hemos omitido deliberadamente en esta sección por razones de espacio, pero 
+creemos que hemos conseguido cubrir los aspectos y procedimientos más importantes que necesitas conocer para iniciarte en el análisis 
+computacional de redes.
+
+Hasta ahora hemos visto cómo realizar ARS sobre grafos "artificiales" en aras de la simplicidad. Sin embargo, la representación y el 
+análisis de grafos del "mundo real" serán normalmente más difíciles debido a su tamaño o complejidad. Para concluir este capítulo, te 
+mostraremos cómo aplicar a datos reales algunos de los conceptos explicados.
+
+Utilizando la API de Twitter (véase la sección [-@sec-apis]), recuperamos los nombres de los 100 primeros seguidores de los cinco 
+políticos más importantes de España en 2017 (Mariano Rajoy, Pedro Sánchez, Albert Rivera, Alberto Garzón y Pablo Iglesias). Con esta 
+información elaboramos un grafo no dirigido[^7] de los "amigos" de estos políticos españoles para entender cómo se conectaban estos 
+líderes a través de sus seguidores. En el Ejemplo [-@exm-friends1] cargamos los datos en un objeto grafo 'g_friends' que contiene las 
+500 aristas del grafo. Como podemos imaginar, los cinco políticos mencionados eran, a menudo, los nodos más centrales, pero si nos 
+fijamos en las centralidades grado, intermediación y cercanía podemos obtener fácilmente algunos de los otros nodos relevantes de la red 
+de Twitter: CEARefugio, elenballesteros o Unidadpopular. Estas cuentas merecen especial atención ya que contribuyen a la conexión de los 
+principales líderes de ese país. De hecho, si realizamos un análisis de agrupación mediante el algoritmo de Louvain encontraremos una 
+alta modularidad (0,77, lo que indica que los grupos están bien separados) y, como era de esperar, cinco grupos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-friends1}
+Carga y análisis de una red real de políticos españoles y sus seguidores en Twitter
+
+::: {.panel-tabset}
+## Código Python
+```{python friends1-python}
+url = "https://cssbook.net/d/friends3.csv"
+fn, _headers = urllib.request.urlretrieve(url)
+g_friends = nx.read_adjlist(fn, create_using=nx.Graph, delimiter=";")
+print(f"Nodes: {g_friends.number_of_nodes()}, "
+      f"Edges: {g_friends.number_of_edges()}")
+```
+```{python friends1-python2}
+# Degree centrality:
+def sort_by_value(dict):
+    return sorted(dict.items(), key=lambda item: item[1], reverse=True)
+print(sort_by_value(nx.degree_centrality(g_friends)))
+```
+```{python friends1-python3}
+# Betweenness centrality: 
+print(sort_by_value(nx.betweenness_centrality(g_friends)))
+```
+```{python friends1-python4}
+# Closeness centrality: 
+print(sort_by_value(nx.closeness_centrality(g_friends)))
+```
+```{python friends1-python5}
+# Clustering with Louvain: 
+cluster5 = community_louvain.best_partition(g_friends)
+print("Length: ", len(set(cluster5.values())))
+print("Modularity: " f"{community_louvain.modularity(cluster5,g_friends):.2f}")
+```
+## Código R
+```{r friends1-r}
+edges = read_delim("https://cssbook.net/d/friends3.csv",
+                   col_names=FALSE, delim=";")
+g_friends = graph_from_data_frame(d=edges, directed = FALSE)
+glue("Nodes: {gorder(g_friends)}, edges: {gsize(g_friends)}")
+
+# Degree centrality:
+print(sort(degree(g_friends, normalized = T), decreasing = TRUE)[1:10])
+# Betweenness centrality:
+print(sort(betweenness(g_friends, normalized = T), decreasing = TRUE)[1:10])
+# Closeness centrality:
+print(sort(closeness(g_friends, normalized = T), decreasing = TRUE)[1:10])
+# Clustering with Louvain:
+cluster5 = cluster_louvain(g_friends) 
+print(glue("Length: {length(cluster5)}"))
+print(glue("Modularity: {modularity(cluster5)}"))
+```
+:::
+:::
+:::
+
+Cuando visualizamos los grupos en la red (ejemplo [-@exm-friends2]) utilizando la centralidad de grado para el tamaño de los nodos, 
+podemos situar a los cinco políticos en el centro de los grupos (representados con colores diferentes). Y, lo que es más interesante, 
+podemos ver que incluso cuando algunos usuarios siguen a dos de los líderes políticos, solo son asignados a uno de los grupos. Este es el 
+caso del nodo que une a Garzón y Sánchez, que está adscrito al grupo de Sánchez, o el nodo que une a Garzón y Rajoy, que está adscrito al 
+grupo de Rajoy. En el gráfico también se observan otros dos hechos interesantes. En primer lugar, se observa un triángulo que agrupa a 
+Sánchez, Garzón e Iglesias, líderes de los partidos de izquierda en España. En segundo lugar, algunas parejas de políticos (como 
+Iglesias-Garzón o Sánchez-Rivera) comparten más amigos que el resto de parejas posibles.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-friends2}
+Visualización y trazado de grupos de la red de políticos españoles y sus seguidores en Twitter 
+
+::: {.panel-tabset}
+## Código Python
+```{python friends2-python}
+#| results: hide
+pos = nx.spring_layout(g_friends)
+plt.figure(figsize=(10, 10))
+plt.axis("off")
+
+size = list(nx.degree_centrality(g_friends).values())
+size = [x * 7000 for x in size]
+labels_filtered = {
+    k: v for k, v in nx.degree_centrality(g_friends).items() if v > 0.005
+}
+labels = {}
+for k, v in labels_filtered.items():
+    labels[k] = k
+
+nx.draw_networkx_labels(g_friends, pos, font_size=10, labels=labels)
+nx.draw_networkx_nodes(
+    g_friends,
+    pos,
+    node_size=size,
+    cmap=plt.cm.RdYlBu,
+    node_color=list(cluster5.values()),
+)
+nx.draw_networkx_edges(g_friends, pos, alpha=0.5)
+plt.show(g_friends)
+
+```
+## Código R
+```{r friends2-r}
+plot(cluster5, g_friends, vertex.label.cex = 2,
+   vertex.size=degree(g_friends, normalized=T)*40,
+   vertex.label = ifelse(degree(g_friends,
+                         normalized=T) > 0.005,
+                         V(g_friends)$name, NA))
+```
+:::
+:::
+:::
+
+[^1]: Véase también el problema matemático de los Siete Puentes de Königsberg, formulado por Leonhard Euler en 1736, considerado la base de la teoría de grafos. Inspirado en una ciudad dividida por un río y conectada por varios puentes, el problema consistía en recorrer toda la ciudad cruzando cada puente exactamente una vez.︎
+
+[^2]: Las conexiones entre estos políticos en Facebook y Twitter en los ejemplos son, por supuesto, puramente ficticias y se crearon *ad hoc* para ilustrar pequeñas redes sociales.︎
+
+[^3]: Puedes utilizar esta biblioteca en Python con el paquete adaptado 'python-igraph'.︎
+
+[^4]: La distancia geodésica es el número más corto de aristas entre dos vértices︎.
+
+[^5]: La aproximación consiste en dividir por el número máximo posible de vértices ($N$) menos 1, o por $N-1$. También podemos calcular el 'weighted degree' (grado ponderado) de un nodo, que es el mismo grado pero ponderado por el peso de las aristas.︎
+
+[^6]: Esta similitud se debe a que nuestra red de ejemplo es extremadamente pequeña. En redes más grandes, los resultados podrían no ser tan similares.︎
+
+[^7]: Omitimos deliberadamente las direcciones de las aristas dada su imposible reciprocidad.︎
+
+
