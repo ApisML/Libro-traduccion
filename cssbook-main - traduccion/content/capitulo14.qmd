@@ -1,0 +1,1231 @@
+# Datos multimedia {#sec-chap-image}
+
+{{< include common_setup.qmd >}}
+
+**Resumen.**
+Los datos recogidos digitalmente no solo contienen textos, sino que, a menudo, cuentan con audios, imágenes y vídeos. En capítulos 
+anteriores hemos utilizado exclusivamente características textuales, pero también podemos utilizar valores de píxeles para analizar 
+imágenes. En primer lugar, veremos cómo utilizar bibliotecas, servicios comerciales o API existentes para realizar análisis multimedia 
+(por ejemplo, reconocimiento óptico de caracteres, conversión de voz a texto o reconocimiento de objetos). A continuación, mostraremos 
+cómo almacenar, representar y convertir datos de imágenes para utilizarlos como entrada en nuestro análisis computacional. Nos centraremos 
+en el análisis de imágenes mediante técnicas de clasificación de aprendizaje automático basadas en aprendizaje profundo, y explicaremos 
+cómo construir (o poner a punto) una Red Neuronal Convolucional (CNN, por sus siglas en inglés) por nosotros mismos.
+
+**Palabras clave.** Imagen, audio, vídeo, multimedia, clasificación de imágenes, aprendizaje profundo.
+
+**Objetivos:**
+
+-  Aprender a transformar datos multimedia en entradas útiles para el análisis computacional.
+-  Comprender cómo aplicar el aprendizaje profundo para la clasificación automática de imágenes
+
+::: {.callout-note icon=false collapse=true}
+## Paquetes utilizados en este capítulo
+
+Este capítulo utiliza 'tesseract' (genérico) y la API 'Cloud Speech' de Google ('googleLanguageR' y 'google-cloud-language' en Python) 
+para convertir imágenes o archivos de audio en texto. Utilizaremos 'PIL' (Python) e 'imagemagic' (genérico) para convertir imágenes en 
+entradas; y 'Tensorflow' y 'keras' (ambos en Python y R) para construir y afinar CNN.
+
+Puedes instalar estos y otros paquetes auxiliares con el código de abajo si es necesario (ver Sección [-@sec-installing] para más detalles):
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter14install-python}
+#| eval: false
+!pip3 install Pillow requests numpy sklearn
+!pip3 install tensorflow keras
+```
+## Código R
+```{r chapter14install-r}
+#| eval: false
+install.packages(c("magick", "glue","lsa",
+    "tidyverse","dslabs","randomForest","caret",
+    "tensorflow","keras"))
+```
+:::
+Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
+
+::: {.panel-tabset}
+## Código Python
+```{python chapter14library-python}
+import matplotlib.pyplot as plt
+from PIL import Image
+import requests
+import numpy as np
+
+import sklearn
+from sklearn.datasets import fetch_openml
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+import tensorflow as tf
+import keras
+from tensorflow.keras.applications.resnet50 import ResNet50
+
+```
+## Código R
+```{r chapter14library-r}
+library(magick)
+library(lsa)
+library(tidyverse)
+library(dslabs)
+library(randomForest)
+library(caret)
+library(tensorflow)
+library(keras)
+```
+:::
+:::
+
+## Más allá del análisis de texto: Imágenes, audio y vídeo {#sec-beyond}
+
+Un libro sobre el análisis computacional de la comunicación estaría incompleto sin un capítulo dedicado al análisis de datos 
+audiovisuales. De hecho, si pensamos en los posibles contenidos derivados de las dinámicas sociales, culturales y políticas en el 
+panorama digital actual, nos daremos cuenta de que el contenido escrito es solo una parte del pastel. Los seres humanos producimos muchos 
+más contenidos orales que mensajes de texto, y somos más ágiles a la hora de descifrar sonidos y contenidos visuales. La digitalización 
+de la vida social y política, así como la explosión de contenidos digitales autogenerados en la web y las redes sociales, han provocado 
+una cantidad sin precedentes de contenidos multimedia que merecen ser incluidos en muchos tipos de investigación.
+
+Basta con imaginar una colección de emisoras de radio digitales grabadas, la enorme cantidad de fotos que se producen cada día en 
+Instagram o incluso los millones de vídeos de interés social que se suben a Youtube. Sin duda, son minas de oro para los investigadores 
+sociales, que tradicionalmente utilizaban técnicas manuales para analizar solo una pequeña parte de este contenido multimedia. Sin 
+embargo, también es cierto que las técnicas computacionales para analizar audio, imágenes o vídeo están aún poco desarrolladas en 
+ciencias sociales, dada la dificultad de aplicación para los profesionales no computacionales y lo novedosos que son los descubrimientos 
+en campos como la visión artificial.
+
+Esta sección ofrece una breve descripción de los distintos formatos de archivos multimedia. Explicamos cómo generar entradas útiles en 
+nuestro *pipeline* (la serie de pasos que vamos a seguir) para realizar análisis computacionales.
+
+Probablemente ya estés familiarizado con los formatos digitales de imágenes (.jpg, .bmp, .gif, etc.), audio (.mp3, .wav, .wma, flac, etc.) 
+y vídeo (.avi, .mov, .wmv, .flv, etc.), lo que es el primer paso para utilizar estos contenidos como entrada. Sin embargo, al igual que 
+en el caso de los textos, tendrás que hacer un preprocesamiento para dar forma a estos formatos y obtener una representación matemática 
+adecuada del contenido.
+
+En el caso del audio, existen muchas aproximaciones computacionales útiles para investigar sobre estos contenidos: desde el 
+reconocimiento de voz, el análisis de sentimientos en audio o la clasificación de sonidos, hasta la generación automática de música. Los 
+recientes avances en el campo de la inteligencia artificial han creado un campo próspero y diversificado con múltiples aplicaciones 
+académicas y comerciales. Por nuestra parte, los científicos sociales computacionales podemos obtener grandes conocimientos utilizando 
+ciertas aplicaciones, como la transformación de voz a texto, y aplicando después análisis de texto (ya explicados en los capítulos 9, 10 
+y 11) a los resultados. Como se verá en la sección [-@sec-apivisions], existen algunas bibliotecas en R y Python que permiten utilizar 
+modelos preentrenados para transcribir voz en distintos idiomas.
+
+Aunque este enfoque es bastante limitado (es solo una pequeña parte de todo lo que abarca el análisis de audio) y restringido (no 
+abordaremos cómo crear los modelos), nos servirá para mostrar cómo una aplicación específica, sencilla y potente del análisis automático 
+de entradas de audio puede ayudarnos a responder muchas preguntas sociales (desde qué actores se nombran en los discursos orales de 
+cualquier partido político, hasta cuáles son los temas de una conversación natural o cuáles son los sentimientos expresados en los 
+guiones de los informativos radiofónicos). De hecho, el análisis automatizado de audio puede ayudar a responder nuevas preguntas de 
+investigación, distintas de las que suelen aplicarse al análisis de texto. Este es el caso de la investigación de @knox2021dynamic, 
+que utilizaron un enfoque computacional sobre archivos de audio de los Argumentos Orales del Tribunal Supremo (407 argumentos y 153 horas 
+de audio, que comprenden más de 66.000 intervenciones de los jueces y 44 millones de momentos) para demostrar que cierta información 
+crucial, como el escepticismo de los argumentos jurídicos, se transmitía mediante la emisión vocal (por ejemplo, el tono del discurso), 
+algo indescifrable para el análisis de texto. O también podríamos mencionar el trabajo de @dietrich2019pitch, que analizaron 
+computacionalmente el tono vocal de más de 70.000 discursos de audio en el hemiciclo del Congreso y descubrieron que los miembros 
+femeninos del Congreso hablaban con mayor intensidad emocional cuando se referían a las mujeres.
+
+Por otro lado, a pesar de los recientes y prometedores avances en visión artificial, aplicar métodos computacionales a la entrada de 
+vídeo es, probablemente, la tarea más difícil. Por razones de espacio, en este capítulo no trataremos análisis de vídeo específicos, pero 
+es importante que sepas que la mayoría de los análisis computacionales de vídeo se basan en la inspección de los contenidos de imagen y 
+audio. Partiendo de este enfoque estándar, es necesario especificar qué fotogramas clave se van a extraer del vídeo (por ejemplo, tomar 
+una imagen fija cada 1.000 fotogramas) y, a continuación, aplicar técnicas de visión artificial (como la detección de objetos) a esas 
+imágenes independientes. Si te resulta interesante, échale un ojo a la versión 3 de la arquitectura de detección de objetos 
+*You Only Look Once Take* (YOLOv3)[^1] creada por @yolov3, que utiliza una Red Neuronal Convolucional preentrenada (véase la sección 
+[-@sec-cnn]) para localizar objetos dentro del vídeo (figura [-@fig-yolo]). Este análisis de imágenes fotograma a fotograma se podría 
+complementar con un análisis de características de audio para lograr responder a muchas preguntas de ciencias sociales. Sin embargo, no 
+hay que olvidar que este enfoque no cubre algunos aspectos interesantes del vídeo, como los encuadres y movimientos de la cámara o las 
+técnicas de edición, que sin duda aportan más información sobre el contenido.
+
+![Captura de pantalla de un vídeo en tiempo real analizado por YOLOv3 en su sitio web  https://pjreddie.com/darknet/yolo/](img/ch15_yolo.png){#fig-yolo}
+
+## Utilización de bibliotecas y API existentes {#sec-apivisions}
+
+En las siguientes secciones te mostraremos cómo tratar contenidos multimedia desde cero, prestando especial atención a la clasificación 
+de imágenes utilizando bibliotecas de última generación. Sin embargo, recomendamos empezar utilizando bibliotecas existentes que 
+implementan directamente el análisis multimedia o conectarse a servicios comerciales para ejecutar tareas de clasificación de forma 
+remota utilizando sus API. Existe una gran variedad de bibliotecas y API disponibles, tantas, que no podremos abarcarlas en este libro, 
+pero sí mencionaremos brevemente algunas de ellas que pueden ser útiles en el análisis computacional de la comunicación.
+
+Un ejemplo en el campo de la analítica visual es el reconocimiento óptico de caracteres (OCR, por sus siglas en inglés). Aunque es cierto 
+que podrías entrenar tus propios modelos para desplegar una clasificación multiclase y predecir cada letra, número y símbolo de una 
+imagen, descubrirías que es una tarea extenuante. En su lugar, existen bibliotecas especializadas tanto en R como en Python, como 
+'tesseract', que ejecutan esta tarea en segundos con una gran precisión. Aun así, es posible que tengas que aplicar algún 
+preprocesamiento a las imágenes de entrada para conseguir que tengan una forma adecuada. Esto significa que tendrás que utilizar paquetes 
+como 'PIL' o 'Magick' para mejorar la calidad de la imagen recortándola o reduciendo el ruido de fondo. En el caso de los archivos PDF, 
+tendrás que convertirlos primero en imágenes y luego aplicarles el OCR.
+
+En el caso de documentos de audio e imagen más complejos, puedes utilizar servicios más sofisticados proporcionados por empresas privadas 
+(por ejemplo, Google, Amazon, Microsoft, etc.). Estos servicios comerciales ya han desplegado sus propios modelos de aprendizaje 
+automático con muy buenos resultados. A veces, incluso se pueden personalizar algunos de sus modelos, pero por regla general sus 
+características internas y su configuración no son transparentes para el usuario. Además, estos servicios ofrecen API amigables y, 
+normalmente, una cuota gratuita para realizar tus primeros ejercicios.
+
+Para trabajar con archivos de audio, muchos investigadores sociales necesitan convertir largas conversaciones, programas de radio o 
+entrevistas a texto sin formato. Para ello, Google Cloud ofrece el servicio *Speech-to-Text*[^2] que transcribe remotamente el audio a un 
+formato de texto compatible con múltiples idiomas (¡Más de 125!). Con este servicio puedes utilizar remotamente y desde tu propio 
+ordenador los modelos de aprendizaje automático creados por Google Platform (debes tener una cuenta y conectarte con los paquetes 
+adecuados como 'googleLanguageR' o 'google-cloud-language' en Python).
+
+Si aplicas el reconocimiento óptico de caracteres a las imágenes o el reconocimiento automático de voz (*Speech-to-Text recognition*) al 
+contenido de audio, obtendrás un jugoso texto sin formato para realizar Procesamiento de Lenguaje Natural análisis de sentimientos, 
+modelado de temas… Y otras técnicas aplicables a texto (véase el capítulo 11). Así pues, es muy probable que tengas que combinar 
+distintas bibliotecas y servicios para realizar un pipeline computacional completo, ¡Incluso puede que tengas que alternar entre R y 
+Python!
+
+Por último, nos gustaría mencionar la existencia de servicios comerciales de autoetiquetado, como Cloud Vision de Google, Computer Vision 
+de Microsoft o Rekognition de Amazon. Por ejemplo, si te conectas a los servicios de Amazon's Rekognition no solo podrás detectar y 
+clasificar imágenes, sino también realizar análisis de sentimientos sobre rostros o predecir contenidos sensibles dentro de las imágenes. 
+Tanto en este servicio como en el caso de Google Cloud, tendrás que obtener credenciales de venta comercial para poder conectarse su API 
+(aunque hay una "cuota" inicial gratuita de llamadas de acceso a la API antes de que se te exija pagar por su uso). Este enfoque tiene 
+dos ventajas principales. La primera es el acceso a un modelo muy bien entrenado y validado (está siendo reentrenado continuamente) a lo 
+largo de millones de imágenes y con la participación de miles de codificadores. La segunda es la escalabilidad, ya que se pueden 
+almacenar y analizar imágenes a escala relativamente rápido utilizando servicios de computación en nube.
+
+![Fotografía de refugiados en un bote salvavidas, utilizada como entrada para la API de reconocimiento de Amazon. El servicio comercial detecta en las imágenes clases como ropa, indumentaria, humano, persona, chaleco salvavidas o chaleco.](img/ch15_refugees.png){#fig-refugees}
+
+Si quieres probar, puedes utilizar Rekognition de Amazon para detectar objetos en una fotografía de noticias de refugiados en un bote 
+salvavidas (Figura [-@fig-refugees]). Como resultado, obtendrás un conjunto de etiquetas precisas: Ropa (99,95\%), Indumentaria (99,95\%), 
+Humano (99,70\%), Persona (99,70\%), Chaleco salvavidas (99,43\%) y Chaleco (99,43\%). Con una confianza menor, también se encuentran 
+etiquetas como Abrigo (67,39\%) y Personas (66,78\%). Este ejemplo, además de demostrarnos la funcionalidad del servicio, también pone de 
+manifiesto la necesidad de validación y la dificultad de captar conceptos complejos en los análisis automatizados: aunque todas estas 
+etiquetas son, sin duda, correctas, no logran captar realmente la esencia de la imagen y el contexto social. Incluso podría decirse que, 
+sabiendo que la imagen trata de refugiados, algunas de estas etiquetas, puestas por un ser humano para describir la imagen, resultarían 
+bastante cínicas.
+
+En la sección [-@sec-cnn] utilizaremos esta misma imagen (almacenada como 'myimg2_RGB') para detectar objetos utilizando un modelo de 
+clasificación entrenado con una base de datos de imágenes de libre acceso ('ImageNet'). Comprobarás que hay algunas predicciones 
+diferentes en ambos métodos, pero, sobre todo, que el tiempo para realizar la clasificación es menor en el servicio comercial, ya que no 
+tenemos que entrenar ni elegir un modelo. Como podrás imaginar, no puedes modificar los modelos comerciales ni acceder a sus detalles 
+internos, lo que supone una limitación importante si quieres construir tu propio sistema de clasificación personalizado.
+
+## Almacenamiento, representación y conversión de imágenes {#sec-storing}
+
+En esta sección nos centraremos en aprender a almacenar, representar y convertir imágenes para su posterior análisis computacional. Para 
+un análisis más exhaustivo del análisis computacional de imágenes, véase @williams2020image.
+
+Para realizar una manipulación básica de imágenes tenemos que: primero, cargar imágenes y transformar su forma cuando sea necesario 
+(recortando o redimensionando), y segundo, crear una representación matemática de la imagen (normalmente derivada de su tamaño, colores e 
+intensidad de píxel) como una matriz tridimensional (x, y, canal de color) o un vector aplanado (secuencia numérica de una sola dimensión). 
+Dispones de algunas bibliotecas útiles en Python y R ('pil' e 'imagemagik', respectivamente) para llevar a cabo la investigación en estas 
+etapas iniciales, pero también encontrarás que las bibliotecas más avanzadas en visión artificial incluirán funciones o módulos para el 
+preprocesamiento de imágenes. En este punto puedes trabajar de forma local o remota, pero ten en cuenta que las imágenes pueden ser 
+archivos pesados y, si estás trabajando con miles de archivos, seguramente necesites almacenarlos o procesarlos en la nube (ver 
+Sección [-@sec-cloudcomputing]).
+
+Puedes cargar cualquier imagen como objeto en tu espacio de trabajo, como mostramos en el Ejemplo [-@exm-loadimg]. En este caso cargamos 
+dos imágenes de refugiados publicadas por los principales medios de comunicación en Europa (véase @amores2019visual), una es un JPG y la 
+otra es un archivo PNG. Para este paso básico de carga utilizamos la función open del módulo Image en 'pil' y la función 'image_read' en 
+'imagemagik'. El archivo de imagen JPG es una imagen de $805\times 453$ con modelo de color RGB y el PNG es una imagen $1540\times 978$ 
+con modelo de color RGBA. Como puedes ver, los dos objetos tienen diferentes formatos, tamaños y modelos de color, lo que significa que 
+hay poco análisis que puedas hacer si no creas una representación matemática estándar de ambos.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-loadimg}
+Cargar imágenes JPG y PNG como objetos
+
+::: {.panel-tabset}
+## Código Python
+```{python loadimg-python}
+myimg1 = Image.open(
+    requests.get("https://cssbook.net/d/259_3_32_15.jpg", stream=True).raw
+)
+myimg2 = Image.open(
+    requests.get("https://cssbook.net/d/298_5_52_15.png", stream=True).raw
+)
+print(myimg1)
+print(myimg2)
+
+```
+## Código R
+```{r loadimg-r}
+myimg1 = image_read(
+    "https://cssbook.net/d/259_3_32_15.jpg")
+myimg2 = image_read(
+    "https://cssbook.net/d/298_5_52_15.png")
+rbind(image_info(myimg1), image_info(myimg2))
+```
+:::
+:::
+:::
+
+![Representación de la estructura de datos matricial de una imagen RGB en la que cada píxel contiene información sobre la intensidad de cada componente de color.](img/ch15_pixel.png){#fig-pixel}
+
+La buena noticia cuando se trabaja con imágenes digitales es que el concepto de 'píxel' te facilitará el comprender la representación 
+matemática básica que subyace al análisis computacional de las imágenes. Una rejilla rectangular de píxeles se representa mediante una 
+matriz de puntos que, a su vez, genera una 'bitmap image' (una imagen de mapa de *bits*) o 'raster grafic' (gráfico rasterizado). La 
+estructura de datos en matriz de puntos es una representación básica pero muy útil de las imágenes, ya que podemos realizar tanto 
+operaciones simples como avanzadas con ella. Estas representaciones funcionan de forma que cada punto de la matriz es un número que 
+contiene la información sobre la intensidad de cada píxel (que comúnmente oscila entre 0 y 255) también conocida como profundidad de bits 
+o de color (figura [-@fig-pixel]). Esto significa que la representación numérica de un píxel puede tener 256 valores diferentes, siendo 0 
+el tono más oscuro de un determinado color y 255 el más claro. Ten en cuenta que si divides los valores del píxel por 255 tendrás una 
+escala de 0 a 1 para representar la intensidad.
+
+En una imagen en blanco y negro solo tendremos un color (escala de grises), con los puntos más oscuros representando el negro y los más 
+claros el blanco. La representación matemática será una matriz única o un array bidimensional en la que el número de filas y columnas 
+corresponderá a las dimensiones de la imagen. Por ejemplo, en una imagen en blanco y negro de $224 \times 224$, tendremos 50.176 enteros 
+(en escalas 0-255) que representarán la intensidad de cada píxel.
+
+En el Ejemplo [-@exm-imagel] convertimos nuestra imagen JPG original a escala de grises y luego creamos un objeto con la representación 
+matemática (una matriz de $453 \times 805$).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-imagel}
+Conversión de imágenes a escala de grises y creación de un *array* bidimensional
+
+::: {.panel-tabset}
+## Código Python
+```{python imagel-python}
+#| cache: true
+myimg1_L = myimg1.convert("L")
+print(type(myimg1_L))
+myimg1_L_array = np.array(myimg1_L)
+print(type(myimg1_L_array))
+print(myimg1_L_array.shape)
+
+```
+## Código R
+```{r imagel-r}
+#| cache: true
+myimg1_L = image_convert(myimg1, colorspace = "gray")
+print(class(myimg1_L))
+myimg1_L_array = as.integer(myimg1_L[[1]])
+print(class(myimg1_L_array))
+print(dim(myimg1_L_array))
+
+```
+:::
+:::
+:::
+
+Por el contrario, las imágenes en color tendrán varios canales de color que dependerán del modelo de color elegido. Un modelo de color 
+estándar es el RGB de tres canales (rojo, verde y azul), pero puedes encontrar otras variaciones en los colores elegidos y el número de 
+canales como: RYB (rojo, amarillo y azul), RGBA (rojo, verde, azul y alfa[^3]) o CMYK (cian, magenta, amarillo y negro[^4]). Es importante 
+destacar que, mientras que los esquemas utilizados para la impresión, como el CMYK, son substractivos (todos los colores alcanzan su 
+valor máximo en negro y el valor mínimo en blanco), los esquemas utilizados para las pantallas de ordenador y televisión (como el RGB) 
+son aditivos: todos los colores alcanzan su valor máximo en blanco (funciona al contrario que colorear con pinturillas).
+
+En este libro utilizaremos principalmente RGB, ya que es la representación más utilizada en la literatura de vanguardia sobre visión 
+artificial, dado que normalmente estos canales de color producen modelos más precisos. La representación matemática de RGB será una 
+matriz tridimensional o una colección de tres arrays bidimensionales (uno para cada color) como mostramos en la figura [-@fig-pixel]. De 
+esta manera, una imagen RGB de $224 \times 224$ tendrá 50.176 intensidades de píxel para cada uno de los tres colores, es decir, ¡Un 
+total de 150.528 enteros!
+
+A continuación, en el Ejemplo [-@exm-imagergb] convertiremos nuestro archivo JPG original en un objeto RGB y luego crearemos un nuevo 
+objeto con la representación matemática (una matriz de $453 \times 805 \times 3$).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-imagergb}
+Conversión de imágenes al modelo de color RGB y creación de tres *arrays* bidimensionales
+
+::: {.panel-tabset}
+## Código Python
+```{python imagergb-python}
+
+myimg1_RGB = myimg1.convert("RGB")
+print(type(myimg1_RGB))
+myimg1_RGB_array = np.array(myimg1_RGB)
+print(type(myimg1_RGB_array))
+print(myimg1_RGB_array.shape)
+
+```
+## Código R
+```{r imagergb-r}
+myimg1_RGB = image_convert(myimg1, colorspace = "RGB")
+print(class(myimg1_RGB))
+myimg1_RGB_array = as.integer(myimg1_RGB[[1]])
+print(class(myimg1_RGB_array))
+print(dim(myimg1_RGB_array))
+
+```
+:::
+:::
+:::
+
+
+Si no queremos utilizar píxeles, hay otras formas de almacenar imágenes digitales. Una de ellas son los gráficos vectoriales, con 
+formatos como .ai, .eps, .svg o .drw. A diferencia de las imágenes de mapa de bits, no tienen una cuadrícula de puntos, sino que se 
+forman con un conjunto de objetos geométricos (líneas, triángulos, cuadrados, formas curvas, etc.) que tienen un punto inicial y un 
+final, de forma que pueden formar tanto imágenes simples como complejas. La gran ventaja de este formato es que las imágenes no se 
+"pixelan" al ampliarlas porque estos objetos pueden transformarse fácilmente sin distorsionarse. Sin embargo, para obtener la 
+representación matemática estándar de las imágenes hay que convertir los gráficos vectoriales en gráficos rasterizados, es decir, de 
+píxeles (hacerlo a la inversa es un poco más difícil y a menudo solo es posible por aproximación).
+
+A veces es necesario convertir la imagen a un tamaño específico. En el caso de la clasificación de imágenes, es especialmente importante, 
+ya que todas las imágenes de entrada del modelo deben tener el mismo tamaño. Por esta razón, una de las tareas más comunes en la etapa de 
+preprocesamiento es cambiar las dimensiones de la imagen para ajustar la anchura y la altura a un tamaño específico. En el ejemplo 
+[-@exm-resize] utilizamos el método resize proporcionado por 'pil' y la función 'image_scale' de 'imagemagik' para reducir la primera de 
+nuestras imágenes en RGB ('myimg1_RGB') al 25\%. Observa que primero obtenemos las dimensiones originales de la fotografía 
+('myimg1_RGB.width' o 'image_info(myimg1_RGB)['width'][[1]]') y luego las multiplicamos por 0.25 para obtener el nuevo tamaño, que es el 
+que vamos a necesitar para aplicar la funciones.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-resize}
+Redimensionar al 25\% y visualizar una imagen
+
+::: {.panel-tabset}
+## Código Python
+```{python resize-python}
+#| results: hide
+#| cache: true
+# Resize and visalize myimg1. Reduce to 25%
+width = int(myimg1_RGB.width * 0.25)
+height = int(myimg1_RGB.height * 0.25)
+myimg1_RGB_25 = myimg1_RGB.resize((width, height))
+plt.imshow(myimg1_RGB_25)
+```
+## Código R
+```{r resize-r}
+#| cache: true
+#Resize and visalize myimg1. Reduce to 25%
+myimg1_RGB_25 = image_scale(myimg1_RGB,
+        image_info(myimg1_RGB)["width"][[1]]*0.25)
+plot(myimg1_RGB_25)
+```
+:::
+:::
+:::
+
+Ahora, utilizando las funciones del último ejemplo, especificamos en el Ejemplo [-@exm-resize2] cómo redimensionar la misma imagen a 
+$224 \times 244$, que es una de las dimensiones estándar en visión artificial.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-resize2}
+Redimensionar a $224 \times 244$ y visualizar una imagen
+
+::: {.panel-tabset}
+## Código Python
+```{python resize2-python}
+#| results: hide
+# Resize to 224 x 224
+myimg1_RGB_224 = myimg1_RGB.resize((224, 224))
+plt.imshow(myimg1_RGB_224)
+```
+## Código R
+```{r resize2-r}
+# Resize and visalize myimg1. Resize to 224 x 224
+# The ! is used to specify an exact width and height
+myimg1_RGB_224 = image_scale(myimg1_RGB,
+                             "!224x!224")
+plot(myimg1_RGB_224)
+```
+:::
+:::
+:::
+
+Habrás observado que la nueva imagen tiene ahora la anchura y la altura correctas, pero está deformada. La razón es que la imagen 
+original no era cuadrada y nuestra orden fue forzarla a encajar en un $224 \times 224$ cuadrado, perdiendo su aspecto original. Existen 
+diferentes alternativas para solucionar este problema, pero probablemente la más extendida sea recortar la imagen original para crear una 
+imagen que ya sea cuadrada. Como se puede ver en el Ejemplo [-@exm-crop] podemos crear una función que primero determine la orientación 
+de la imagen (vertical frente a horizontal) y luego recorte los márgenes (arriba y abajo si es vertical; e izquierda y derecha si es 
+horizontal) para crear un cuadrado. Después de aplicar esta función *ad hoc* 'crop' a la imagen original, podemos redimensionarla de nuevo 
+para obtener una imagen $224 \times 224$ no distorsionada. 
+
+Evidentemente, haciendo esto estás perdiendo parte de la información de la imagen, así que quizás quieras pensar en otras alternativas, 
+como rellenar un par de lados con píxeles en blanco para crear el cuadrado, añadiendo así información en lugar de eliminarla.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-crop}
+Función recortar la imagen para crear un cuadrado y redimensionar la foto
+
+::: {.panel-tabset}
+## Código Python
+```{python crop-python}
+#| results: hide
+# Crop and resize to 224 x 224
+
+# Adapted from Webb, Casas & Wilkerson (2020)
+def crop(img):
+    height = img.height
+    width = img.width
+    hw_dif = abs(height - width)
+    hw_halfdif = hw_dif / 2
+    crop_leftright = width > height
+    if crop_leftright:
+        y0 = 0
+        y1 = height
+        x0 = 0 + hw_halfdif
+        x1 = width - hw_halfdif
+    else:
+        y0 = 0 + hw_halfdif
+        y1 = height - hw_halfdif
+        x0 = 0
+        x1 = width
+    return img.crop((x0, y0, x1, y1))
+
+myimg1_RGB_crop = crop(myimg1_RGB)
+myimg1_RGB_crop_224 = myimg1_RGB_crop.resize((224, 224))
+plt.imshow(myimg1_RGB_crop_224)
+
+```
+## Código R
+```{r crop-r}
+#Crop and resize to 224 x 224
+#Create function
+crop = function(img) {
+    width = image_info(img)["width"][[1]]
+    height = image_info(img)["height"][[1]]
+    if (width > height) {
+        return (image_crop(img, 
+                sprintf("%dx%d+%d", height,
+                    height, (width-height)/2)))
+    }   else  {
+        return (image_crop(img,
+                sprintf("%sx%s+%s+%s", width,
+        width, (width-width), (height-width)/2)))
+        }
+    }
+
+myimg1_RGB_crop = crop(myimg1_RGB)
+myimg1_RGB_crop_224 = image_scale(myimg1_RGB_crop, "!224x!224")
+plot(myimg1_RGB_crop_224)
+```
+:::
+:::
+:::
+
+También puedes ajustar la orientación de la imagen, voltearla o cambiar su fondo, entre otros comandos. Estas técnicas pueden ser útiles 
+para crear imágenes adicionales con el fin de ampliar el conjunto de entrenamiento en la clasificación de imágenes (véase el apartado 
+[-@sec-cnn]). Esto se denomina aumento de datos y consiste en duplicar los ejemplos iniciales sobre los que se entrenó el modelo y 
+alterarlos para que el algoritmo sea más robusto y generalice mejor. En el Ejemplo [-@exm-rotate] utilizamos el método 'rotate' en 'pil' 
+y la función 'image_rotate' en 'imagemagik' para rotar 45 grados la imagen redimensionada 'myimg1_RGB_224' anterior. Haciendo esto, 
+puedes ver la facilidad con la que obtenemos una imagen alternativa con información similar para incluirla en un conjunto de 
+entrenamiento aumentado.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-rotate}
+Rotar una imagen 45 grados
+
+::: {.panel-tabset}
+## Código Python
+```{python rotate-python}
+#| results: hide
+#| cache: true
+# Rotate 45 degrees
+myimg1_RGB_224_rot = myimg1_RGB_224.rotate(-45)
+plt.imshow(myimg1_RGB_224_rot)
+
+```
+## Código R
+```{r rotate-r}
+#Rotate 45 degrees
+#| cache: true
+myimg1_RGB_224_rot = image_rotate(
+    myimg1_RGB_224, 45)
+plot(myimg1_RGB_224_rot)
+```
+:::
+:::
+:::
+
+Por último, la representación numérica del contenido visual puede ayudarnos a comparar imágenes para encontrar otras similares o incluso 
+duplicadas. Tomemos el caso de las imágenes RGB, que ya en el Ejemplo [-@exm-imagergb] vimos cómo las podemos transformar en tres *arrays* 
+bidimensionales. Si, a continuación, convertimos la matriz tridimensional de la imagen en un vector aplanado, podemos utilizar esta 
+representación numérica (que es más simple) para calcular similitudes. Observa cómo lo hacemos en el Ejemplo [-@exm-flatten]: tomamos los 
+vectores ('img_vect1' e 'img_vect2') de dos imágenes aplanadas (obtenidas de dos imágenes redimensionadas a $15 \times 15$, para facilitar 
+los cálculos), y utilizamos la similitud del coseno para calcular lo parecidas que son ambas imágenes. Apilamos los dos vectores en una 
+matriz y luego utilizamos la función 'cosine_similarity' del módulo 'metrics' del paquete 'sklearn' en Python y la función 'cosine' del 
+paquete 'lsa' en R.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-flatten}
+Comparación de dos vectores aplanados para detectar similitudes entre imágenes
+
+::: {.panel-tabset}
+## Código Python
+```{python flatten-python}
+# Create two 15x15 small images to compare
+
+# image1
+myimg1_RGB_crop_15 = myimg1_RGB_crop_224.resize((15, 15))
+# image2
+myimg2_RGB = myimg2.convert("RGB")
+myimg2_RGB_array = np.array(myimg2_RGB)
+myimg2_RGB_crop = crop(myimg2_RGB)
+myimg2_RGB_crop_224 = myimg2_RGB_crop.resize((224, 224))
+myimg2_RGB_crop_15 = myimg2_RGB_crop_224.resize((15, 15))
+
+img_vect1 = np.array(myimg1_RGB_crop_15).flatten()
+img_vect2 = np.array(myimg2_RGB_crop_15).flatten()
+
+matrix = np.row_stack((img_vect1, img_vect2))
+
+sim_mat = cosine_similarity(matrix)
+sim_mat
+
+```
+## Código R
+```{r flatten-r}
+#Create two 15x15 small images to compare
+
+#image1
+myimg1_RGB_crop_15 = image_scale(myimg1_RGB_crop_224, 15)
+img_vect1 = as.integer(myimg1_RGB_crop_15[[1]])
+img_vect1 = as.vector(img_vect1)
+
+#image2
+myimg2_RGB = image_convert(myimg2, colorspace = "RGB")
+myimg2_RGB_crop = crop(myimg2_RGB)
+myimg2_RGB_crop_15 = image_scale(myimg2_RGB_crop, 15)
+img_vect2 = as.integer(myimg2_RGB_crop_15[[1]])
+#drop the extra channel for comparision
+img_vect2 = img_vect2[,,-4] 
+img_vect2 = as.vector(img_vect2)
+
+matrix = cbind(img_vect1, img_vect2)
+
+cosine(img_vect1, img_vect2)
+cosine(matrix)
+```
+:::
+:::
+:::
+
+Como se puede ver en la matriz resultante, cuando las imágenes se comparan consigo mismas (sería el caso de un duplicado exacto) obtienen 
+un valor de 1. Las imágenes similares obtendrían valores inferiores a 1 pero cercanos a él, mientras que las imágenes dispares obtendrían 
+valores bajos.
+
+## Clasificación de imágenes {#sec-cnn}
+
+La aplicación de la clasificación automática de imágenes puede ayudar a responder muchas preguntas científicas, desde poner a prueba 
+hipótesis tradicionales hasta abrir nuevos campos de interés en la investigación en ciencias sociales. Basta con pensar en el potencial 
+de detectar a gran escala quién aparece en las fotografías de las noticias o cuáles son las emociones faciales expresadas en los perfiles 
+de una red social. Más aún, imaginemos que se pudiera etiquetar automáticamente si una imagen contiene o no una determinada acción. Este 
+es el caso de @williams2020images, que realizaron una clasificación binaria de fotografías relacionadas con el movimiento *Black Lives 
+Matter* para modelar si una imagen era una protesta o no, lo que puede ayudar a entender en qué medida los medios de comunicación 
+cubrieron un tema social y político relevante.
+
+Hay muchos otros ejemplos excelentes de cómo se pueden adoptar tareas de clasificación de imágenes para responder a preguntas de 
+investigación específicas en ciencias sociales, como las de @horiuchi2012should, que detectaron sonrisas en imágenes de políticos para 
+calcular los efectos de la apariencia facial en los resultados electorales; o el trabajo de @peng2018same, que utilizó el reconocimiento 
+automatizado de rasgos faciales en políticos estadounidenses para investigar el sesgo de las representaciones de los medios de 
+comunicación.
+
+En esta sección, aprenderemos a realizar la clasificación automática de imágenes, que es probablemente la aplicación de la visión 
+artificial más extendida en las ciencias sociales y de la comunicación (véase la Tabla [-@tbl-visionlingo] para algunos términos). 
+Primero discutiremos cómo aplicar un algoritmo superficial y luego veremos un enfoque de aprendizaje profundo, dada una base de datos 
+etiquetados.
+
+|Términos usados en la visión artificial | Definición|
+|-|-|
+|bitmap | Formato para almacenar imágenes digitales mediante una cuadrícula rectangular de puntos de colores. También se denomina "imagen rasterizada".|
+|pixel | Significa “*picture element*” (elemento de imagen) y es el punto más pequeño de una imagen de mapa de bits.|
+|Modelo de color (*color model*) | Representación matemática de los colores de una imagen. El estándar en visión artificial es RGB, pero existen otros como RYB, RGBA o CMYK.|
+|Gráfico vectorial (*vector graphic*) | Formato para almacenar imágenes digitales mediante líneas y curvas formadas por puntos.|
+|Aumento de datos (*data augmentation*) | Técnica para aumentar el conjunto de imágenes de entrenamiento mediante la creación de otras nuevas basadas en la modificación de algunas de las originales (recorte, rotación, etc.).|
+|Clasificación de imágenes (*image classification*) | Tarea de aprendizaje automático para predecir la clase de una imagen basándose en un modelo. La clasificación de imágenes más avanzada se realiza con redes neuronales convolucionales (CNN, por sus siglas en inglés). Otras tareas relacionadas son la detección de objetos y la segmentación de imágenes.|
+|Función de activación (*activation function*) |  Parámetro de una CNN que define la salida de una capa dadas las entradas de la capa anterior. Algunas funciones de activación habituales en la clasificación de imágenes son sigmoide, softmax o RELU.|
+|Función de pérdida (*loss function*) | Parámetro de una CNN que tiene en cuenta la diferencia entre la predicción y la variable objetivo (confianza en la predicción). Se utiliza habitualmente la pérdida de entropía cruzada.|
+|Optimización (*optimization*) |  Parámetro de una CNN que actualiza los pesos y los sesgos para reducir el error. Algunos optimizadores comunes en la clasificación de imágenes son el descenso del gradiente estocástico y ADAM.|
+|Aprendizaje por transferencia (*transfer learning*) | Utilización de capas entrenadas por otras arquitecturas CNN para afinar un nuevo modelo invirtiendo menos recursos (por ejemplo, datos de entrenamiento).|
+:  Algunos conceptos de visión artificial utilizados en el análisis automático de la comunicación {#tbl-visionlingo}
+
+Técnicamente, en una tarea de clasificación de imágenes entrenamos un modelo con ejemplos (por ejemplo, un corpus de imágenes con 
+etiquetas) para predecir la categoría de cualquier nueva muestra dada. Se trata de la misma lógica utilizada en la clasificación 
+supervisada de textos explicada en el apartado [-@sec-supervised], pero utilizando imágenes en lugar de textos. Por ejemplo, si mostramos 
+muchas imágenes de gatos y casas, el algoritmo aprenderá las características constantes de cada una y te dirá, con cierto grado de 
+confianza, si una nueva imagen contiene un gato o una casa. Lo mismo ocurre con letras, números, objetos o caras, y se puede aplicar una 
+clasificación binaria o multiclase. Piensa en el reconocimiento de la matrícula de tu vehículo por una cámara o en el etiquetado 
+automático de tu cara en las fotos publicadas en Facebook.
+
+Más allá de la clasificación de imágenes, existen otras tareas específicas de la visión artificial, como la detección de objetos o la 
+segmentación semántica (Figura 14.4). Para llevar a cabo la detección de objetos, primero tenemos que localizar todos los posibles 
+objetos contenidos en una imagen mediante la predicción de una caja delimitadora o *bounding box* (es decir, los cuatro puntos 
+correspondientes a las coordenadas verticales y horizontales del centro del objeto), lo que normalmente es una tarea de regresión. Una 
+vez colocadas las cajas delimitadoras alrededor de los objetos, debemos aplicar la clasificación multiclase explicada anteriormente. En 
+el caso de la segmentación semántica, en lugar de clasificar los objetos, clasificamos cada píxel de la imagen según la clase del objeto 
+al que pertenece el píxel, lo que significa que podrían no distinguirse diferentes objetos de la misma clase. Véase @geron2019hands para 
+una explicación más detallada y ejemplos gráficos de la detección de objetos frente a la segmentación de imágenes.
+
+![ Detección de objetos (izquierda) frente a segmentación semántica (derecha). Fuente: @geron2019hands](img/ch15_location.png){#fig-location}
+
+Está fuera del alcance de este libro abordar la implementación de la detección de objetos o la segmentación semántica, por lo que nos 
+centraremos en cómo llevar a cabo la clasificación básica de imágenes en bibliotecas de última generación en R y Python. Como habrás 
+imaginado, necesitaremos algunas imágenes ya etiquetadas para disponer de un conjunto de entrenamiento adecuado. Tampoco resulta 
+especialmente interesante, para este capítulo, el proceso de recopilar y anotar las imágenes, por lo que nos basaremos principalmente en 
+bases de datos de imágenes preexistentes (como 'MNIST' y 'Fashion MNIST') y modelos pre-entrenados (es decir, arquitecturas CNN).
+
+### Clasificación básica con algoritmos superficiales {#sec-shallow}
+
+En el capítulo [-@sec-chap-introsml] te introdujimos en el apasionante mundo del aprendizaje automático y, en la sección 
+[-@sec-supervised], te presentamos el enfoque supervisado para clasificar textos. La mayoría de los modelos analizados utilizaban los 
+llamados “algoritmos superficiales”, como Naive Bayes o Máquinas de Vectores Soporte en lugar de los modelos de redes neuronales de gran 
+tamaño denominados “aprendizaje profundo”. Como veremos en la siguiente sección, las redes neuronales profundas son hoy en día la mejor 
+opción para tareas complejas de clasificación de imágenes. Sin embargo, primero te explicaremos cómo llevar a cabo una sencilla 
+clasificación multiclase de imágenes que contienen números con un algoritmo superficial.
+
+Empecemos por entrenar un modelo para reconocer números utilizando 70.000 pequeñas imágenes de dígitos escritos a mano de la base de 
+datos de la Organización Nacional de Puntos de Referencia e Innovación Modificada (MNIST, por sus siglas en inglés) ([@lecun1998gradient]). 
+Este popular corpus de entrenamiento contiene ejemplos en escala de grises de números escritos por estudiantes y trabajadores 
+estadounidenses y suele emplearse para probar modelos de aprendizaje automático (60.000 para entrenamiento y 10.000 para pruebas). Los 
+tamaños de las imágenes son de $28 \times 28$, lo que genera 784 características para cada imagen, con valores de píxeles del blanco al 
+negro representados por una escala de 0--255. En la Figura [-@fig-numbers] se pueden observar los 10 primeros números manuscritos 
+utilizados tanto en el conjunto de entrenamiento como en el de prueba.
+
+![Primeros 10 dígitos manuscritos del conjunto de entrenamiento y prueba del MNIST.](img/ch15_numbers.png){#fig-numbers}
+
+Puedes descargar las imágenes MNIST desde la página web de su proyecto[^5] si es necesario, aunque muchas bibliotecas ya cuentan con esta 
+base de datos. En el Ejemplo [-@exm-mnist] utilizamos la función 'read_mnist' del paquete 'dslabs' ('Data Science Labs') en R y la función 
+'fetch_openml' del paquete 'sklearn' (módulo 'datasets') en Python para leer y cargar un objeto 'mnist' en nuestro espacio de trabajo. A 
+continuación, creamos los cuatro objetos necesarios ('X_train', 'X_test', 'y_train', 'y_test') para generar un modelo de aprendizaje 
+automático, imprimimos los primeros números en los conjuntos de entrenamiento y prueba y comprobamos que coinciden con los de la 
+[-@fig-numbers].
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-mnist}
+Carga de la base de datos MNIST y preparación de los conjuntos de entrenamiento y prueba
+
+::: {.panel-tabset}
+## Código Python
+```{python mnist-python0}
+#| echo: false
+# fetch_openml is really slow and caching does not really seem to work, so do manual caching. We can probably do this better somehow
+import pickle
+from pathlib import Path
+cache = Path.cwd() / "mnist_784.pickle"
+if cache.exists():
+    with cache.open('rb') as f:
+        X_train, X_test, y_train, y_test = pickle.load(f)
+else:
+    mnist = fetch_openml("mnist_784", version=1)
+    X, y = mnist["data"], mnist["target"]
+    y = y.astype(np.uint8)
+    X_train, X_test = X[:60000], X[60000:]
+    y_train, y_test = y[:60000], y[60000:]
+    with cache.open('wb') as f:
+        pickle.dump([X_train, X_test, y_train, y_test], f)
+```
+```{python mnist-python}
+#| eval: false
+mnist = fetch_openml("mnist_784", version=1)
+X, y = mnist["data"], mnist["target"]
+y = y.astype(np.uint8)
+X_train, X_test = X[:60000], X[60000:]
+y_train, y_test = y[:60000], y[60000:]
+```
+```{python mnist-python2}
+print("Numbers in training set= ", y_train[0:10])
+print("Numbers in test set= ", y_test[0:10])
+```
+## Código R
+```{r mnist-r}
+mnist = read_mnist()
+
+X_train = mnist$train$images
+y_train = factor(mnist$train$labels)
+X_test = mnist$test$images
+y_test = factor(mnist$test$labels)
+
+print("Numbers in training set = ")
+print(factor(y_train[1:10]), max.levels = 0)
+print("Numbers in test set = ")
+print(factor(y_test[1:10]), max.levels = 0)
+```
+:::
+:::
+:::
+
+Una vez que estemos listos para pasar los números por el modelo, elegimos uno de los algoritmos superficiales explicados en la sección 
+[-@sec-nb2dnn] para desplegar una tarea de clasificación de imágenes binaria o multiclase. En el caso de la binaria, debemos seleccionar 
+un número de referencia (por ejemplo "3") y luego crear el modelo de ese número frente a todos los demás (para responder a preguntas como 
+"¿Cuál es la probabilidad de que este dígito sea el número 3?"). En cambio, si elegimos la clasificación multiclase, nuestro modelo puede 
+predecir cualquiera de los diez números (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) incluidos en nuestros ejemplos.
+
+Ahora, utilizamos los conceptos básicos del algoritmo Bosques Aleatorios (véase la [@sec-randomforest]) para crear y ajustar un modelo 
+con 100 árboles ('forest_clf'). En el Ejemplo [-@exm-multiclass], utilizamos de nuevo el paquete 'randomForest' en R y el paquete 'sklearn' 
+en Python para calcular un modelo para las diez clases utilizando el corpus de 60.000 imágenes (las clases están equilibradas de forma 
+similar, $\sim$9--11\% cada una). Como hacemos en los ejemplos, se pueden comprobar que las predicciones para las diez primeras imágenes 
+del conjunto de prueba ('X_test') son correctas, y también comprobar las predicciones para todo el conjunto de prueba, para obtener así 
+algunas métricas del modelo. La exactitud es superior a 0,97, lo que significa que la tarea de clasificación se realiza muy bien.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-multiclass}
+Modelización de los dígitos manuscritos con RandomForest y predicción de algunos resultados
+
+::: {.panel-tabset}
+## Código Python
+```{python multiclass-python}
+#| cache: true
+forest_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+forest_clf.fit(X_train, y_train)
+print(forest_clf)
+print(
+    "Predict the first 10 numbers of our set:", forest_clf.predict(X_test[:10])
+)
+
+predictions = forest_clf.predict(X_test)
+print("Overall Accuracy: ", accuracy_score(y_test, predictions))
+
+```
+## Código R
+```{r multiclass-r}
+#| cache: true
+#Multiclass classification with RandomForest
+rf_clf = randomForest(X_train, y_train, ntree=100)
+rf_clf
+predict(rf_clf, X_test[1:10,])
+predictions = predict(rf_clf, X_test)
+cm = confusionMatrix(predictions, y_test)
+print(cm$overall["Accuracy"])
+```
+:::
+:::
+:::
+
+Este enfoque basado en algoritmos poco profundos funciona bastante bien para imágenes sencillas, pero tiene muchas limitaciones para 
+imágenes más complejas, como figuras o fotografías reales. Después de todo, cuanto más compleja es la imagen y más abstracto el concepto, 
+menos probable es que se pueda esperar una relación directa entre el color de un píxel y la clasificación. En la siguiente sección 
+presentamos el uso del aprendizaje profundo en la clasificación de imágenes, que hoy en día es un enfoque más preciso para tareas 
+complejas.
+
+### Aprendizaje profundo para el análisis de imágenes {#sec-deep}
+
+Aunque requieren cálculos pesados, las redes neuronales profundas (DNN, por sus siglas en inglés) son hoy en día la mejor forma de llevar 
+a cabo la clasificación de imágenes, ya que su rendimiento es normalmente superior al de los algoritmos superficiales. La razón es que 
+ampliamos el proceso de aprendizaje utilizando capas ocultas intermedias, de modo que cada una de estas capas puede aprender diferentes 
+patrones o aspectos de la imagen con distintos niveles de abstracción: por ejemplo, desde la detección de líneas o contornos en las 
+primeras capas hasta la captación de una representación de características superior de una imagen (como el color de la piel, las formas 
+de los ojos o las narices) en las capas siguientes. En los apartados [-@sec-neural] y [-@sec-deeplearning] hemos introducido los 
+conceptos generales de una DNN (como perceptrones, capas, capas ocultas, propagación hacia atrás o hacia delante y funciones de salida), 
+y ahora trataremos algunas arquitecturas habituales para el análisis de imágenes.
+
+Una de las arquitecturas DNN más sencillas es el Perceptrón Multicapa (MLP, por sus siglas en inglés) que contiene una capa de entrada, 
+una o varias capas ocultas y una capa de salida (todas ellas completamente conectadas y con neuronas sesgadas (*bias neurons*), excepto la 
+capa de salida). Originalmente, en un MLP, las señales se propagan de las entradas a las salidas (en una sola dirección), en lo que 
+llamamos una red neuronal prealimentada (FNN, por sus siglas en inglés), pero utilizando el descenso del gradiente como optimizador 
+podemos aplicar la retropropagación (calcular automáticamente los gradientes de los errores de la red en dos etapas: una hacia delante y 
+otra hacia atrás) y obtener así un entrenamiento más eficiente.
+
+Podemos utilizar el MLP para clasificación binaria y multiclase. En el primer caso, normalmente utilizaremos una única neurona de salida 
+con la función de activación sigmoidea o logística (probabilidad de 0 a 1) (véase el [@sec-logreg]). En el segundo caso, necesitaremos 
+una neurona de salida por clase con la función de activación 'softmax' (probabilidades de 0 a 1 para cada clase pero con la condición de 
+que deben sumar 1 si las clases son excluyentes. Es la función utilizada en la regresión logística multinomial). Para predecir 
+probabilidades, en ambos casos necesitaremos una función de pérdida. La que normalmente se recomienda es la pérdida de entropía cruzada 
+(*cross entropy loss*) o, simplemente, *log loss*.
+
+La biblioteca de última generación para redes neuronales en general y para visión artificial en particular es 'TensorFlow'[^6] 
+(originalmente creada por Google y posteriormente hecha pública) y la API de aprendizaje profundo de alto nivel 'Keras', aunque se pueden 
+encontrar otros buenos paquetes de implementación como 'PyTorch' (creado por Facebook), que tiene muchas funcionalidades sencillas y 
+también se ha popularizado en los últimos años (ver por ejemplo las tareas de clasificación de imágenes para ciencias sociales realizadas 
+en 'PyTorch' por@williams2020images). Todos estos paquetes tienen versiones actuales tanto para R como para Python.
+
+Ahora, vamos a entrenar un MLP para construir un clasificador de imágenes que reconozca artículos de moda utilizando la base de datos 
+'Fashion MNIST'[^7]. Esta base de datos contiene 70.000 (60.000 para el entrenamiento y 10.000 para la prueba) ejemplos en escala de 
+grises ($28\times 28$) de diez clases diferentes que incluyen: “*ankle boots*” (botines), “*bags*” (bolsos), “*coats*” (abrigos), 
+“*dresses*” (vestidos), “*pullovers*” (monos), “*sandals*” (sandalias), “*shirts*” (camisas), “*sneakers*” (deportivas), “*t-shirts/tops*” 
+(camisetas/tops) and “*trousers*” (pantalones) (Figura [-@fig-fashion]). Si se compara esta base de datos con el MNIST, se observa que 
+las figuras de artículos de moda son más complejas que los dígitos escritos a mano, lo que normalmente genera una menor precisión en la 
+clasificación supervisada.
+
+![Ejemplos de elementos *Fashion MNIST*.](img/ch15_fashion.png){#fig-fashion}
+
+Puedes utilizar 'Keras' para cargar 'Fashion MNIST'. En el Ejemplo [-@exm-fashion], cargamos la base de datos completo y creamos los 
+objetos necesarios para el modelado ('X_train_full', 'y_train_full', 'X_test', 'y_test'). Además, reescalamos todas las características 
+de entrada de 0--255 a 0--1 dividiéndolas por 255 para aplicar el descenso del gradiente. A continuación, obtuvimos tres conjuntos con 
+*arrays* de $28\times 28$: 60.000 en el de entrenamiento y 10.000 en el de prueba. También podríamos generar un conjunto de validación 
+(por ejemplo, 'X_valid' e 'y_valid') con una cantidad determinada de registros extraídos del conjunto de entrenamiento (por ejemplo, 
+5.000), pero como verás más adelante, 'Keras' nos permite generar automáticamente el conjunto de validación como una proporción del 
+conjunto de entrenamiento (por ejemplo, 0.1, que serían 6.000 registros en nuestro ejemplo) al ajustar el modelo (recuerda la importancia 
+de trabajar con un conjunto de validación para evitar el sobreajuste, explicada en la Sección [-@sec-train]).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-fashion}
+Carga de la base de datos Fashion MNIST y preparación de los conjuntos de entrenamiento, prueba y validación
+
+::: {.panel-tabset}
+## Código Python
+```{python fashion-python}
+fashion_mnist = keras.datasets.fashion_mnist
+(X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+class_names = ["T-shirt/top", "Trouser", "Pullover",
+               "Dress", "Coat", "Sandal", "Shirt",
+               "Sneaker", "Bag", "Ankle boot"]
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+print(X_train.shape, X_test.shape)
+
+```
+## Código R
+```{r fashion-r}
+fashion_mnist <- dataset_fashion_mnist()
+c(X_train, y_train) %<-% fashion_mnist$train
+c(X_test, y_test) %<-% fashion_mnist$test
+class_names = c("T-shirt/top","Trouser",
+    "Pullover","Dress", "Coat", "Sandal","Shirt",
+    "Sneaker", "Bag","Ankle boot")
+X_train <- X_train / 255
+y_test <- y_test / 255
+print(dim(X_train))
+print(dim(X_test))
+```
+:::
+:::
+:::
+
+El siguiente paso es diseñar la arquitectura de nuestro modelo. Hay tres formas de crear los modelos en Keras (secuencial, funcional o 
+subclase), pero hay miles de formas de configurar una red neuronal profunda. En el caso de este MLP, tenemos que incluir primero una capa 
+de entrada con 'input_shape', que sea igual a la dimensión de la imagen ($28\times 28$ para 784 neuronas). En la parte superior del MLP 
+necesitaremos una capa de salida con 10 neuronas (el número de resultados posibles en nuestra tarea de clasificación multiclase) y una 
+función de activación 'softmax' para las probabilidades finales de cada clase.
+
+En el Ejemplo [-@exm-mlp] utilizamos el modelo secuencial para diseñar nuestro MLP capa por capa, incluyendo las capas de entrada y 
+salida antes mencionadas. Entre medias, hay muchas opciones para la configuración de las capas ocultas: número de capas, número de 
+neuronas, funciones de activación, etc. Como sabemos que cada capa oculta ayudará a modelar distintos patrones de la imagen, podríamos 
+incluir al menos dos de ellas con distinto número de neuronas (reduciendo significativamente este número en la segunda) y transmitir su 
+información mediante la función de activación 'relu'. Lo que hacemos en realidad es crear un objeto llamado 'model' que guarda la 
+arquitectura propuesta. Podemos utilizar el método 'summary' para obtener una representación clara de la red neuronal creada y el número 
+de parámetros del modelo (¡266.610 en este caso!).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-mlp}
+Crear la arquitectura del MLP con Keras
+
+::: {.panel-tabset}
+## Código Python
+```{python mlp-python}
+model = keras.models.Sequential(
+    [
+        keras.layers.Flatten(input_shape=[28, 28]),
+        keras.layers.Dense(300, activation="relu"),
+        keras.layers.Dense(100, activation="relu"),
+        keras.layers.Dense(10, activation="softmax"),
+    ]
+)
+model.summary()
+
+```
+## Código R
+```{r mlp-r}
+model = keras_model_sequential()
+model %>%
+layer_flatten(input_shape = c(28, 28)) %>%
+layer_dense(units=300, activation="relu") %>%
+layer_dense(units=100, activation="relu") %>%
+layer_dense(units=10, activation="softmax")
+model
+```
+:::
+:::
+:::
+
+Los siguientes pasos serán utilizar 'compile' (compilar), 'fit' (ajustar) y 'evaluate' (evaluar) sobre el modelo, de forma similar a lo 
+que ya has hecho en ejercicios anteriores de este libro. En el Ejemplo [-@exm-model], primero incluimos los parámetros (pérdida, 
+optimizador y métricas) del paso de compilación y ajustamos el modelo, lo que puede llevar algunos minutos (o incluso horas, dependiendo 
+de tu base de datos, la arquitectura de tu DNN y, por supuesto, tu ordenador).
+
+Al ajustar el modelo, hay que separar el conjunto de entrenamiento en fases o *epochs* (épocas). Una buena regla general para elegir el 
+número óptimo de fases es parar unas cuantas iteraciones después de que la pérdida de la prueba deje de mejorar[^8] (nosotros elegimos 
+cinco fases para el ejemplo). También tendrás que establecer la proporción del conjunto de entrenamiento que se convertirá en el conjunto 
+de validación (en este caso 0,1). Además, puedes utilizar el parámetro 'verbose' para elegir si quieres ver el progreso (1 para crear una 
+barra de progreso y 2 para devolver una línea por fase) o no (0 para “silencio”) del proceso de entrenamiento. Usando el método 'evaluate' 
+puedes obtener la pérdida final y la exactitud, que en este caso es de 0.84 (¡Pero puedes llegar hasta 0.88 si lo ajustas a 25 fases!).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-model}
+Compilación, ajuste y evaluación del modelo para el MLP
+
+::: {.panel-tabset}
+## Código Python
+```{python model-python}
+model.compile(
+    loss="sparse_categorical_crossentropy",
+    optimizer="sgd",
+    metrics=["accuracy"],
+)
+
+history = model.fit(X_train, y_train, epochs=5, verbose=0, validation_split=0.1)
+print("Evaluation: ")
+print(model.evaluate(X_test, y_test, verbose=0))
+```
+## Código R
+```{r model-r}
+#| cache: true
+model %>% compile(optimizer = "sgd", metrics = c("accuracy"),
+                  loss = "sparse_categorical_crossentropy")
+history = model %>% fit(X_train, y_train,validation_split=0.1, epochs=5, verbose=0)
+print(history$metrics)
+score = model %>% evaluate(X_test, y_test, verbose = 0)
+print("Evaluation")
+print(score)
+```
+:::
+:::
+:::
+
+Por último, puedes utilizar el modelo para predecir las clases de cualquier imagen nueva (utilizando 'predict_classes'). En el ejemplo 
+[-@exm-predict], utilizamos el modelo para predecir las clases de los seis primeros elementos del conjunto de prueba. Si vuelves a la 
+figura [-@fig-fashion] puedes comparar estas predicciones “*ankle boot*”, “*pullover*”, “*trouser*”, “*trouser*”, “*shirt*”, and 
+“*trouser*”) con las seis primeras imágenes reales del conjunto de prueba, y ver la precisión de nuestro modelo.
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-predict}
+Predicción de clases utilizando el MLP
+
+::: {.panel-tabset}
+## Código Python
+```{python predict-python}
+#| cache: true
+X_new = X_test[:6]
+y_pred = np.argmax(model.predict(X_new, verbose=0), axis=-1)
+class_pred = [class_names[i] for i in y_pred]
+class_pred
+
+```
+## Código R
+```{r predict-r}
+#| cache: true
+img = X_test[1:6, , , drop = FALSE]
+class_pred = model %>% predict(img, verbose=0) %>% k_argmax()
+class_pred
+```
+:::
+:::
+:::
+
+Utilizando los conceptos y el código descritos anteriormente, puedes intentar entrenar un nuevo MLP con imágenes en color de diez clases 
+(avión, automóvil, pájaro, gato, ciervo, perro, rana, caballo, barco y camión) utilizando los conjuntos de datos CIFAR-10 y CIFAR-100[^9].
+
+### Reutilización de una CNN de código abierto {#sec-tuning}
+
+Comparado con los ejemplos de las últimas secciones, el entrenamiento para imágenes complejas, como fotografías, es una tarea más 
+sofisticada. Por un lado, no es tan sencillo construir una red neuronal profunda desde cero como hicimos en la sección [-@sec-deep] para 
+entrenar un MLP. Por suerte, puedes reutilizar algunas capas inferiores de otras DNN e implementar el aprendizaje por transferencia para 
+ahorrar tiempo y utilizar menos datos de entrenamiento. Por otro lado, tampoco deberíamos quedarnos en los MLP tradicionales, sino que 
+deberíamos probar otros tipos de DNN, como las Redes Neuronales Convolucionales (CNN) que son, hoy en día, el enfoque de vanguardia en 
+visión artificial. Además, para obtener mejores resultados, deberíamos construir o explorar diferentes arquitecturas de CNN que puedan 
+producir predicciones más precisas en la clasificación de imágenes. En esta sección mostraremos cómo reutilizar una arquitectura CNN de 
+código abierto y propondremos un ejemplo de cómo ajustar una CNN existente para un problema de ciencias sociales.
+
+Como se explica en la sección [-@sec-cnnbasis], una CNN es un tipo específico de DNN que ha tenido un gran éxito en tareas visuales 
+complejas (clasificación de imágenes, detección de objetos o segmentación semántica) y reconocimiento de voz[^10]. En lugar de utilizar 
+capas totalmente conectadas como en un MLP típico, una CNN utiliza capas parcialmente conectadas, inspiradas en cómo se conectan las 
+neuronas "reales" en la corteza visual: algunas neuronas solo reaccionan a estímulos situados en un campo receptivo limitado. En otras 
+palabras, en una CNN, cada neurona está conectada a algunas neuronas de la capa anterior (y no a todas), lo que reduce significativamente 
+la cantidad de información transmitida a la capa siguiente y ayuda a la DNN a detectar patrones complejos. Sorprendentemente, esta 
+reducción del número de parámetros y pesos que intervienen en el modelo funciona mejor para imágenes grandes y complejas, no como las 
+mostradas en MNIST.
+
+Construir una CNN es bastante similar a un MLP, excepto por el hecho de que tendrás que trabajar con capas convolucionales y de 
+agrupamiento (*pooling*). Las capas convolucionales incluyen un término de sesgo (*bias*) y son los bloques más importantes de una CNN, 
+ya que establecen las conexiones específicas entre las neuronas. Dicho de forma más gráfica: cada neurona de una capa de alto nivel está 
+conectada solo a un grupo rectangular de neuronas (el campo receptivo) de la capa de bajo nivel y no a todas[^11]. Para más detalles 
+técnicos sobre el funcionamiento de una CNN, puedes acudir a bibliografía específica como la de @geron2019hands.
+
+Como ya hemos dicho, en lugar de construir una CNN desde cero, podemos recurrir a muchas arquitecturas preentrenadas y de código abierto 
+que han sido optimizadas para la clasificación de imágenes. Además de una pila de capas convolucionales y de agrupamiento, estas 
+arquitecturas suelen incluir algunas capas totalmente conectadas y una capa de salida normal para la predicción (como en los MLP). 
+Algunas de estas arquitecturas podrían ser: LeNet-5, AlexNet, GoogLeNet, VGGNet, ResNet, Xception o SENet[^12]. Todas estas CNN han sido 
+probadas previamente en clasificación de imágenes con resultados prometedores, pero aún con ello, debes fijarte en la composición interna 
+de cada una de ellas y en sus métricas para elegir la más adecuada para ti. Puedes implementar y entrenar la mayoría de ellas desde cero, 
+ya sea en 'keras' o 'PyTorch', o puedes utilizarlas directamente, incluso puedes ajustar el modelo preentrenado para ahorrar tiempo.
+
+Vamos a utilizar el modelo preentrenado de una Red Residual ('ResNet') con 50 capas, también conocida como 'ResNet50', para mostrarte 
+cómo desplegar un clasificador multiclase sobre imágenes. La arquitectura ResNet (también con 34, 101 y 152 capas) se basa en el 
+aprendizaje residual y utiliza conexiones de salto, lo que significa que la capa de entrada no solo alimenta a la capa siguiente, sino 
+que esta señal también se añade a la salida de otra capa de alto nivel. Esto permite tener una red mucho más profunda y, en el caso de 
+ResNet152, ha conseguido una tasa de error del top 5 del 3,6\% (el error top 5 se refiere al porcentaje en el que nuestra etiqueta de 
+referencia no aparece entre las 5 predicciones con mayor probabilidad). Como hacemos en el Ejemplo [-@exm-resnet50], puedes importar 
+fácilmente a tu espacio de trabajo una arquitectura 'ResNet50' e incluir los pesos preentrenados de un modelo entrenado con 'ImageNet' 
+(¡Descomenta la segunda línea del código para visualizar el modelo completo!).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-resnet50}
+Carga y visualización de la arquitectura ResNet50
+
+::: {.panel-tabset}
+## Código Python
+```{python resnet50-python}
+model_rn50 = tf.keras.applications.resnet50.ResNet50(weights="imagenet")
+
+```
+## Código R
+```{r resnet50-r}
+model_resnet50 = application_resnet50(weights="imagenet")
+```
+:::
+:::
+:::
+
+'ImageNet' es un corpus de imágenes etiquetadas basado en la jerarquía WordNet. ResNet utiliza un subconjunto de ImageNet con 1.000 
+ejemplos para cada una de las 1.000 clases de un corpus total de aproximadamente 1.350.000 imágenes (1.200.000 para entrenamiento, 
+100.000 para prueba y 50.000 para validación).
+
+En el Ejemplo [-@exm-newimages] recortamos una parte de nuestra segunda fotografía de ejemplo de refugiados llegando a la costa europea 
+('myimg2_RGB') para obtener solo el paisaje marino. Con el 'model_resnet50' creado, vamos a pedir hasta tres predicciones de la clase de 
+la fotografía en el Ejemplo [-@exm-resnetpredictions].
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-newimages}
+Recortar una imagen para obtener un paisaje marítimo
+
+::: {.panel-tabset}
+## Código Python
+```{python newimages-python}
+#| results: hide
+def plot_color_image(image):
+    plt.imshow(image, interpolation="nearest")
+    plt.axis("off")
+
+picture1 = np.array(myimg2_RGB) / 255
+picture2 = np.array(myimg2_RGB) / 255
+images = np.array([picture1, picture2])
+see = [0, 0, 0.3, 0.3]
+refugees = [0.1, 0.35, 0.8, 0.95]
+tf_images = tf.image.crop_and_resize(
+    images, [see, refugees], [0, 1], [224, 224]
+)
+plot_color_image(tf_images[0])
+plt.show()
+
+```
+## Código R
+```{r newimages-r}
+#| cache: true
+picture1 = image_crop(myimg2_RGB, "224x224+50+50")
+plot(picture1)
+picture1 = as.integer(picture1[[1]])
+#drop the extra channel for comparision
+picture1 = picture1[,,-4] 
+picture1 = array_reshape(picture1, c(1, dim(picture1)))
+picture1 = imagenet_preprocess_input(picture1)
+```
+:::
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-resnetpredictions}
+Predecir la clase de la primera imagen
+
+::: {.panel-tabset}
+## Código Python
+```{python resnetpredictions-python}
+inputs = tf.keras.applications.resnet50.preprocess_input(tf_images * 255)
+Y_proba = model_rn50.predict(inputs, verbose=0)
+preds = tf.keras.applications.resnet50.decode_predictions(Y_proba, top=3)
+print(preds[0])
+```
+## Código R
+```{r resnetpredictions-r}
+#| cache: true
+preds1 = model_resnet50 %>% predict(picture1)
+imagenet_decode_predictions(preds1, top = 3)[[1]]
+```
+:::
+:::
+:::
+
+Como se puede ver en las salidas de Python y R[^13], la mejor interpretación del modelo es un banco de arena, que se aproxima mucho a la 
+imagen real que contiene agua de mar, montañas y cielo. Sin embargo, parece que el modelo confunde el mar con arena. Otros resultados del 
+modelo de Python son la orilla del mar y el acantilado, que también se acercan mucho al paisaje marino real. Sin embargo, en el caso de 
+la predicción de R, el modelo detecta un submarino y una ballena gris, lo que revela que las predicciones aún no son precisas al 100\%.
+
+Si hacemos lo mismo con otra parte de esa imagen original y nos centramos solo en el grupo de refugiados en un bote salvavidas que llegan 
+a la costa europea, ¡obtendremos un resultado diferente! En el Ejemplo [-@exm-newimages2] hacemos otro recorte ('myimg2_RGB') y obtenemos 
+una nueva imagen enmarcada. A continuación, en el Ejemplo 14.[-@exm-resnetpredictions2] volvemos a ejecutar la tarea de predicción 
+utilizando el modelo 'ResNet50' entrenado con 'ImageNet' y obtenemos un resultado correcto: ambas predicciones coinciden en ver un bote 
+salvavidas, que es una buena etiqueta para la imagen que queremos clasificar. De nuevo, otras predicciones de nivel inferior resultan 
+correctas (lancha motora) o totalmente erróneas (volcán, ballena gris o anfibio).
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-newimages2}
+Recortar una imagen para obtener una foto de refugiados en un bote salvavidas
+
+::: {.panel-tabset}
+## Código Python
+```{python newimages2-python}
+#| cache: true
+#| results: hide
+plot_color_image(tf_images[1])
+plt.show()
+
+```
+## Código R
+```{r newimages2-r}
+#| cache: true
+picture2 = image_crop(myimg2_RGB, "224x224+1000")
+plot(picture2)
+picture2 = as.integer(picture2[[1]])
+#drop the extra channel for comparision
+picture2 = picture2[,,-4] 
+picture2 = array_reshape(picture2, c(1, dim(picture2)))
+picture2 = imagenet_preprocess_input(picture2)
+```
+:::
+:::
+:::
+
+::: {.callout-note appearance="simple" icon=false}
+
+::: {#exm-resnetpredictions2}
+Predecir la clase de la segunda imagen
+
+::: {.panel-tabset}
+## Código Python
+```{python resnetpredictions2-python}
+print(preds[1])
+```
+## Código R
+```{r resnetpredictions2-r}
+#| cache: true
+preds2 = model_resnet50 %>% predict(picture2)
+imagenet_decode_predictions(preds2, top = 3)[[1]]
+```
+:::
+:::
+:::
+
+Estos ejemplos muestran cómo utilizar una CNN de código abierto, que tiene 1.000 clases y ha sido preentrenada con imágenes de las que no 
+tenemos control. Sin embargo, puede que quieras construir tu propio clasificador con tus propios datos de entrenamiento, pero utilizando 
+parte de una arquitectura existente. Esto se llama ajuste fino (*fine-tuning*) y puedes seguir un buen ejemplo en ciencias sociales en 
+@williams2020images en el que los autores reutilizan 'RestNet18' para construir clasificadores binarios y multiclase añadiendo sus 
+propios ejemplos de datos sobre la CNN preentrenada[^14].
+
+Hasta ahora hemos cubierto las principales técnicas, métodos y servicios para analizar datos multimedia, profundizando en las imágenes. 
+Ya que encontrarás la mayoría de ellos en R y Python, depende de ti elegir qué biblioteca o servicio utilizar, aplicando los conceptos 
+básicos explicados en este capítulo. Si estás interesado en profundizar en el análisis multimedia, te animamos a explorar este emergente 
+y apasionante campo de especialización, dada la enorme importancia que sin duda tendrá en un futuro próximo.
+
+
+[^1]: https://pjreddie.com/darknet/yolo/
+
+[^2]: https://cloud.google.com/speech-to-text
+
+[^3]: Alfa se refiere a la opacidad de cada pixel.︎
+
+[^4]: En inglés, la K puede hacer referencia tanto a Key como a blacK, aunque en ambos casos se refieran al color negro.
+
+[^5]: http://yann.lecun.com/exdb/mnist/︎
+
+[^6]: Desplegaremos *TensorFlow**2* en nuestros ejercicios.︎
+
+[^7]: https://github.com/zalandoresearch/fashion-mnist︎
+
+[^8]: La pérdida/exactitud sobre el modelo de entrenamiento será cada vez mejor. Y la pérdida/exactitud sobre el modelo de evaluación también, al principio. Pero, llegados cierto punto, la pérdida/exactitud del modelo de entrenamiento continuará mejorando, sin que lo haga la pérdida/exactitud del modelo de evaluación. Si seguimos entrenando el modelo durante más fases, estaremos sobreajustando el modelo de entrenamiento, algo que no queremos. Tampoco queremos parar en la iteración en la que obtuvimos la mejor pérdida/exactitud para el modelo de evaluación, porque también lo estaríamos sobreajustando. Por lo tanto, los profesionales a menudo dejan que se ejecute durante algunas fases más después de alcanzar la mejor pérdida/exactitud para el modelo de evaluación. Una vez hecho esto, una comprobación final en el modelo de validación nos dirá realmente lo bien que funciona fuera de la muestra.︎ 
+
+[^9]: https://www.cs.toronto.edu/ kriz/cifar.html︎
+
+[^10]: Las CNN también funcionan muy bien para el procesamiento del lenguaje natural.︎
+
+[^11]: Si la capa de entrada (en el caso de las imágenes en color hay tres subcapas, una por canal de color) y las capas convolucionales son de distinto tamaño, podemos aplicar técnicas como el *zero padding* (añadir ceros alrededor de las entradas) o espaciar los campos receptivos (cada desplazamiento de un campo receptivo a otro será una zancada). Para transmitir los pesos de los campos receptivos a las neuronas, la capa convolucional generará automáticamente algunos filtros para crear mapas de características (las zonas de la entrada que activan mayoritariamente esos filtros). Además, al crear submuestras de las entradas, las capas de agrupación reducirán el número de parámetros, el esfuerzo computacional de la red y el riesgo de sobreajuste. Las capas de agrupación agregan las entradas utilizando una función aritmética estándar como el mínimo, el máximo o la media.︎
+
+[^12]: La descripción de los detalles técnicos de todas estas arquitecturas queda fuera del alcance de este libro, pero, este caso, además de poder recurrir a la literatura científica específica de cada arquitectura, algunos paquetes, como keras, incluyen documentación básica que puede serte de ayuda.︎
+
+[^13]: Las salidas en Python y R pueden diferir un poco ya que el recorte de las nuevas imágenes fue similar, pero no idéntico.︎
+
+[^14]: Los ejemplos se proporcionan en Python con el paquete 'PyTorch', que es bastante sencillo de utilizar si ya estás familiarizado con Keras.︎

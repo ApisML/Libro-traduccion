@@ -1,0 +1,151 @@
+# ¿Cómo seguimos? {#sec-chap-wherenext}
+
+**Resumen.**
+En este capítulo se resumen los principales objetivos de aprendizaje del libro y se esbozan los posibles pasos siguientes. Se presta 
+especial atención a la aplicación ética de los métodos computacionales, así como a la importancia de la ciencia abierta y transparente.
+
+**Palabras clave.** Resumen, ciencia abierta, ética
+
+**Objetivos:**
+
+-  Reflexionar sobre los objetivos de aprendizaje del libro
+-  Señalar vías para futuros estudios
+-  Destacar las consideraciones éticas en la aplicación de las técnicas tratadas en el libro
+-  Relacionar las técnicas del libro con las prácticas de la ciencia abierta
+
+::: {.callout-note icon=false collapse=true}
+
+Este último capítulo ofrece una visión general de lo que se ha tratado hasta ahora y de las interesantes vías que se pueden explorar a 
+continuación. En él se indican recursos para aprender más sobre temas como la programación, el modelado estadístico o el aprendizaje 
+profundo. También se abordan consideraciones sobre ética y ciencia abierta.
+:::
+
+## ¿Qué hemos conseguido? {#sec-howfarcome}
+En este libro te hemos introducido en el análisis computacional de la comunicación. En el capítulo [-@sec-chap-introduction], intentamos 
+convencerte de que todo esto merece la pena, y también dejamos claro que el tema es mucho más amplio de lo que este libro puede abarcar. 
+Así que aquí estamos. Tal vez te hayas saltado algunos capítulos, tal vez hayas hecho alguna lectura adicional o seguido algunos 
+tutoriales en línea, y tal vez hayas completado tu primer pequeño proyecto utilizando algunas de las técnicas que hemos cubierto. Pero 
+vamos a recapitular.
+
+Ahora ya tienes algunos conocimientos de programación. Esperamos que esto te haya abierto nuevas puertas y te permita utilizar una gran 
+cantidad de bibliotecas, tutoriales y herramientas que hagan tu vida más fácil, tu investigación más productiva y tus análisis, mejores.
+
+Has aprendido a manejar nuevos tipos de datos. No solo los conjuntos de datos tabulares tradicionales, sino también datos textuales, 
+datos semiestructurados y, en cierta medida, datos de red e imágenes.
+
+Eres capaz de aplicar marcos de aprendizaje automático. Conoces los enfoques supervisados y no supervisados, y puedes decidir cómo 
+utilizarlos para encontrar respuestas a tus preguntas de investigación.
+
+Finalmente, has obtenido al menos una primera impresión de algunas técnicas interesantes como las redes neuronales, así como de servicios 
+como bases de datos, contenedores y computación en la nube. Esperamos que conocerlos te ayude a tomar una decisión informada sobre si 
+serán buenas herramientas en las que sumergirte en tus próximos proyectos.
+
+## ¿Y ahora, qué? {#sec-wheretogo}
+Pero, ¿qué deberías aprender a continuación?
+
+Lo más importante es insistir en que la pregunta de investigación debe ser la guía, no el método. No se debe utilizar el módulo de red 
+neuronal más novedoso solo porque está de moda, cuando basta con contar las ocurrencias de una simple expresión regular. Pero esto 
+también se aplica a la inversa: si un método nuevo funciona mucho mejor que uno antiguo, ¡Hay que aprenderlo! Durante demasiado tiempo, 
+por ejemplo, se ha confiado en simples análisis de sentimientos con diccionarios estándar, solo porque eran fáciles de usar, a pesar de 
+que existían alternativas mejores.
+
+Dicho esto, intentaremos dar algunas recomendaciones generales sobre lo que deberías aprender a continuación.
+
+**Mejora tu programación.** En este libro, hemos intentado llegar a un compromiso entre la enseñanza de los conceptos de programación 
+necesarios para aplicar nuestros métodos, por un lado, y la ausencia de tecnicismos, por otro. Después de todo, para muchos científicos 
+sociales, la programación es un medio para alcanzar un fin, no un objetivo en sí mismo. Pero a medida que avances, un conocimiento más 
+profundo de los conceptos de programación te facilitará adaptarlo todo a tus necesidades y, de nuevo, te abrirá nuevas puertas. Existen 
+innumerables libros y tutoriales en línea sobre "Programación en [idioma de tu elección]". De hecho, en este libro "bilingüe" te hemos 
+enseñado a programar con R y Python (los lenguajes más utilizados por los científicos de datos), pero hay otros lenguajes de programación 
+que también podrían merecer tu atención (por ejemplo, Java, Scala, Julia, etc.) si te conviertes en un científico computacional.
+
+**Aprende a escribir bibliotecas.** Una habilidad muy específica pero ampliamente aplicable que te animamos a aprender es escribir tus 
+propios paquetes ("módulos" o "bibliotecas"). Una de las cosas buenas de los análisis computacionales es que son muy compatibles con un 
+enfoque de Ciencia Abierta. Compartir lo que has hecho es mucho más fácil si ya está documentado en algún código que puedas compartir. 
+Pero puedes ir un paso más allá: por supuesto que es bueno que la gente pueda reproducir exactamente tu análisis, pero, ¿no sería aún 
+mejor si también pudieran utilizar tu código para ejecutar análisis utilizando sus propios datos? Si se te ha ocurrido una forma estupenda 
+de calcular un estadístico, ¿por qué no facilitar a los demás que hagan lo mismo? Considera la posibilidad de escribir (¡y de documentar!) 
+tu código de forma general y publicarlo en CRAN o pypi para que otros puedan instalarlo y utilizarlo fácilmente.
+
+**Busca inspiración para diseñar nuevos tipos de estudios.** Intenta pensar un poco fuera de la caja y más allá de las encuestas clásicas, 
+los experimentos y los análisis de contenido para diseñar nuevos estudios. Libros como *Bit by Bit*, de @Salganik2019, pueden ayudarte 
+con ello. También puedes echar un vistazo a otras disciplinas científicas como la biología computacional, la cual ha reinventado sus 
+métodos, preguntas e hipótesis. Ten en cuenta que los métodos computacionales repercuten en los debates teóricos y empíricos sobre los 
+procesos de comunicación, lo que a su vez exigirá nuevos tipos de estudios. Los campos científicos emergentes como la Ciencia 
+Computacional de la Comunicación, las Ciencias Sociales Computacionales y las Humanidades Digitales muestran cómo la teoría y los métodos 
+pueden desarrollarse de la mano.
+
+**Profundiza en el conocimiento del aprendizaje profundo.** Para muchas tareas del análisis computacional de la comunicación, los métodos 
+clásicos de aprendizaje automático (como la regresión o las máquinas de vectores soporte) funcionan perfectamente. De hecho, como ya 
+hemos dicho, no es necesario subirse siempre al carro de la técnica más novedosa. Si una simple regresión logística obtiene una puntuación 
+F1 de 88,1 y la red neuronal más sofisticada obtiene 88,5, ¿merece la pena el esfuerzo adicional y la pérdida de explicaciones? Depende 
+del caso, pero probablemente no. Sin embargo, a estas alturas, podemos estar bastante seguros de que las redes neuronales y el aprendizaje 
+profundo han llegado para quedarse. En este libro solo hemos podido hacer una introducción limitada, pero el análisis de vanguardia de 
+texto y, especialmente, de material visual ya no puede prescindir de ellas. Aunque es probable que no siempre entrenes tú mismo los 
+modelos, sino que utilices, por ejemplo, encajes de palabras preentrenadas o paquetes como 'spacy', que han sido entrenados utilizando 
+redes neuronales, merece la pena entender mejor estas técnicas. También en este caso, existen muchos tutoriales en línea para *frameworks* 
+como 'keras' o 'tensorflow', pero también libros exhaustivos que proporcionan una sólida comprensión de los modelos subyacentes 
+@goldberg2017.
+
+**Aprende más sobre modelos estadísticos.** No todo en el análisis computacional de la comunicación es aprendizaje automático. Al 
+principio del libro, utilizamos la analogía de la ratonera (en la que solo nos importaba el rendimiento, no el mecanismo subyacente) 
+frente a una mejor comprensión previa, y argumentamos que, a menudo, podemos utilizar el aprendizaje automático como una "ratonera" para 
+enriquecer nuestros datos, aunque en última instancia nos interese explicar algún otro proceso. Por ejemplo, es posible que queramos 
+utilizar el aprendizaje automático como un paso más en un flujo de trabajo para predecir el tema de los mensajes de las redes sociales y, 
+a continuación, utilizar un enfoque estadístico convencional para comprender qué factores explican la frecuencia con la que se ha 
+compartido el mensaje. Sin embargo, estos datos suelen tener características diferentes a los que se pueden encontrar en encuestas o 
+experimentos. En este caso, por ejemplo, el número de compartidos es una variable de recuento: solo puede tener números enteros positivos 
+y, por tanto, tiene un límite inferior (0), pero no un límite superior. Esto es muy diferente de los datos distribuidos normalmente y 
+requiere modelos de regresión como la regresión binomial negativa. No es difícil, pero merece la pena informarse. Del mismo modo, los 
+modelos multinivel suelen ser apropiados para los datos con los que se trabaja. Familiarizarse con esta y otras técnicas (como el análisis 
+de mediación y moderación, o incluso el modelado de ecuaciones estructurales) te permitirá elegir mejor. En otro orden de cosas, quizá te 
+interese familiarizarte con la estadística bayesiana, un marco muy diferente del llamado enfoque frecuentista que probablemente conozcas 
+de tus cursos de estadística.
+
+Y, por último, pero no por ello menos importante: ¡Diviértete! Al menos para nosotros, esa es una de las partes más importantes: ¡No te 
+olvides de disfrutar de los conocimientos adquiridos y de crear proyectos que te gusten!
+
+## Ciencia computacional abierta, transparente y ética {#sec-ethics}
+
+Empezamos este libro reflexionando sobre lo que hacemos realmente cuando realizamos análisis computacionales de la comunicación. Una de 
+las cosas que destacamos en el Capítulo [-@sec-chap-introduction] fue nuestro uso de herramientas de código abierto, en particular Python 
+y R y la gran cantidad de bibliotecas de código abierto que las amplían. Con suerte, también te habrás dado cuenta, no solo de lo mucho 
+que tu trabajo podía por tanto basarse en el trabajo de otros, sino también de cuántos de los recursos que utilizaste fueron creados como 
+un esfuerzo de la comunidad.
+
+Ahora que has adquirido los conocimientos necesarios para llevar a cabo una investigación computacional sobre la comunicación, es el 
+momento de reflexionar sobre cómo devolver algo a la comunidad y cómo contribuir a un entorno de investigación abierto. Al mismo tiempo, 
+no es tan sencillo como "publicarlo todo"; al fin y al cabo, los investigadores trabajan a menudo con datos sensibles. Por ello, 
+concluimos este libro con un breve debate sobre la ciencia computacional abierta, transparente y ética.
+
+**Ciencia transparente y abierta.** A raíz de la llamada crisis de la reproducibilidad de los últimos años, la exigencia de una ciencia 
+transparente y abierta se ha hecho cada vez más fuerte. El público, los financiadores y las revistas piden cada vez más acceso a los 
+datos y los scripts en los que se basa la investigación publicada. Por supuesto, publicar tus datos y código no es la panacea para todos 
+los problemas, pero es un paso hacia una mejor ciencia desde, al menos, dos perspectivas [@VanAtteveldt2019]: en primer lugar, permite a 
+otros reproducir tu trabajo, mejorando su credibilidad (y la credibilidad del campo en su conjunto) y, en segundo lugar, permite a otros 
+basarse en tu trabajo sin reinventar la rueda.
+
+¿Cómo puedes contribuir a ello? Lo más importante, como aconsejamos en el apartado [-@sec-practices]: utiliza un sistema de control de 
+versiones y comparte tu código en algún sitio como github.com. También hablamos de las posibilidades de compartir código en la Sección 
+[-@sec-publishingsource]. Por último, en [github.com/ccs-amsterdam/compendium](https://github.com/ccs-amsterdam/compendium) puedes 
+encontrar una plantilla para organizar tu código y tus datos de modo que tu investigación sea fácil de reproducir.
+
+**El compromiso entre privacidad y transparencia.** Aunque compartir código no es especialmente controvertido, compartir datos a veces sí 
+lo es. Es posible que trabajes con datos que contengan información personal identificable. Por un lado, debes compartir tus datos para 
+asegurarte de que tu trabajo puede reproducirse; por otro, sería éticamente (y dependiendo de tu jurisdicción, potencialmente también 
+legalmente) incorrecto compartir datos personales sobre individuos. Como escriben @boyd2012: "Que sea accesible no lo convierte en ético". 
+Por lo tanto, la situación no siempre es blanca o negra, y existen algunas técnicas para encontrar un equilibrio entre ambas: puedes 
+eliminar (o picar) información como los nombres de usuario, puedes agregar tus datos, puedes añadir ruido artificial… Lo ideal sería 
+integrar consideraciones legales, éticas y técnicas para tomar una decisión informada sobre cómo encontrar un equilibrio que maximice la 
+transparencia y minimice los riesgos para la privacidad. Cada vez hay más bibliografía que explora distintas posibilidades, como @Breuer2020.
+
+**Otros retos éticos en los análisis computacionales.** Por último, también existen otros retos éticos que van más allá del uso de datos 
+sensibles desde el punto de vista de la privacidad. Muchas de las herramientas que utilizamos nos otorgan un gran poder, lo que conlleva 
+una gran responsabilidad. Por ejemplo, como destacamos en la sección [-@sec-ethicallegalpractical], cada vez que hacemos *scraping* de un 
+sitio web, provocamos algunos costes. Pueden ser despreciables para una única petición http, pero poco a poco se van sumando. Del mismo 
+modo, los cálculos en algún servicio en la nube provocan costes ambientales. Por eso, antes de iniciar un proyecto a gran escala, debemos 
+sopesar los costes o daños que causamos y los beneficios (científicos) que obtenemos.
+
+Al final, sin embargo, creemos firmemente que, como científicos computacionales, estamos bien equipados para contribuir al avance hacia 
+una ciencia más ética, abierta y transparente. ¡Hagámoslo!
+
