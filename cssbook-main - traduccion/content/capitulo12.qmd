@@ -52,16 +52,16 @@ Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
 ::: {.panel-tabset}
 ## Código Python
 ```{python chapter12library-python}
-# accessing APIs and URLs
+# acceder a API y URL
 import requests
 
-# handling of JSON responses
+# lidiar con respuestas JSON
 import json
 from pprint import pprint
 from pandas import json_normalize
 
-# general data handling
-# note: you need to additionally install geopy
+# lidiar con datos en general
+# note: además, debes instalar geopy
 import geopandas as gpd
 import pandas as pd
 
@@ -431,10 +431,10 @@ Análisis de sitios web mediante XPATH o selectores CSS
 ```{python htmlparse1-python}
 tree = parse(urlopen("https://cssbook.net/d/eat/index.html"))
 
-# get the restaurant names via XPATH
+# Obtén los nombres de los restaurantes a través de XPATH
 print([e.text_content().strip() for e in tree.xpath("//h3")])
 
-# get the restaurant names via CSS Selector
+# Obtén los nombres de los restaurantes a través de CSS Selector
 print([e.text_content().strip() for e in tree.getroot().cssselect("h3")])
 
 ```
@@ -443,10 +443,10 @@ print([e.text_content().strip() for e in tree.getroot().cssselect("h3")])
 url = "https://cssbook.net/d/eat/index.html"
 page = read_html(url)
 
-# get the restaurant names via XPATH
+# Obtén los nombres de los restaurantes a través de XPATH
 page %>% html_nodes(xpath="//h3") %>% html_text()
 
-# get the restaurant names via CSS Selector
+# Obtén los nombres de los restaurantes a través de CSS Selector
 page %>% html_nodes("h3") %>% html_text() 
 ```
 :::
@@ -620,8 +620,8 @@ Rastreo de un sitio web en Python
 BASEURL = "https://cssbook.net/d/eat/"
 
 def get_restaurants(url):
-    """takes the URL of an overview page as input
-    returns a list of (name, link) tuples"""
+    """Toma la url de una página general como entrada
+	Obtén una lista de tuplas (links)"""
     tree = parse(urlopen(url))
     names = [
         e.text.strip() for e in tree.xpath("//div[@class='restaurant']/h3")
@@ -632,7 +632,7 @@ def get_restaurants(url):
     return list(zip(names, links))
 
 def get_reviews(url):
-    """yields reviews on the specified page"""
+    """produce reseñas en la página especificada"""
     while True:
         print(f"Downloading {url}...")
         tree = parse(urlopen(url))
@@ -667,8 +667,8 @@ with open("reviews.json", mode="w") as f:
             f.write(json.dumps(r))
             f.write("\n")
 
-# You can process the results with pandas
-# (using lines=True since it"s one json per line)
+# Puedes procesar los resultados en pandas
+# (utilizando lines=True, ya que hay un json en cada línea)
 df = pd.read_json("reviews.json", lines=True)
 print(df)
 ```
@@ -771,12 +771,11 @@ element.send_keys("TinTin")
 element.send_keys(Keys.RETURN)
 try:
     driver.find_element("css selector", "#links a").click()
-    # let"s be cautious and wait 10 seconds
-    # so that everything is loaded
+    # Seamos precavidos y esperemos 10 segundos para que todo cargue
     time.sleep(10)
     driver.save_screenshot("screenshotTinTin.png")
 finally:
-    # whatever happens, close the browser
+    # pase lo que pase, cierra el buscador
     driver.quit()
 
 ```
@@ -894,15 +893,15 @@ URL = "https://www.geenstijl.nl/5160019/page"
 ```
 ```{python cookiewall-python}
 #| cache: true
-# circumvent cookie wall by setting a specific
-# cookie: the key-value pair (cpc: 10)
+# Esquivar el muro de coockies estableciendo una coockie en específico: 
+# el par clave-valor (cpc: 10)
 client = requests.session()
 r = client.get(URL)
 
 cookies = client.cookies.items()
 cookies.append(("cpc", "10"))
 response = client.get(URL, cookies=dict(cookies))
-# end circumvention
+# termina la finta
 
 tree = fromstring(response.text)
 allcomments = [e.text_content().strip() for e in tree.cssselect(".cmt-content")]
@@ -914,14 +913,14 @@ print(f"There are {len(allcomments)} comments.")
 #| cache: true
 URL = "https://www.geenstijl.nl/5160019/page/"
 
-# circumvent cookie wall by setting a specific
-# cookie: the key-value pair (cpc: 10)
+# Esquivar el muro de coockies estableciendo una coockie en específico: 
+# el par clave-valor (cpc: 10)
 r = GET(URL)
 cookies = setNames(cookies(r)$value, 
                    cookies(r)$name)
 cookies = c(cookies, cpc=10)
 r = GET(URL, set_cookies(cookies))
-# end circumvention
+# termina la finta
 
 allcomments = r %>% 
   read_html() %>%

@@ -145,7 +145,7 @@ Gráfico de barras de los tuits a lo largo del tiempo
 #| results: hide
 tw.index = pd.DatetimeIndex(tw["created_at"])
 tw["status_id"].groupby(pd.Grouper(freq="H")).count().plot(kind="bar")
-# (note the use of \ to split a long line)
+# (fíjate en el uso de \ para dividir una línea demasiado larga)
 
 ```
 ## Código R
@@ -449,16 +449,16 @@ plt.show()
 ```
 ## Código R
 ```{r fungraphb-r}
-# create igraph and select largest component
+# Crea un igraph y selecciona el componente más grande
 g = graph_from_data_frame(edges)
 components <- decompose.graph(g)
 largest = which.max(sapply(components, gsize))
 g2 = components[[largest]]
-# Color nodes by cluster
+# Colorea los nodos según el clúster al que pertenecen
 clusters = cluster_spinglass(g2)
 V(g2)$color = clusters$membership
 V(g2)$frame.color = V(g2)$color
-# Set node (user) and edge (arrow) size
+# Asigna un tamaño a los nodos (el usuario) y las aristas (las flechas)
 V(g2)$size = degree(g2)^.5
 V(g2)$label.cex = V(g2)$size/3
 V(g2)$label = ifelse(degree(g2)<=1,"",V(g2)$name) 
@@ -512,7 +512,7 @@ e = e[["geometry_from", "geometry_to"]]
 px = lambda point: point.x
 py = lambda point: point.y
 
-# WVA: This code no longer works but gives
+# WVA: El código ya no funciona, pero devuelve:
 #      UnsupportedOperationException: getX called on empty Point
 # x_values = list(zip(e["geometry_from"].map(px),
 #                    e["geometry_to"].map(px)))

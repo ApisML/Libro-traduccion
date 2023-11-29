@@ -67,7 +67,7 @@ Una vez instalados, tienes que importar (activar) los paquetes en cada sesión:
 ::: {.panel-tabset}
 ## Código Python
 ```{python chapter11library-python}
-# General packages and dictionary analysis
+# Paquetes generales y diccionarios de análisis
 import os
 import tarfile
 import bz2
@@ -83,7 +83,7 @@ import numpy as np
 from nltk.tokenize import TreebankWordTokenizer
 import matplotlib.pyplot as plt
 
-# Supervised text classification
+# Clasificación de texto supervisada
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
@@ -95,7 +95,7 @@ import eli5
 from nltk.sentiment import vader
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-# Deep learning with Keras
+# Aprendizaje profundo con Keras
 from keras.layers import Dense, Input, GlobalMaxPooling1D, Conv1D, Embedding
 from keras.models import Model
 from tensorflow.keras.optimizers import RMSprop
@@ -103,7 +103,7 @@ from keras_preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 from gensim.models.keyedvectors import KeyedVectors
 
-# Topic Modeling
+# Modelado de temas
 import gensim
 from gensim import matutils
 from gensim.models.ldamodel import LdaModel
@@ -118,14 +118,14 @@ library(tidyverse)
 library(readtext)
 library(quanteda)
 
-# Supervised text classification
+# Clasificación de texto supervisada
 library(quanteda.textmodels)
 library(MLmetrics)
 
-# Deep learning with Keras
+# Aprendizaje profundo con Keras
 library(keras)
 
-# Topic Modeling
+# Modelado de temas
 library(topicmodels)
 library(topicdoc)
 ```
@@ -335,11 +335,12 @@ sentimentdict.update({word: -1 for word in neg})
 
 scores = []
 mytokenizer = TreebankWordTokenizer()
-# For speed, we only take the first 100 reviews
+# Para ir más rápido, solo usamos las primeras 100 reseñas
 for review in text_train[:100]:
     words = mytokenizer.tokenize(review)
-    # we look up each word in the sentiment dict
-    # and assign its value (with default 0)
+    # Comprobamos cada palabra del diccionario de sentimientos
+    # y le asignamos su valor (por defecto, 0)
+
     scores.append(sum(sentimentdict.get(word, 0) for word in words))
 print(scores)
 ```
@@ -352,7 +353,7 @@ pos = scan(poswords, what="list")
 neg = scan(negwords, what="list")
 sentimentdict = dictionary(list(pos=pos, neg=neg))
 
-# For speed, we only take the first 100 reviews
+# Para ir más rápido, solo usamos las primeras 100 reseñas
 scores = corpus_sample(reviewdata, 100)  %>% 
   tokens() %>%
   dfm() %>% 
@@ -793,19 +794,19 @@ Guardar y cargar un vectorizador y un clasificador
 
 ```{python reuse-python}
 #| cache: true
-# Make a vectorizer and train a classifier
+# Crea un vectorizador y entrena un clasificador
 vectorizer = TfidfVectorizer(min_df=5, max_df=0.5)
 classifier = LogisticRegression(solver="liblinear")
 X_train = vectorizer.fit_transform(text_train)
 classifier.fit(X_train, y_train)
 
-# Save them to disk
+# Guárdalo en el disco
 with open("myvectorizer.pkl", mode="wb") as f:
     pickle.dump(vectorizer, f)
 with open("myclassifier.pkl", mode="wb") as f:
     joblib.dump(classifier, f)
 
-# Later on, re-load this classifier and apply:
+# Después, vuelve a carga el clasificador y ejecuta:
 new_texts = ["This is a great movie", "I hated this one.", "What an awful fail"]
 
 with open("myvectorizer.pkl", mode="rb") as f:
@@ -858,7 +859,7 @@ Uso de eli5 para explicar una predicción
 ## Python code
 ```{python eli5b-python}
 #| cache: true
-# WvA: This doesn't work outside a notebook, should probably call other functions 
+# WvA: no funciona fuera de un cuaderno, probablemente sea necesario utilizar otras funciones
 # eli5.show_prediction(classifier, text_test[0], vec=vectorizer, targets=["pos"])
 ```
 :::
@@ -910,14 +911,14 @@ Aprendizaje profundo: Definición de una red neuronal convolucional
 ::: {.panel-tabset}
 ## Código Python
 ```{python rnnmodel-python}
-# Tokenize texts
+# Tokeniza el texto
 tokenizer = Tokenizer(num_words=9999)
 tokenizer.fit_on_texts(h.lemmata)
 word_index = tokenizer.word_index
 sequences = tokenizer.texts_to_sequences(h.lemmata)
 tokens = pad_sequences(sequences, maxlen=1000)
 
-# Prepare embeddings layer
+# Prepara la capa de incrustaciones
 fn = "w2v_320d_trimmed"
 if not os.path.exists(fn):
     url = f"https://cssbook.net/d/{fn}"
@@ -936,7 +937,7 @@ embedding_layer = Embedding(
     weights=[emb_matrix],
 )
 
-# Configure the CNN model
+# Configura el modelo CNN
 sequence_input = Input(shape=(tokens.shape[1],), dtype="int32")
 seq = embedding_layer(sequence_input)
 m = Conv1D(filters=128, kernel_size=3, activation="relu")(seq)
@@ -980,20 +981,20 @@ Aprendizaje profundo: Entrenamiento y prueba del modelo
 ## Código Python
 ```{python rnn-python}
 #| cache: true
-# Split data into train and test
+# Divide los datos entre entrenamiento y prueba
 train_data = tokens[:4000]
 test_data = tokens[4000:]
 train_labels = h.value[:4000]
 test_labels = h.value[4000:]
 
-# Train model (note: remove 'verbose=0' to see progress)
+# Entrena el modelo (nota: elimina 'verbose=0'  para ver el progreso)
 m.compile(loss="mean_absolute_error", optimizer=RMSprop(learning_rate=0.004))
 labels = np.asarray([[x] for x in train_labels])
 m.fit(train_data, labels, epochs=5, batch_size=128, verbose=0)
 
 output = m.predict(test_data, verbose=0)
 
-# Bin output into -1, 0, 1
+# Encapsula el resultado en -1, 0, 1
 pred = [1 if x[0] > 0.3 else (0 if x[0] > -0.3 else -1) for x in output]
 correct = [x == y for (x, y) in zip(pred, test_labels)]
 acc = sum(correct) / len(pred)
@@ -1003,17 +1004,17 @@ print(f"Accuracy: {acc}")
 ## Código R
 ```{r rnn-r}
 #| cache: true
-# Split data into train and test
+# Divide los datos entre entrenamiento y prueba
 d_train = d %>% slice_sample(n=4000)
 d_test = d %>% anti_join(d_train)
 
-# Train model
+# Entrena el modelo
 compile(model, loss = "binary_crossentropy",
         optimizer = "adam", metrics = "accuracy")
 fit(model, d_train$lemmata, d_train$value,
   epochs = 10, batch_size = 512, 
   validation_split = 0.2)
-# Validate against test data
+# Compruébalo con los datos de prueba
 eval=evaluate(model, d_test$lemmata, d_test$value)
 print(glue("Accuracy: {eval['accuracy']}"))
 ```

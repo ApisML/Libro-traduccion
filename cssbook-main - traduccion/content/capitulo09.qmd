@@ -141,7 +141,7 @@ words = c("These", "are", "words")
 glue("class(words): {class(words)}")
 print("length(words): {length(words)}")
 glue("words[1]: {words[1]}")
-# Note: use collapse to convert to single value
+# Nota: usa collapse para pasar a valor único
 words_2_3 = str_c(words[2:3], collapse=", ")
 glue("words[2:3]: {words_2_3}")
 ```
@@ -230,13 +230,13 @@ Algunos métodos básicos de limpieza de textos
 ```{python clean-python}
 text = """   <b>Communication</b>    
     (from Latin communicare, meaning to share) """
-# remove tags:
+# elimina las etiquetas:
 cleaned = text.replace("<b>", "").replace("</b>", "")
-# normalize white space
+# normaliza los espacios en blanco
 cleaned = " ".join(cleaned.split())
-# lower case
+# minúsculas
 cleaned = cleaned.lower()
-# trim spaces from start and end
+# elimina los espacios del principio y el final
 cleaned = cleaned.strip()
 
 print(cleaned)
@@ -247,14 +247,14 @@ print(cleaned)
 text = "    <b>Communication</b>    
      (from Latin communicare, meaning to share)  "
 cleaned = text %>% 
-  # remove HTML tags:
+  # elimina las etiquetas HTML:
   str_replace_all("<b>", " ")  %>% 
   str_replace_all("</b>", " ")  %>% 
-  # normalize white space 
+  # normaliza los espacios en blanco
   str_squish() %>%
-  # lower case
+  # minúsculas
   tolower()  %>% 
-  # trim spaces at start and end
+  # elimina los espacios del principio y el final
   trimws()
 
 glue(cleaned)
@@ -517,12 +517,12 @@ Uso de expresiones regulares para limpiar un texto
 ## Código Python
 ```{python reclean-python}
 text = """   <b>Communication</b>    
-    (from Latin communicare, meaning to share) """
-# remove tags:
+    (del Latin, communicare, que significa “compartir”) """
+# elimina las etiquetas:
 cleaned = re.sub("<[^>]+>", "", text)
-# normalize white space
+# normaliza los espacios en blanco
 cleaned = re.sub("\s+", " ", cleaned)
-# trim spaces from start and end
+# elimina los espacios del principio y el final
 cleaned = re.sub("^\s+|\s+$", "", cleaned)
 cleaned = cleaned.strip()
 
@@ -532,13 +532,13 @@ print(cleaned)
 ## Código R
 ```{r reclean-r}
 text = "    <b>Communication</b>    
-     (from Latin communicare, meaning to share)  "
+     (del Latin, communicare, que significa “compartir)  "
 cleaned = text %>% 
-  # remove HTML tags:
+  # elimina las etiquetas HTML:
   str_replace_all("<[^>]+>", " ")  %>% 
-  # normalize white space 
+  # normaliza los espacios en blanco 
   str_replace_all("\\p{space}+", " ")  %>% 
-  # trim spaces at start and end
+  # elimina los espacios del principio y el final
   str_remove_all("^\\s+|\\s+$")
 
 cleaned
@@ -571,13 +571,13 @@ pd.set_option('display.max_colwidth', 40)
 ```{python cleanpandas-python}
 url = "https://cssbook.net/d/example_tweets.csv"
 tweets = pd.read_csv(url, index_col="id")
-# identify tweets with hashtags
+# encuentra tweets con hashtags
 tweets["tag"] = tweets.text.str.contains(r"#\w+")
-# How many at-mentions are there?
+# ¿Cuántas menciones hay?
 tweets["at"] = tweets.text.str.count(r"(^|\s)@\w+")
-# Extract first url
+# Extrae la primera URL
 tweets["url"] = tweets.text.str.extract(r"(https?://\S+)")
-# Remove urls, tags, and @-mentions
+# Elimina urls, hashtags y menciones con @
 expr = r"(^|\s)(@|#|https?://)\S+"
 tweets["plain2"] = tweets.text.str.replace(expr, " ", regex=True).replace(
     r"\W+", " "
@@ -591,13 +591,13 @@ library(tidyverse)
 url="https://cssbook.net/d/example_tweets.csv"
 tweets = read_csv(url)
 tweets = tweets %>% mutate(
-    # identify tweets with hashtags
+    # encuentra tweets con hashtags
     has_tag=str_detect(text, "#\\w+"),
-    # How many at-mentions are there?
+    # ¿Cuántas menciones hay?
     n_at = str_count(text, "(^|\\s)@\\w+"),
-    # Extract first url
+    # Extrae la primera URL
     url = str_extract(text, "(https?://\\S+)"),
-    # Remove at-mentions, tags, and urls
+    # Elimina urls, hashtags y menciones con @
     plain2 = str_replace_all(text, 
        "(^|\\s)(@|#|https?://)\\S+", " ") %>% 
              str_replace_all("\\W+", " ")
@@ -625,7 +625,7 @@ Dividir, extraer y unir un único texto
 ## Código Python
 ```{python split-python}
 text = "apples, pears, oranges"
-# Three ways to achieve the same thing:
+# Tres maneras de conseguir lo mismo:
 items = text.split(", ")
 items = regex.split(r"\p{PUNCTUATION}\s*", text)
 items = regex.findall(r"\p{LETTER}+", text)

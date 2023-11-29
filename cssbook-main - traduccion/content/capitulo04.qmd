@@ -268,7 +268,7 @@ headlines = (
 
 for x in headlines:
     try:
-        # Getting len of None will raise an error
+        # Obtener la longitud de None causará un error
         if len(x) < 40:
             print(x)
     except:
@@ -282,7 +282,7 @@ headlines = list("US condemns terrorist attacks",
 
 for (x in headlines){
   tryCatch(
-      # Getting nchar of NA will raise an error
+      # Obtener nchar de NA causará un error
       if (nchar(x)<40) print(x),
       error=function(error_condition) {
         print(paste(x, "is not a valid headline"))

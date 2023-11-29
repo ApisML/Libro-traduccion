@@ -60,10 +60,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Classical statistical modeling
+# Modelado estadístico clásico
 import statsmodels.formula.api as smf
 
-# ML: Preprocessing
+# ML: Preprocesamiento
 from sklearn import preprocessing
 
 # ML: Train/test splits, cross validation,
@@ -74,13 +74,13 @@ from sklearn.model_selection import (
     GridSearchCV,
 )
 
-# ML: Different models
+# ML: diferentes modelos
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 
-# ML: Model evaluation
+# ML: Evaluación de modelos
 from sklearn.metrics import (
     confusion_matrix,
     classification_report,
@@ -176,8 +176,7 @@ Obtención de un modelo calculando una regresión OLS
 ```{python ols-python}
 df = pd.read_csv("https://cssbook.net/d/media.csv")
 mod = smf.ols(formula="newspaper ~ age + gender", data=df).fit()
-# mod.summary() would give a lot more info,
-# but we only care about the coefficients:
+# mod.summary() daría más información, pero solo buscamos los coeficientes
 mod.params
 ```
 ## Código R
@@ -185,8 +184,7 @@ mod.params
 df = read.csv("https://cssbook.net/d/media.csv")
 mod = lm(formula = "newspaper ~ age + gender",
          data = df)
-# summary(mod) would give a lot more info, 
-# but we only care about the coefficients:
+# summary(mod) daría más información, pero solo buscamos los coeficientes
 mod
 ```
 :::
@@ -686,10 +684,9 @@ Un clasificador simple de máquina de vectores de soporte
 ::: {.panel-tabset}
 ## Código Python
 ```{python svm-python}
-# !!! We normalize our features to have M=0 and
-# SD=1. This is necessary as our features are not
-# measured on the same scale, which SVM requires.
-# Alternatively, rescale to [0:1] or [-1:1]
+# !!! Normalizamos nuestras características para tener M=0 y SD=1. Es necesario 
+# ya que no están medidas con la misma escala y es un requisito de SVM. Otra opción 
+# es rescalar a [0:1] o [-1:1]
 
 scaler = preprocessing.StandardScaler().fit(X_train)
 
@@ -705,10 +702,9 @@ y_pred = myclassifier.predict(X_test_scaled)
 ## Código R
 ```{r svm-r}
 #| cache: true
-# !!! We normalize our features to have M=0 and 
-# SD=1. This is necessary as our features are not 
-# measured on the same scale, which SVM requires.
-# Alternatively, rescale to [0:1] or [-1:1]
+# !!! Normalizamos nuestras características para tener M=0 y SD=1. Es necesario 
+# ya que no están medidas con la misma escala y es un requisito de SVM. Otra opción 
+# es rescalar a [0:1] o [-1:1]
 
 myclassifier = train(x = X_train, y = y_train, 
     preProcess = c("center", "scale"), 
@@ -1028,11 +1024,11 @@ print(diag(confmat) / colSums(confmat))
 ::: {.panel-tabset}
 ## Código Python
 ```{python cutoffpointb-python}
-# get all predicted probabilities and ROC curve
+# consigue todas las probabilidades predichas y la curva ROC
 predprobs = myclassifier.predict_log_proba(X_test)
 fpr, tpr, thresholds = roc_curve(y_test, predprobs[:, 1], pos_label="user")
 
-# determine the cutoff point
+# determina el punto de corte
 optimal_threshold = thresholds[np.argmax(tpr - fpr)]
 
 print(
@@ -1259,12 +1255,11 @@ Una búsqueda en cuadrícula en R.
 ## Código R
 ```{r gridsearch3-r}
 #| cache: true
-# Create the grid of parameters
+# Crea la red de parámetros
 grid = expand.grid(Loss=c("L1","L2"),
                    cost=c(100,1000))
 
-# Train the model using our previously defined 
-# parameters
+# Entrena el modelo usando los parámetros previamente 
 gridsearch = train(x = X_train, y = y_train,
     preProcess = c("center", "scale"), 
     method = "svmLinear3", 

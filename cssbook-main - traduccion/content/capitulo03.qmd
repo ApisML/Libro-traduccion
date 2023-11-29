@@ -152,7 +152,7 @@ Algunas operaciones sencillas
 ## Código Python
 ```{python var2-python}
 a = 100
-a = a * 2  # equivalent to (shorter) a*=2
+a = a * 2  # es equivalente, pero más corto, a a*=2
 b = 50
 c = a + b
 print(a, b, c)
@@ -209,7 +209,7 @@ Valores de números enteros, números de coma flotante y boleanos.
 ```{python var3-python}
 d = 20
 print(type(d))
-# forcing python to treat 20 as a float
+# obliga a Python a tratar 20 como un número de coma flotante
 d2 = 20.0
 print(type(d2))
 
@@ -227,7 +227,7 @@ print(int(False))
 ```{r var3-r}
 d = 20
 print(class(d))
-# forcing R to treat 20 as an int
+# obliga a R a tratar 20 como un int
 d2 = 20L
 print(class(d2))
 
@@ -401,9 +401,10 @@ print(scores[4])
 print([scores[0], scores[9]])
 print(scores[0:4])
 
-# Convert the first 4 scores into numbers
-# Note the use of a list comprehension [.. for ..]
-# This will be explained in the section on loops
+# Transforma las 4 primeras calificaciones en números
+# Fíjate en el uso de una lista de comprensión [.. for ..]
+# Se explicará en la sección sobre bucles del libro
+
 scores_new = [int(e) for e in scores[1:4]]
 print(type(scores_new))
 print(scores_new)
@@ -417,7 +418,7 @@ scores[5]
 scores[c(1, 10)]
 scores[1:4]
 
-# Convert the first 4 scores into numbers
+# Transforma las 4 primeras calificaciones en números
 scores_new = as.numeric(scores[1:4])
 class(scores_new)
 scores_new
@@ -454,41 +455,42 @@ Algunas operaciones más con *arrays* unidimensionales
 ::: {.panel-tabset}
 ## Código Python
 ```{python 1darray3-python}
-# Appending a new value to a list:
+# Añadir un nuevo valor a una lista:
 scores.append(7)
 
-# Create a new list instead of overwriting:
+# Crear una lista nueva en vez de sobreescribirla:
 scores4 = scores + [7]
 
-# Removing an entry:
+# Eliminar una entrada:
 del scores[-10]
 
-# Creating a list containing various ranges
+# Crear una lista que incluya varios rangos:
 list(range(1, 21))
 list(range(-5, 6))
 
-# A range of fractions: 0, 0.2, 0.4, ... 1.0
-# Because range only handles integers, we first
-#   make a range of 0, 2, etc, and divide by 10
+# Un rango de decimales: 0, 0.2, 0.4, ... 1.0
+# Como los rangos solo trabajan con enteros primero hacemos un rango de 0,2, etc 
+#y luego lo dividimos entre 10
+
 my_sequence = [e / 10 for e in range(0, 11, 2)]
 
 ```
 ## Código R
 ```{r 1darray3-r}
-# appending a new value to a vector
+# Añadir un nuevo valor a un vector
 scores = c(scores, 7)
 
-# Create a new list instead of overwriting:
+# Crear una lista nueva en vez de sobreescribirla:
 scores4 = c(scores, 7)
 
-# removing an entry from a vector
+# Eliminar una entrada de un vector:
 scores = scores[-10]
 
-# Creating a vector containing various ranges
+# Crear un vector que contenga varios rangos
 range1 = 1:20
 range2 = -5:5
 
-# A range of fractions: 0, 0.2, 0.4, ... 1.0 
+# Un rango de decimales: 0, 0.2, 0.4, ... 1.0
 my_sequence = seq(0,1, by=0.2)
 ```
 :::
@@ -556,7 +558,7 @@ Las listas pueden almacenar objetos muy diferentes: desde múltiples tipos de da
 my_list = [33, "Twitter", np.sqrt, [1, 2, 3, 4]]
 print(type(my_list))
 
-# this resolves to sqrt(16):
+# Esto se convierte en raíz de (16)
 print(my_list[2](16))
 
 ```
@@ -565,7 +567,7 @@ print(my_list[2](16))
 my_list = list(33, "Twitter", sqrt, c(1,2,3,4))
 class(my_list)
 
-# this resolves to sqrt(16):
+# Esto se convierte en raíz de (16)
 my_list[[3]](16)
 ```
 :::
@@ -732,7 +734,7 @@ grades$A = 4
 grades$B = 3
 grades$C = 2
 grades$D = 1
-# Note: grades[["A"]] is equivalent to grades$A
+# Nota: grades[["A"]] es equivalente a grades$A
 print(glue("Grade for A: {grades[['A']]}"))
 print(glue("Grade for A: {grades$A}"))
 print(grades)
@@ -976,12 +978,12 @@ headlines = [
     "New elections forces UK to go back to the UE",
     "Venezuelan president is dismissed",
 ]
-# Manually counting each element
+# Cada elemento se cuenta manualmente
 print("manual results:")
 print(len(headlines[0]))
 print(len(headlines[1]))
 print(len(headlines[2]))
-# and the second is using a for-loop
+# y en el segundo se aplica un bucle for
 print("for-loop results:")
 for x in headlines:
     print(len(x))
@@ -992,12 +994,12 @@ for x in headlines:
 headlines = list("US condemns terrorist attacks", 
   "New elections forces UK to go back to the UE",
   "Venezuelan president is dismissed")
-# Manually counting each element
+# Cada elemento se cuenta manualmente
 print("manual results:  ")
 print(nchar(headlines[1]))
 print(nchar(headlines[2]))
 print(nchar(headlines[3]))
-# Using a for-loop
+# Se aplica un bucle for
 print("for-loop results:")
 for (x in headlines){
   print(nchar(x))
@@ -1043,8 +1045,8 @@ Las comprensiones de listas son muy populares en Python
 len_headlines = [len(x) for x in headlines]
 print(len_headlines)
 
-# Note: the "list comprehension" above is
-#   equivalent to the more verbose code below:
+# Nota: la “lista de comprensión” de arriba es un equivalente más 
+# simple al código que hay continuación:
 len_headlines = []
 for x in headlines:
     len_headlines.append(len(x))
@@ -1271,15 +1273,15 @@ Escribir funciones
 ::: {.panel-tabset}
 ## Código Python
 ```{python functions-python}
-# The first function just computes 60% of the value
+# La primera función solo calcula el 60% del valor
 def perc_60(x):
     return x * 0.6
 
 print(perc_60(10))
 print(perc_60(4))
 
-# The second function only computes 60% it the
-#  value is bigger than 5
+# La segunda función solo calcula el 60% si el valor 
+# es mayor que 5
 def perc_60_cond(x):
     if x > 5:
         return x * 0.6
@@ -1292,14 +1294,14 @@ print(perc_60_cond(4))
 ```
 ## Código R
 ```{r functions-r}
-#The first function just computes 60% of the value
+# La primera función solo calcula el 60% del valor
 perc_60 = function(x) x*0.6
 
 print(perc_60(10))
 print(perc_60(4))
 
-# The second function only computes 60% it the
-#  value is bigger than 5
+# La segunda función solo calcula el 60% si el valor 
+# es mayor que 5
 perc_60_cond = function(x) {
   if (x>5) {
     return(x*0.6)
@@ -1328,7 +1330,7 @@ Las funciones son especialmente útiles cuando se utilizan repetidamente
 ::: {.panel-tabset}
 ## Código Python
 ```{python functions2-python}
-# Apply the function in a for-loop
+# La función se ejecuta en un bucle for
 scores = [3, 4, 5, 7]
 for x in scores:
     print(perc_60_cond(x))
@@ -1336,7 +1338,7 @@ for x in scores:
 ```
 ## Código R
 ```{r functions2-r}
-# Apply the function in a for-loop
+# La función se ejecuta en un bucle for
 scores = list(3,4,5,6,7)
 for (x in scores) {
   print(perc_60_cond(x))
@@ -1377,7 +1379,7 @@ def square1(somelist):
 
 mysquares = square1(mylist)
 print(
-    f"""As a list:
+    f"""En forma de lista:
 type: {type(mysquares)}
 representation: {mysquares}
 entries: {[x for x in mysquares]}
@@ -1391,14 +1393,15 @@ def square2(somelist):
 
 mysquares = square2(mylist)
 print(
-    f"""As a generator:
+    f"""En forma de generador:
 type: {type(mysquares)}
 representation: {mysquares}
 entries: {[x for x in mysquares]}
 second pass: {[x for x in mysquares]}"""
 )
-# This throws an error (generators have no length)
+# Esto causa un error (los generadores no tienen longitud)
 # print(f"length: {len(mysquares)}")
+
 
 ```
 :::

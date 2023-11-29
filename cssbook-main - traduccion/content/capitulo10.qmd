@@ -50,7 +50,7 @@ Una vez instalados, tienes que importar (activar) los paquetes en cada sesión
 ::: {.panel-tabset}
 ## Código Python
 ```{python chapter10library-python}
-# Standard library and basic data wrangling
+# Bibliotecas estandar y extracción de datos básica
 import os
 import sys
 import urllib
@@ -60,7 +60,7 @@ import regex
 import pandas as pd
 import numpy as np
 
-# Tokenization
+# Tokenización
 import nltk
 from nltk.tokenize import TreebankWordTokenizer, WhitespaceTokenizer
 from nltk.corpus import stopwords
@@ -69,12 +69,12 @@ nltk.download("stopwords")
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import nagisa
 
-# For plotting word clouds
+# Para hacer nubes de palabras
 
 from matplotlib import pyplot as plt
 from wordcloud import WordCloud
 
-# Natural language processing
+# Procesamiento del lenguaje natural
 import spacy
 import ufal.udpipe
 from gensim.models import KeyedVectors, Phrases
@@ -87,11 +87,11 @@ import conllu
 ```{r chapter10library-r}
 library(glue)
 library(tidyverse)
-# Tokenization
+# Tokenización
 library(quanteda)
 library(quanteda.textstats)
 library(quanteda.textplots)
-# Natural language processing
+# Procesamiento del lenguaje natural
 library(udpipe)
 library(spacyr)
 ```
@@ -121,9 +121,10 @@ texts = [
 ]
 cv = CountVectorizer()
 d = cv.fit_transform(texts)
-# Create a dataframe of the word counts to inspect
-# - todense transforms the dtm into a dense matrix
-# - get_feature_names() gives a list words
+# Crea un marco de datos con el conteo de palabras para inspeccionarlo
+# todense transforma la DTM en un matriz densa
+# get_feature_names()  da una lista de palabras
+
 pd.DataFrame(d.todense(), columns=cv.get_feature_names())
 
 ```
@@ -134,7 +135,7 @@ texts = c(
     "The caged bird sings with a fearful trill", 
     "for the caged bird sings of freedom")
 d = tokens(texts) %>% dfm()
-# Inspect by converting to a (dense) matrix
+# Inspecciónalo convirtiéndolo una matriz densa
 convert(d, "matrix") 
 ```
 :::
@@ -265,8 +266,8 @@ Tokenización de un verso japonés.
 ## Código Python
 ```{python haiku-python}
 #| cache: true
-# this snippet uses the tokenizer created above
-# (example "Tokenization with Python")
+# estamos utilizando el tokenizador creado antes
+# (ejemplo "Tokenization with Python")
 haiku = ("\u53e4\u6c60\u86d9"
          "\u98db\u3073\u8fbc\u3080"
          "\u6c34\u306e\u97f3")
@@ -310,8 +311,8 @@ Ejemplo de matriz documento-término
 ::: {.panel-tabset}
 ## Código Python
 ```{python sotu-python}
-# this snippet uses the tokenizer created above
-# (example "Tokenization with Python")
+# estamos utilizando el tokenizador creado antes
+# (ejemplo "Tokenization with Python")
 sotu = pd.read_csv("https://cssbook.net/d/sotu.csv")
 cv = CountVectorizer(tokenizer=mytokenizer.tokenize)
 d = cv.fit_transform(sotu["text"])
@@ -345,12 +346,12 @@ Una mirada al interior de la DTM.
 ## Código Python
 ```{python freq-python}
 def termstats(dfm, vectorizer):
-    """Helper function to calculate term and
-    document frequency per term"""
-    # Frequencies are the column sums of the DFM
-    frequencies = dfm.sum(axis=0).tolist()[0]
-    # Document frequencies are the binned count
-    # of the column indices of DFM entries
+    """Función de ayuda para calcular la frecuencia de 
+	término y documento por término""
+    # Las frecuencias son la suma de las columnas de la DFM 
+    # frequencies = dfm.sum(axis=0).tolist()[0]
+    # Las frecuencias de los documentos son la suma agrupada de 
+    # los índices de columnas de las entradas de la DFM
     docfreqs = np.bincount(dfm.indices)
     freq_df = pd.DataFrame(
         dict(frequency=frequencies, docfreq=docfreqs),
@@ -848,7 +849,7 @@ Recortar una matriz documento-término
 ## Código Python
 ```{python trimming-python}
 #| cache: true
-print(f"# of words before trimming: {d.shape[1]}")
+print(f"# palabras antes de filtrar: {d.shape[1]}")
 cv_trim = CountVectorizer(
     stop_words=stopwords.words("english"),
     tokenizer=mytokenizer.tokenize,
@@ -856,17 +857,17 @@ cv_trim = CountVectorizer(
     min_df=0.005,
 )
 d_trim = cv_trim.fit_transform(tweets.text)
-print(f"  after trimming: {d_trim.shape[1]}")
+print(f"# después de filtrar {d_trim.shape[1]}")
 
 ```
 ## Código R
 ```{r trimming-r}
 #| cache: true
-glue("# of words before trimming: {ncol(d)}")
+glue("# palabras antes de filtrar: {ncol(d)}")
 d_trim = dfm_trim(d, min_docfreq = 0.005, 
                   max_docfreq = 0.75,
                   docfreq_type = "prop")
-glue("# of word after trimming: {ncol(d_trim)}")
+glue("# palabras después de filtrar: {ncol(d_trim)}")
 
 ```
 :::
@@ -1214,7 +1215,7 @@ Utilización de encaje de palabras para encontrar palabras similares y análogas
 ::: {.panel-tabset}
 ## Código Python
 ```{python embeddings0-python}
-# Download the model if needed
+# Descarga el modelo si es necesario
 glove_fn = "glove.6B.50d.10k.w2v.txt"
 url = f"https://cssbook.net/d/{glove_fn}"
 if not os.path.exists(glove_fn):
@@ -1222,14 +1223,14 @@ if not os.path.exists(glove_fn):
 ```
 ```{python embeddings1-python}
 #| results: hide
-# Load the vectors
+# Carga los vectores
 wv = KeyedVectors.load_word2vec_format(glove_fn)
 wvdf = pd.DataFrame(wv.vectors, index=wv.index_to_key)
 ```
 
 ```{python embeddings2-python}
 wvdf.sort_values(0, ascending=False).head()
-# Find similar terms
+# Encuentra términos similares
 for term, similarity in wv.most_similar("fraud")[:5]:
     print(f"{term}: {similarity:.2f}")
 # Find analogous terms
@@ -1484,9 +1485,9 @@ python -m spacy download es_core_news_sm
 ## Código R
 ```{r spacymodel-r}
 #| eval: false
-# Only needed once
+# Solo hace falta una vez
 spacy_install()
-# Only needed for languages other than English:
+# Solo es necesario para idiomas diferentes al inglés:
 spacy_download_langmodel("es_core_news_sm")
 ```
 :::
@@ -1515,10 +1516,10 @@ pd.DataFrame(
 ## Código R
 ```{r spacy-r}
 #| eval: false
-# I couldn't get this to work properly in the renv environment
+# No hemos conseguido que funcione adecuadamente en el entorno renv
 spacy_initialize("es_core_news_sm")
 spacy_parse("Todos los caminos llevan a Roma")
-# To close spacy (or switch languages), use:
+# Para cerrar spacy (o cambiar de lenguaje), usa:
 spacy_finalize()
 ```
 :::

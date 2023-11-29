@@ -149,20 +149,20 @@ SQLite te ofrece funciones de base de datos sin necesidad de configurar un servi
 import pandas as pd
 import sqlite3
 
-# Load a dataframe
+# Carga un marco de datos
 url = "https://cssbook.net/d/gun-polls.csv"
 d = pd.read_csv(url)
 
-# connecting  to a SQLite database
+# conecta a una base de datos SQLite
 conn = sqlite3.connect("mydb.db")
 # store the df as table "gunpolls" in the database
 d.to_sql("gunpolls", con=conn)
 
-# run a query on the SQLite database
+# ejecuta una consulta en la base de datos SQLite
 sql = """SELECT support, pollster 
          FROM gunpolls LIMIT 5;"""
 d2 = pd.read_sql_query(sql, conn)
-# close connection
+# cierra la conexión
 conn.close()
 d2
 
@@ -172,21 +172,21 @@ d2
 library(tidyverse)
 library(RSQLite)
 
-# Load a dataframe
+# Carga un marco de datos
 url = "https://cssbook.net/d/gun-polls.csv"
 d = read_csv(url)
 
-# connecting  to a SQLite database
+# conecta a una base de datos SQLite
 mydb = dbConnect(RSQLite::SQLite(), "mydb.sqlite")
 # store the df as table "gunpolls" in the database
 dbWriteTable(mydb, "gunpolls", d)
 
-# run a query on the SQLite database
+# ejecuta una consulta en la base de datos SQLite
 sql = "SELECT support, pollster 
        FROM gunpolls LIMIT 5;"
 d2 = dbGetQuery(mydb, sql)
 d2
-# close connection
+# cierra la conexión
 dbDisconnect(mydb)
 
 ```

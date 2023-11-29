@@ -108,20 +108,20 @@ Creación de un marco de datos a partir de otras estructuras de datos
 ::: {.panel-tabset}
 ## Código Python
 ```{python createdataframe-python}
-# Create two lists that will be columns
+# Crea dos listas que servirán como columnas
 list1 = ["Anna", "Peter", "Sarah", "Kees"]
 list2 = [40, 33, 40, 77]
 
-# or we could have a list of lists instead
+# o podríamos utilizar una lista de listas
 mytable = [["Anna", 40], ["Peter", 33], ["Sarah", 40], ["Kees", 77]]
 
-# Convert an array to a dataframe
+#Transforma un array en un marco de datos
 df = pd.DataFrame(mytable)
 
-# Or create the data frame directly from vectors
+# O crea el marco de datos directamente desde los vectores
 df2 = pd.DataFrame.from_records(zip(list1, list2))
 
-# No. of rows, no. of columns, and shape
+# Número de filas, columnas y forma
 print(f"{len(df)} rows x {len(df.columns)} cols")
 print(f"Its shape is {df.shape}")
 
@@ -131,20 +131,20 @@ print(df == df2)
 ```
 ## Código R
 ```{r createdataframe-r}
-# Create two vectors that will be columns
+# Crea dos vectores para que sean las columnas
 vector1 <- c("Anna","Peter","Sarah","Kees")
 vector2 <- c(40,33,40,77)
 
-# Create an array of four rows and two columns
+# Crea un array de 4 filas y 2 columnas
 myarray <- array(c(vector1,vector2), dim=c(4,2))
 
-# Convert an array to a dataframe
+#Transforma el array en un marco de datos
 df1=data.frame(myarray)
 
-# Or create the data frame directly from vectors
+# O crea el marco de datos desde los vectores
 df2=data.frame(vector1, vector2)
 
-# No. of rows, no. of columns, and dimension
+# Número de filas, de columnas y dimensiones
 print(glue("{ncol(df1)} rows x {nrow(df1)} cols"))
 print(dim(df1))
 
@@ -313,28 +313,28 @@ Lectura de ficheros en un marco de datos
 ## Código Python
 ```{python readfiles-python}
 url = "https://cssbook.net/d/media.csv"
-# Directly read a csv file from internet
+# Lee el archivo csv directamente desde internet
 df = pd.read_csv(url)
 
-# We can also explicitly specify delimiter etc.
+# También podemos especificar el delimitador
 df = pd.read_csv(url, delimiter=",")
-# Note: use help(pd.read_csv) to see all options
+# Nota: usa help(pd.read_csv) para ver todas las opciones
 
-# Save dataframe to a csv:
+# Guarda el marco de datos como csv:
 df.to_csv("mynewcsvfile.csv")
 
 ```
 ## Código R
 ```{r readfiles-r}
 url = "https://cssbook.net/d/media.csv"
-# Directly read a csv file from internet
+# Lee el archivo csv directamente desde internet
 df = read_csv(url)
 
-# We can also explicitly specify delimiter etc.
+# También podemos especificar el delimitador
 df = read_delim(url, delim = ",")
-# Note: use ?read_csv to see all options
+# Nota: usa ?read_csv para ver todas las opciones
 
-# Save dataframe to a csv:
+# Guarda el marco de datos como csv:
 write_csv(df,"mynewcsvfile.csv")
 ```
 :::
@@ -375,10 +375,10 @@ Lectura de ficheros sin marcos de datos
 ::: {.panel-tabset}
 ## Código Python
 ```{python readingstopwords-python}
-# Define stopword list in the code itself
+# Indica las stopwords en el propio código
 stopwords = ["and", "or", "a", "an", "the"]
 
-# Better idea: Download stopwords file and read it
+# Mejor aún: descargar un archivo de stopwords y leerlo
 url = "https://cssbook.net/d/stopwords.txt"
 urllib.request.urlretrieve(url, "stopwords.txt")
 with open("stopwords.txt") as f:
@@ -388,10 +388,10 @@ stopwords
 ```
 ## Código R
 ```{r readingstopwords-r}
-# Define stopword list in the code itself 
+# Indica las stopwords en el propio código
 stopwords = c("and", "or", "a", "an", "the")
 
-# Better idea: Download stopwords file and read it
+# Mejor aún: descargar un archivo de stopwords y leerlo
 url = "https://cssbook.net/d/stopwords.txt"
 download.file(url, "stopwords.txt")
 stopwords =  scan("stopwords.txt", what="string")
@@ -409,12 +409,12 @@ More examples for reading from and writing to files.
 ::: {.panel-tabset}
 ## Código Python
 ```{python extendedfilehandling-python}
-# Modify the stopword list and save it:
+# Modifica la lista de stopwords y guárdala
 stopwords += ["somenewstopword", "andanotherone"]
 with open("newstopwords.txt", mode="w") as f:
     f.writelines(stopwords)
 
-# Use json to read/write dictionaries
+# Usa json para leer/escribir diccionarios
 somedict = {"label": "Report", "entries": [1, 2, 3, 4]}
 
 with open("test.json", mode="w") as f:
@@ -427,14 +427,14 @@ print(d)
 ```
 ## Código R
 ```{r extendedfilehandling-r}
-# Modify the stopword list and save it:
+# Modifica la lista de stopwords y guárdala
 stopwords = c(stopwords, 
               "somenewstopword", "andanotherone")
 fileConn<-file("newstopwords.txt")
 writeLines(stopwords, fileConn)
 close(fileConn)
 
-# Use json to read/write named lists
+# Usa json para leer/escribir listas nombradas
 somedict = list(label="Report",
                entries=c(1,2,3,4))
 
@@ -509,7 +509,7 @@ En Python, 'scikit-learn' tiene una función para descargar y limpiar automátic
 ::: {.panel-tabset}
 ## Código Python
 ```{python 20newsgroups-python}
-# Note: use fetch_20newsgroups? for more options
+# Nota: usa fetch_20newsgroups? para más opciones
 d = fetch_20newsgroups(remove=("headers", "footers", "quotes"))
 df = pd.DataFrame(zip(d["data"], d["target_names"]))
 df.head()
@@ -533,7 +533,7 @@ Las colecciones de discursos sobre el estado de la nación en EE.UU. está dispo
 ::: {.panel-tabset}
 ## Código Python
 ```{python sotudata-python}
-# Note: download is only needed once...
+# Note: solo hace falta descargar una vez
 nltk.download("state_union")
 sentences = state_union.sents()
 print(f"There are {len(sentences)} sentences.")
@@ -542,7 +542,7 @@ print(f"There are {len(sentences)} sentences.")
 ## Código R
 ```{r sotudata-r}
 speeches = sotu_meta
-# show only first 50 characters
+# solo muestra los primeros 50 caracteres
 speeches %>% 
     mutate(text = substr(sotu_text,0,50)) %>%
     head()

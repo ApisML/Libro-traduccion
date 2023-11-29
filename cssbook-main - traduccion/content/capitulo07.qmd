@@ -49,17 +49,17 @@ Una vez instalados, tienes que importar (activar) los paquetes en cada sesión:
 ::: {.panel-tabset}
 ## Código Python
 ```{python chapter07library-python}
-# General packages
+# Paquetes básicos
 import itertools
 import pandas as pd
 import numpy as np
 
-# Packages for visualizing
+# Paquetes para hacer visualizaciones
 import matplotlib.pyplot as plt
 import seaborn as sns
 import geopandas as gpd
 
-# Packages for clustering
+# Paquetes para clustering
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, AgglomerativeClustering
 import scipy.cluster.hierarchy as sch
@@ -221,6 +221,7 @@ Eliminar valores perdidos
 ```{python na-python}
 n_miss = d2["support_refugees"].isna().sum()
 print(f"# of missing values: {n_miss}")
+# de valores perdidos: 6576
 
 d2 = d2.dropna()
 print(f"Shape after dropping NAs: {d2.shape}")
@@ -230,6 +231,7 @@ print(f"Shape after dropping NAs: {d2.shape}")
 ```{r na-r}
 n_miss = sum(is.na(d2$support_refugees))
 print(glue("# of missing values: {n_miss}"))
+# de valores perdidos: 6576
 
 d2 = d2 %>% drop_na()
 print(glue("Rows after dropping NAs: {nrow(d2)}"))
@@ -489,13 +491,13 @@ Representar varias líneas en un gráfico
 ## Código Python
 ```{python combine2-python}
 #| results: hide
-# Combine data
+# Combinar los datos
 support_combined = d2.groupby(["date_n"]).agg(
     refugees=("support_refugees_n", "mean"),
     migrants=("support_migrants_n", "mean"),
 )
 
-# plot
+# argumento
 sns.lineplot(x="date_n", y="refugees", data=support_combined, color="blue")
 sns.lineplot(x="date_n", y="migrants", data=support_combined, color="red")
 plt.xlabel("Day")
@@ -506,13 +508,13 @@ plt.show()
 ```
 ## Código R
 ```{r combine2-r}
-# Combine data
+# Combinar los datos
 support_combined = d2 %>% group_by(date_n) %>%
  summarise(
   refugees=mean(support_refugees_n, na.rm = TRUE),
   migrants=mean(support_migrants_n, na.rm = TRUE))
 
-# Pivot to long format and plot 
+# Convertir a datos largos y argumento
 support_long = support_combined %>% 
   pivot_longer(-date_n, names_to="group", 
                values_to="support")
@@ -821,7 +823,7 @@ supports_country = (
     .reset_index()
 )
 
-# Load a world map and plot it
+# Carga el mapa del mundo y lo entrama
 wmap = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
 wmap = wmap.rename(columns={"name": "country"})
 wmap.plot()
@@ -833,7 +835,7 @@ supports_country = d2 %>%
   group_by(country) %>%
   summarise(m=mean(support_refugees_n,na.rm=TRUE))
 
-#Load a world map and plot it
+# Carga el mapa del mundo y lo entrama
 wmap = map_data("world")
 ggplot(wmap, aes(x=long,y=lat,group=group)) +
   geom_polygon(fill="lightgray", colour = "white")
@@ -1016,7 +1018,7 @@ Obtener el número óptimo de grupos
 ## Código Python
 ```{python elbow-python}
 #| results: hide
-# Average variables by country and scale
+# Variables normales por país y escala
 d3 = d2.groupby(["country"])[
     ["support_refugees_n", "support_migrants_n", "age", "educational_n"]
 ].mean()
@@ -1024,7 +1026,7 @@ d3 = d2.groupby(["country"])[
 scaler = StandardScaler()
 d3_s = scaler.fit_transform(d3)
 
-# Store sum of squares for 1..15 clusters
+# Guarda la suma de los cuadrados para 1..15 clusters
 wss = []
 for i in range(1, 15):
     km_out = KMeans(n_clusters=i, n_init=20)
@@ -1039,7 +1041,7 @@ plt.show()
 ```
 ## Código R
 ```{r elbow-r}
-# Average variables by country and scale
+# Variables normales por país y escala
 d3_s = d2%>%
   group_by(country)%>%
   summarise(
@@ -1049,7 +1051,7 @@ d3_s = d2%>%
     m_edu=mean(educational_n, na.rm=T)) %>%
   column_to_rownames(var="country") %>%
   scale()
-# Store sum of squares for 1..15 clusters
+# Guarda la suma de los cuadrados para 1..15 clusters
 wss = list()
 for (i in 1:15) {
   km.out = kmeans(d3_s, centers=i, nstart=25)
@@ -1079,7 +1081,7 @@ Uso de Kmeans para agrupar países en función de la ayuda media a refugiados e 
 ::: {.panel-tabset}
 ## Código Python
 ```{python kmeans-python}
-# Compute k-means with k = 3
+# Calcula k-medias con k = 3
 km_res = KMeans(n_clusters=3, n_init=25).fit(d3_s)
 print(km_res)
 print("K-means cluste sizes:", np.bincount(km_res.labels_[km_res.labels_ >= 0]))
@@ -1493,24 +1495,24 @@ Combinación de PCA para reducir la dimensionalidad y k-medias para agrupar paí
 ::: {.panel-tabset}
 ## Código Python
 ```{python new-python}
-# Generate a new dataset with first components
+# Genera un nuevo marco de datos con los primeros componentes
 d5 = pca[:, 0:2]
 d5[0:5]
 
-# Get optimal number of clusters
+# Obten un número óptimo de clústeres
 wss = []
 for i in range(1, 15):
     km_out = KMeans(n_clusters=i, n_init=20)
     km_out.fit(d5)
     wss.append(km_out.inertia_)
 
-# Plot sum of squares vs. number of clusters
+# Traza la suma de los cuadrados vs. el número de clústeres
 plt.plot(range(1, 15), wss, marker="o")
 plt.xlabel("Number of clusters")
 plt.ylabel("Within groups sum of squares")
 plt.show()
 
-# Compute again with k = 3 and visualize
+# Calcúlalo otra vez con k = 3  y visualízalo
 km_res_5 = KMeans(n_clusters=3, n_init=25).fit(d5)
 for cluster in range(km_res_5.n_clusters):
     plt.scatter(
@@ -1529,11 +1531,11 @@ plt.show()
 ```
 ## Código R
 ```{r new-r}
-#Generate a new dataset with first components
+# Genera un nuevo marco de datos con los primeros componentes
 d5 = pca$x[, c("PC1", "PC2")]
 head(d5)
 
-#Get optimal number of clusters
+# Obtén un número ideal de clústeres
 wss = list()
 for (i in 1:15) {
   km.out = kmeans(d5, centers = i, nstart = 20)
@@ -1541,12 +1543,12 @@ for (i in 1:15) {
 }
 wss = bind_rows(wss)
 
-# Plot sum of squares vs. number of clusters
+# Traza la suma de los cuadrados vs. el número de clústeres
 ggplot(wss, aes(x=k, y=ss)) + geom_line() + 
      xlab("Number of Clusters") + 
      ylab("Within groups sum of squares")
 
-# Compute again with k = 3 and visualize
+# Calcúlalo otra vez con k = 3  y visualízalo
 set.seed(123)
 km.res_5 <- kmeans(d5, 3, nstart = 25)
 fviz_cluster(km.res_5, d5, ellipse.type = "norm")

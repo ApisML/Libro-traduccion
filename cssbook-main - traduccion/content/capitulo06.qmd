@@ -117,7 +117,7 @@ url = "https://cssbook.net/d/guns-polls.csv"
 d = pd.read_csv(url)
 d = d.rename(columns={"Republican Support": "rep", "Democratic Support": "dem"})
 d = d.drop(columns="URL")
-# alternatively, we can write:
+# también podemos escribir 
 # d.drop(columns="URL", inplace=True)
 d2 = d.loc[d.Question == "arm-teachers"]
 d2
@@ -180,27 +180,29 @@ Mutar
 ::: {.panel-tabset}
 ## Código Python
 ```{python mutate-python}
-# version of the guns polls with some errors
+# versión de las encuestas sobre armas con algunos errores
 url = "https://cssbook.net/d/guns-polls-dirty.csv"
 d2 = pd.read_csv(url)
 
-# Option 1: clean with direct assignment
-# Note that when creating a new column,
-# you have to use df["col"] rather than df.col
+# Opción 1: limpiar con asignación directa
+# Ten en  cuenta que, al crear una nueva columna, tienes que 
+# usar df["col"] en vez de df.col
+
 d2["rep2"] = d2.rep.str.replace("[^0-9\\.]", "")
 d2["rep2"] = pd.to_numeric(d2.rep2)
 d2["Support2"] = d2.Support.fillna(d.Support.mean())
 
-# Alternatively, clean with .assign
-# Note the need to use an anonymous function
-# (lambda) to chain calculations
+# También se puede limpiar usando .assign
+# Ten en cuenta que necesitas utilizar una función anónima (lambda) 
+# para encadenar las operaciones
+
 cleaned = d2.assign(
     rep2=d2.rep.str.replace("[^0-9\\.]", ""),
     rep3=lambda d2: pd.to_numeric(d2.rep2),
     Support2=d2.Support.fillna(d2.Support.mean()),
 )
 
-# Finally, you can create your own function
+# También puedes crear tu propia función
 def clean_num(x):
     x = re.sub("[^0-9\\.]", "", x)
     return int(x)
@@ -211,27 +213,29 @@ cleaned.head()
 ```
 ## Código R
 ```{r mutate-r}
-# version of the guns polls with some errors
+# versión de las encuestas sobre armas con algunos errores
 url="https://cssbook.net/d/guns-polls-dirty.csv"
 d2 = read_csv(url)
 
-# Option 1: clean with direct assignment. 
-# Note the need to specify d2$ everywhere
+# Opción 1: limpiar con asignación directa
+# Ten en  cuenta que tienes que siempre tienes que añadir d2$
+
 d2$rep2=str_replace_all(d2$rep, "[^0-9\\.]", "")
 d2$rep2 = as.numeric(d2$rep2)
 d2$Support2 = replace_na(d2$Support, 
                         mean(d2$Support, na.rm=T))
 
-# Alternative, clean with mutate
-# No need to specify d2$, 
-# and we can assign to a new or existing object
+# También puedes limpiar usando mutate
+# Tienes que añadir d2$ 
+# y podemos añadirlo a un objeto nuevo o existente
+
 cleaned = mutate(d2, 
     rep2 = str_replace_all(rep, "[^0-9\\.]", ""),
     rep2 = as.numeric(rep2),
     Support2 = replace_na(Support, 
         mean(Support, na.rm=TRUE)))
 
-# Finally, you can create your own function
+# También puedes crear tu propia función
 clean_num = function(x) {
     x = str_replace_all(x, "[^0-9\\.]", "")
     as.numeric(x)
@@ -378,7 +382,7 @@ Añadir valores de resumen a casos individuales
 ::: {.panel-tabset}
 ## Código Python
 ```{python transform-python}
-# Note the use of ( ) to split a long line
+# Fíjate en el uso de ( ) para dividir una línea demasiado larga
 d["mean"] = d.groupby("Question")["Support"].transform("mean")
 d["deviation"] = d["Support"] - d["mean"]
 d.head()
@@ -495,7 +499,7 @@ private_fr = private[["Year", "France"]].rename(
 )
 public_fr = public[["Year", "France"]].rename(columns={"France": "fr_public"})
 capital_fr = pd.merge(private_fr, public_fr)
-# Data for Figure 3.6 (Piketty, 2014, p 128)
+# Los datos para la figura 3.6 (Piketty, 2014, p 128)
 capital_fr.head()
 
 ```
@@ -506,7 +510,7 @@ private_fr = private %>%
 public_fr = public %>% 
     select(Year, fr_public=France)
 capital_fr = full_join(private_fr, public_fr)
-# Data for Figure 3.6 (Piketty, 2014, p 128)
+# Los datos para la figura 3.6 (Piketty, 2014, p 128)
 head(capital_fr)
 ```
 :::
@@ -514,14 +518,14 @@ head(capital_fr)
 ::: {.panel-tabset}
 ## Código Python
 ```{python capital_2-python}
-# Are private and public capital correlated?
+# ¿Hay correlación entre el capital privado y público?
 r, p = scipy.stats.pearsonr(capital_fr.fr_private, capital_fr.fr_public)
 print(f"Pearson correlation: rho={r:.2},p={p:.3}")
 
 ```
 ## Código R
 ```{r capital_2-r}
-# Are private and public capital correlated?
+# ¿Hay correlación entre el capital privado y público?
 cor.test(capital_fr$fr_private, 
          capital_fr$fr_public)
 ```
@@ -839,15 +843,15 @@ Tratar con datos "desordenados".
 ## Código Python
 ```{python excel1-python}
 url = "https://cssbook.net/d/Chapitre8.xls"
-# 1 Input: Read the data into a data frame
+# 1 Introducir los datos: volcarlos en un marco de datos
 d = pd.read_excel(url, sheet_name="TS8.2", skiprows=4, skipfooter=3)
 
 d = d.rename(columns={"Unnamed: 0": "year"})
 
-# 2 Reshape: Pivoting to long, dropping missing
+# 2 Darles forma: hacerlos largos, quitar los perdidos
 d = d.melt(value_name="share", id_vars="year")
 
-# 3 Normalize
+# 3 Normalizar
 cols = ["_top", "percentile", "type", "_share", "capital_gains"]
 d[cols] = d.variable.str.split(n=4, expand=True)
 d = d.drop(columns=["variable", "_top", "_share"])
@@ -857,18 +861,18 @@ d.head()
 ```
 ## Código R
 ```{r excel1-r}
-#1 Input: Read the data into a data frame
+# 1 Introducir los datos: volcarlos en un marco de datos
 url="https://cssbook.net/d/Chapitre8.xls"
 dest = tempfile(fileext=".xls")
 download.file(url, dest)
 d = read_excel(dest,sheet="TS8.2",skip=4)
 d = d%>% rename("year"=1)
 
-#2 Reshape: Pivoting to long, dropping missing
+# 2 Darles forma: hacerlos largos, quitar los perdidos
 d = d%>%pivot_longer(-year, values_to="share")%>% 
         na.omit()
 
-#3 Normalize
+# 3 Normalizar
 cols = c(NA,"percent","type",NA,"capital_gains")
 d = d %>% separate(name, into=cols,
    sep=" ", extra="merge", fill="right") %>% 
@@ -882,24 +886,24 @@ head(d)
 ## Código Python
 ```{python excel2-python}
 #| results: hide
-# 4 Filter for the desired data
+# 4 Filtrar los datos necesarios
 subset = d[
     (d.year >= 1910) & (d.percentile == "1%") & (d.capital_gains == False)
 ]
 
-# 5 Analyze and/or visualize
+# 5 Analizar y/o visualizar
 plt = sns.lineplot(data=subset, hue="type", x="year", y="share")
 plt.set(xlabel="Year", ylabel="Share of income going to top-1%")
 
 ```
 ## Código R
 ```{r excel2-r}
-#4 Filter for the desired data
+# 4 Filtrar los datos necesarios
 subset = d %>% filter(year >=1910, 
                       percent=="1%", 
                       capital_gains==F)
 
-#5 Analyze and/or visualization
+# 5 Analizar y/o visualizar
 ggplot(subset, aes(x=year, y=share, color=type)) +
   geom_line() + xlab("Year") + 
 ylab("Share of income going to top-1%") +

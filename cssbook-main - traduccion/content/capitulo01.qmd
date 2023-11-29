@@ -143,10 +143,6 @@ scraping* o el uso de API's; técnicas de tratamiento de texto como el procesami
 del lenguaje natural y diferentes formas de convertir texto en números; técnicas 
 de aprendizaje automático supervisado y no supervisado, y análisis de redes.
 
-
-
-
-
 ## ¿Por qué utilizar Python y/o R? {#sec-whypythonr}
 
 La mayor parte del trabajo en las ciencias sociales computacionales se realiza 
@@ -574,7 +570,7 @@ sustituye  `pip3 install` por `conda install`)
 ```{python None-None}
 #| eval: false
 !pip3 install pandas
-# (On some systems, !pip install pandas)
+# (En algunos sistemas será !pip install pandas)
 ```
 ## Instalar un paquete en R
 ```{r None-None1}

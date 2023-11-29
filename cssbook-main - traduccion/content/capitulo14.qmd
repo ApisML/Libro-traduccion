@@ -369,7 +369,7 @@ Redimensionar al 25\% y visualizar una imagen
 ```{python resize-python}
 #| results: hide
 #| cache: true
-# Resize and visalize myimg1. Reduce to 25%
+# Redimensiona y visualiza myimg1. Redúcela al 25%
 width = int(myimg1_RGB.width * 0.25)
 height = int(myimg1_RGB.height * 0.25)
 myimg1_RGB_25 = myimg1_RGB.resize((width, height))
@@ -378,7 +378,7 @@ plt.imshow(myimg1_RGB_25)
 ## Código R
 ```{r resize-r}
 #| cache: true
-#Resize and visalize myimg1. Reduce to 25%
+#Redimensiona y visualiza myimg1. Redúcela al 25%
 myimg1_RGB_25 = image_scale(myimg1_RGB,
         image_info(myimg1_RGB)["width"][[1]]*0.25)
 plot(myimg1_RGB_25)
@@ -399,14 +399,14 @@ Redimensionar a $224 \times 244$ y visualizar una imagen
 ## Código Python
 ```{python resize2-python}
 #| results: hide
-# Resize to 224 x 224
+# Redimensiona a 224 x 224
 myimg1_RGB_224 = myimg1_RGB.resize((224, 224))
 plt.imshow(myimg1_RGB_224)
 ```
 ## Código R
 ```{r resize2-r}
-# Resize and visalize myimg1. Resize to 224 x 224
-# The ! is used to specify an exact width and height
+# Redimensiona y visualiza . Redimensiona a 224 x 224.
+# ! se utiliza para especificar el ancho y alto exactos.
 myimg1_RGB_224 = image_scale(myimg1_RGB,
                              "!224x!224")
 plot(myimg1_RGB_224)
@@ -435,9 +435,9 @@ Función recortar la imagen para crear un cuadrado y redimensionar la foto
 ## Código Python
 ```{python crop-python}
 #| results: hide
-# Crop and resize to 224 x 224
+# Corta y redimensiona a 224 x 224
 
-# Adapted from Webb, Casas & Wilkerson (2020)
+# Adaptado desde Webb, Casas & Wilkerson (2020)
 def crop(img):
     height = img.height
     width = img.width
@@ -463,8 +463,8 @@ plt.imshow(myimg1_RGB_crop_224)
 ```
 ## Código R
 ```{r crop-r}
-#Crop and resize to 224 x 224
-#Create function
+# Corta y redimensiona a 224 x 224
+# Crea una función
 crop = function(img) {
     width = image_info(img)["width"][[1]]
     height = image_info(img)["height"][[1]]
@@ -505,14 +505,14 @@ Rotar una imagen 45 grados
 ```{python rotate-python}
 #| results: hide
 #| cache: true
-# Rotate 45 degrees
+# Rota 45 grados
 myimg1_RGB_224_rot = myimg1_RGB_224.rotate(-45)
 plt.imshow(myimg1_RGB_224_rot)
 
 ```
 ## Código R
 ```{r rotate-r}
-#Rotate 45 degrees
+# Rota 45 grados
 #| cache: true
 myimg1_RGB_224_rot = image_rotate(
     myimg1_RGB_224, 45)
@@ -539,11 +539,11 @@ Comparación de dos vectores aplanados para detectar similitudes entre imágenes
 ::: {.panel-tabset}
 ## Código Python
 ```{python flatten-python}
-# Create two 15x15 small images to compare
+# Crea 2 imágenes de 15 x 15 para compararlas
 
-# image1
+# Imagen 1
 myimg1_RGB_crop_15 = myimg1_RGB_crop_224.resize((15, 15))
-# image2
+# Imagen 2
 myimg2_RGB = myimg2.convert("RGB")
 myimg2_RGB_array = np.array(myimg2_RGB)
 myimg2_RGB_crop = crop(myimg2_RGB)
@@ -561,14 +561,14 @@ sim_mat
 ```
 ## Código R
 ```{r flatten-r}
-#Create two 15x15 small images to compare
+# Crea 2 imágenes de 15 x 15 para compararlas
 
-#image1
+# Imagen 1
 myimg1_RGB_crop_15 = image_scale(myimg1_RGB_crop_224, 15)
 img_vect1 = as.integer(myimg1_RGB_crop_15[[1]])
 img_vect1 = as.vector(img_vect1)
 
-#image2
+# Imagen 2
 myimg2_RGB = image_convert(myimg2, colorspace = "RGB")
 myimg2_RGB_crop = crop(myimg2_RGB)
 myimg2_RGB_crop_15 = image_scale(myimg2_RGB_crop, 15)
@@ -767,7 +767,7 @@ print("Overall Accuracy: ", accuracy_score(y_test, predictions))
 ## Código R
 ```{r multiclass-r}
 #| cache: true
-#Multiclass classification with RandomForest
+# Clasificación multiclase con RandomForest
 rf_clf = randomForest(X_train, y_train, ntree=100)
 rf_clf
 predict(rf_clf, X_test[1:10,])
@@ -1097,7 +1097,7 @@ plt.show()
 picture1 = image_crop(myimg2_RGB, "224x224+50+50")
 plot(picture1)
 picture1 = as.integer(picture1[[1]])
-#drop the extra channel for comparision
+# Quita el canal extra para hacer la comparación
 picture1 = picture1[,,-4] 
 picture1 = array_reshape(picture1, c(1, dim(picture1)))
 picture1 = imagenet_preprocess_input(picture1)
@@ -1161,7 +1161,7 @@ plt.show()
 picture2 = image_crop(myimg2_RGB, "224x224+1000")
 plot(picture2)
 picture2 = as.integer(picture2[[1]])
-#drop the extra channel for comparision
+# Quita el canal extra para hacer la comparación
 picture2 = picture2[,,-4] 
 picture2 = array_reshape(picture2, c(1, dim(picture2)))
 picture2 = imagenet_preprocess_input(picture2)
