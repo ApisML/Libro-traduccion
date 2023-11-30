@@ -1,12 +1,13 @@
 # Texto como datos {#sec-chap-dtm}
 
 ::: {.callout-warning}
-# Update planned: R Tidytext
+# Actualización pendiente: R Tidytext
 
-At the time of writing this chapter for the published book, `quanteda` was our package of choice for text analysis in R.
-We now think that the `tidytext` package is easier to learn for students who have just leared the `tidyverse` data wrangling package.
-For this reason, we are planning to rewrite this chapter using that package. 
-See the [relevant github issue](https://github.com/vanatteveldt/cssbook/issues/5) for more information. 
+En el momento de escribir este capítulo, utilizamos `quanteda` para realizar el análisis de texto en R.
+A día de hoy, considetamos que el paquete `tidytext` es más sencillo de aprender para estudiantes que 
+ya lo han usado para manipulación de datos.
+Por lo tanto, vamos a reescribir este capítulo utilizando ese paquete.
+Puedes consultar [relevant github issue](https://github.com/vanatteveldt/cssbook/issues/5) para tener más información.
 :::
 
 {{< include common_setup.qmd >}}
