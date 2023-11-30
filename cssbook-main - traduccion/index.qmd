@@ -1,10 +1,10 @@
-Esta es la versión digital del libro *Computational Analysis of Communication* publicado con [Wiley-Blackwell](https://www.wiley.com/en-us/Computational+Analysis+of+Communication-p-9781119680239). 
+Esta es la versión digital en castellano del libro *Computational Analysis of Communication* (Análisis Computacional de la Comunicación) publicado con [Wiley-Blackwell](https://www.wiley.com/en-us/Computational+Analysis+of+Communication-p-9781119680239). La versión en castellano ha sido traducida del inglés por Apis Mediavilla y Carlos Arcila Calderón.
 Si deseas comprar la versión física o el eBook, te recomendamos preguntar en tu librería de confianza. También puedes utilizar el link de arriba para encargarlo.
 
 
 ::: {.callout-warning}
-Esta versión del libro es actualizada reagularmente.
-La edición en acceso avierto de la versión publicada está disponible en [cssbook.net](https://cssbook.net)
+Esta versión en castellano del libro es actualizada reagularmente.
+La edición en inglés en acceso abierto de la versión publicada está disponible en [cssbook.net](https://cssbook.net)
 :::
 
 
@@ -45,8 +45,7 @@ Wiley-Blackwell por hacer posible el acceso abierto de este libro.
 ## Agradecimientos y colaboraciones
 Queremos dar las gracias a los colegas, amigos y estudiantes que nos aconsejaron con las primeras versiones de este manuscrito: 
 Dmitry Bogdanov, Andreu Casas, Modesto Escobar, Anne Kroon, Nicolas Mattis , Cecil Meeusen, Jesús Sánchez-Oro, Nel Ruigrok, Susan Vermeer, 
-Mehdi Zamani, Marthe Möller. Por supuesto, estamos igualmente agradecidos a todos aquellos que nos podamos haber olvidado de mencionar aquí
-(¡Perdonádnos!). Por favor, avísanos si es el caso.
+Mehdi Zamani, Marthe Möller. En la versión en castellano agredecemos a Apis Mediavilla. Por supuesto, estamos igualmente agradecidos a todos aquellos que nos podamos haber olvidado de mencionar aquí (¡Perdonádnos!).  Por favor, avísanos si es el caso.
 
 Nuestra intención es que la versión online sea un documento vivo que vayamos actualizando con nuevas herramientas o perspectivas y que,
 tarde o temprano, se convierta en una segunda edición. Por ello **agradecemos profundamente cualquier comentario**.
@@ -64,14 +63,14 @@ Si deseas contribuir de alguna forma más notoria (como reescribir o añadir un 
 
 Para citar este libro, utiliza:
 
-Van Atteveldt, W., Trilling, D., & Calderón, C. A. (2022). *Computational Analysis of Communication*. Wiley Blackwell.
+Van Atteveldt, W., Trilling, D., & Arcila Calderón, C. (2022). *Computational Analysis of Communication*. Wiley Blackwell.
 
 Bibtex:
 
 ```
 @book{vanatteveldt2022computational,
   title={Computational Analysis of Communication},
-  author={{Van Atteveldt}, Wouter and Trilling, Damian and Calder{\'o}n, Carlos Arc{\'\i}la},
+  author={{Van Atteveldt}, Wouter and Trilling, Damian and Arcila Calder{\'o}n, Carlos},
   year={2022},
   publisher={Wiley Blackwell}
 }
