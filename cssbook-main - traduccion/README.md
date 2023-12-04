@@ -1,47 +1,54 @@
-# Quarto book for Computational Analysis of Communication
+# Libro de Quarto: Computational Analysis of Communication (Análisis Computacional de la Comunicación)
 
-This is a quarto re-render of the original latex+ipynb sources of the CAC book. 
+Esto es una re-renderización en quarto de los archivos originales de latex+ipynb del libro.
 
-It is now considered the 'canonical' source of the book, and we are using this version to publish the [cssbook.net](https://cssbook.net) open access version and to update it for a new version. 
+Esta es la fuente "oficial" del libro, y la que estamos utilizando para la publicación en acceso 
+abierto [cssbook.net](https://cssbook.net) y las actualizaciones.
 
-There is a [github action](https://github.com/vanatteveldt/cssbook/actions) to automatically update [cssbook.net](https://cssbook.net) after each commit, so you can make small fixes directly on github and/or work locally and push your changes. 
+Hay una [github action](https://github.com/vanatteveldt/cssbook/actions) para hacer las 
+actualizaciones automáticamente al confirmarlas [cssbook.net](https://cssbook.net), de forma que 
+puedas hacer cambios pequeños desde github y/p trabajar de forma local para luego realizar los 
+cambios. 
 
-# Setup
+# Configuración
 
-Steps needed to render the book:
- - Install quarto
- - Clone this repository
- - Activate the `renv` R virtual environment, e.g. using [renv/install.R]
+Pasos necesarios para renderizar el libro:
+ - Instala quarto
+ - Clona este repositorio
+ - Activa el antorno virtual de R `renv`, por, ejemplo, usando [renv/install.R].
 
-On my system, the following works for these steps:
+En mi sistema, haciéndolo así funciona bien:
 
 ```
-# Install quarto 
+# Instala quarto
 wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.2.313/quarto-1.2.313-linux-amd64.deb
 sudo apt install ./quarto-1.2.313-linux-amd64.deb
 
-# Install prerequisites for R packages (might be incomplete, please add if you find more requirements)
+# Instala los prerequisitos para los paquetes de R (puede que esté incompleto, por favor, añade los 
+requisitos extra que encuentres)
 sudo apt install gfortran cmake liblapack-dev libgsl-dev libpng-dev libpoppler-cpp-dev libmagick++-dev
 
-# Clone the repository
+# Clona el repositorio
 git clone git@github.com:vanatteveldt/cssbook
 cd cssbook
 
-# Activate the renv
+# Activa el renv
 Rscript renv/install.R
 ```
 
-# Render the book 
+# Renderiza el libro
 
 ```
 quarto render
 ```
 
-# A note on caching
+# Una nota sobre el almacenamiento en caché
 
-The first time to render the book will take a long time. 
-After this, content is both *frozen* at the chapter level, and *cached* at the chunk level where sensible. 
+La primera vez que renderices el libro tardará bastanta.
+Después de hacerlo, el contenido está "congelado" a nivel de capítulo y guardado en el caché al 
+nivel en el que es sensible.
 
-Note that knitr caching for python does not preserve global variables, so python chunks that create objects used in another chunk should not be cached.
-For R objects are cached so this is possible.
-
+Ten en cuenta que knitr caching para python no guarda las variables globales, por lo que los 
+fragmentos de pythonque crean objetos utilizados en otros fragmentos no deben almacenarse en el 
+caché.
+Los objetos de R sí que se pueden almacenar en el caché.
