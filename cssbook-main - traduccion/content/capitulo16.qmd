@@ -9,9 +9,9 @@ especial atención a la aplicación ética de los métodos computacionales, así
 **Objetivos:**
 
 -  Reflexionar sobre los objetivos de aprendizaje del libro
--  Señalar vías para futuros estudios
--  Destacar las consideraciones éticas en la aplicación de las técnicas tratadas en el libro
--  Relacionar las técnicas del libro con las prácticas de la ciencia abierta
+ -  Señalar vías para futuros estudios
+ -  Destacar las consideraciones éticas en la aplicación de las técnicas tratadas en el libro
+ -  Relacionar las técnicas del libro con las prácticas de la ciencia abierta
 
 ::: {.callout-note icon=false collapse=true}
 

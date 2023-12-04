@@ -16,7 +16,7 @@ cómo construir (o poner a punto) una Red Neuronal Convolucional (CNN, por sus s
 **Objetivos:**
 
 -  Aprender a transformar datos multimedia en entradas útiles para el análisis computacional.
--  Comprender cómo aplicar el aprendizaje profundo para la clasificación automática de imágenes
+ -  Comprender cómo aplicar el aprendizaje profundo para la clasificación automática de imágenes
 
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo
@@ -685,7 +685,7 @@ Carga de la base de datos MNIST y preparación de los conjuntos de entrenamiento
 ## Código Python
 ```{python mnist-python0}
 #| echo: false
-# fetch_openml is really slow and caching does not really seem to work, so do manual caching. We can probably do this better somehow
+# fetch_openml es demasiado lento y el caché no acaba de funcionar. Puedes intentar almacenar el caché de forma manual. 
 import pickle
 from pathlib import Path
 cache = Path.cwd() / "mnist_784.pickle"

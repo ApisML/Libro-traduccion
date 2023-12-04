@@ -16,8 +16,8 @@ recuperar conjuntos de datos de ejemplo.
 **Objetivos:**
 
 - Aprender a manejar diferentes codificaciones y dialectos
-- Elegir un formato de archivo con conocimiento de causa
-- Saber cómo acceder a los conjuntos de datos existentes
+ - Elegir un formato de archivo con conocimiento de causa
+ - Saber cómo acceder a los conjuntos de datos existentes
 
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo
@@ -533,7 +533,7 @@ Las colecciones de discursos sobre el estado de la nación en EE.UU. está dispo
 ::: {.panel-tabset}
 ## Código Python
 ```{python sotudata-python}
-# Note: solo hace falta descargar una vez
+# Nota: solo hace falta descargar una vez
 nltk.download("state_union")
 sentences = state_union.sents()
 print(f"There are {len(sentences)} sentences.")

@@ -16,8 +16,8 @@ y muestra cómo crear y entender estructuras de control sencillas como bucles y 
 **Objetivos:**
 
 - Comprender los objetos y los tipos de datos
-- Escribir estructuras de control
-- Utilizar funciones y métodos
+ - Escribir estructuras de control
+ - Utilizar funciones y métodos
 
 
 ::: {.callout-note icon=false collapse=true}

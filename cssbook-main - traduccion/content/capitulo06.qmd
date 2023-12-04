@@ -16,8 +16,8 @@ los datos.
 **Objetivos:**
 
 -  Filtrar filas y columnas en marcos de datos
--  Calcular nuevas columnas y estadísticas de resumen para marcos de datos
--  Reformar y combinar marcos de datos
+ -  Calcular nuevas columnas y estadísticas de resumen para marcos de datos
+ -  Reformar y combinar marcos de datos
 
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo
@@ -832,8 +832,6 @@ El ejemplo [-@exm-excel] muestra cómo realizar estos pasos para el caso de EE.U
 de página que deben omitirse. A continuación, pivotamos las columnas a formato largo. En el paso 3, dividimos la cabecera en dos 
 columnas utilizando 'separate' (R) y 'split' (Python). Por último, los pasos 4 y 5 toman el subconjunto deseado y crean un gráfico 
 de líneas.
-
-El paso que falta, dividir una cabecera en dos columnas, se realiza utilizando 'separate' (R) o 'split' (Python).
 
 ::: {.callout-note appearance="simple" icon=false}
 ::: {#exm-excel}

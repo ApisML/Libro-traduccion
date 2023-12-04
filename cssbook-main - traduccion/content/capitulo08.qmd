@@ -21,7 +21,7 @@ general de las técnicas más utilizadas, desde los clasificadores Naive Bayes h
 
 **Objetivos:**
 
- -  Comprender los principios del aprendizaje automático supervisado 
+-  Comprender los principios del aprendizaje automático supervisado 
  -  Ser capaz de ejecutar un modelo predictivo 
  -  Ser capaz de evaluar el rendimiento de un modelo predictivo
 
@@ -54,7 +54,7 @@ Una vez instalados, tienes que importar (activar) los paquetes en cada sesión:
 ::: {.panel-tabset}
 ## Código Python
 ```{python chapter08library-python}
-# Data handling, math, and plotting
+# Procesamiento de datos, matemáticas y creación de figuras
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

@@ -17,9 +17,9 @@ de un conjunto de datos.
 **Objetivos:**
 
 - Ser capaz de realizar un análisis exploratorio de datos
-- Comprender los principios del aprendizaje automático no supervisado
-- Ser capaz de realizar un análisis de grupos
-- Ser capaz de aplicar técnicas de reducción dimensional
+ - Comprender los principios del aprendizaje automático no supervisado
+ - Ser capaz de realizar un análisis de grupos
+ - Ser capaz de aplicar técnicas de reducción dimensional
 
 
 ::: {.callout-note icon=false collapse=true}

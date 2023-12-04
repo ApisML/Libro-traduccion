@@ -22,8 +22,8 @@ información sobre la lectura y limpieza de textos.
 **Objetivos:**
 
 -  Crear una matriz término-documento a partir de un texto
--  Selección y ponderación de documentos y características
--  Comprender y utilizar representaciones más avanzadas, como n-gramas y *embeddings*.
+ -  Selección y ponderación de documentos y características
+ -  Comprender y utilizar representaciones más avanzadas, como n-gramas y *embeddings*.
 
 ::: {.callout-note icon=false collapse=true}
 
@@ -1528,9 +1528,9 @@ spacy_finalize()
 :::
 
 Como puedes ver, hoy en día hay una buena cantidad de herramientas lingüísticas buenas y relativamente fáciles de usar al alcance de la 
-mano. Nosotros recomendamos especialmente 'Stanza' ([@stanza]), ya que es una herramienta muy buena y flexible con soporte para múltiples 
+mano. Nosotros recomendamos especialmente 'Stanza' (@stanza), ya que es una herramienta muy buena y flexible con soporte para múltiples 
 lenguajes (humanos) y buena integración, especialmente con Python. Si quieres aprender más sobre el procesamiento del lenguaje natural, 
-el libro *Speech and Language Processing* de Jurafsky y Martin es un muy buen punto de partida ([@jurafsky])[^2].
+el libro *Speech and Language Processing* de Jurafsky y Martin es un muy buen punto de partida (@jurafsky)[^2].
 
 ## ¿Qué preprocesamiento utilizar?
 

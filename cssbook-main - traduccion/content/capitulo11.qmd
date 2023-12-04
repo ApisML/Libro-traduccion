@@ -35,8 +35,8 @@ enfoques es el más adecuado para cada tipo de pregunta.
 **Objetivos:**
 
 -  Comprender los distintos enfoques del análisis automático de textos
--  Decidir si utilizar un diccionario, el aprendizaje automático supervisado o el aprendizaje automático no supervisado.
--  Ser capaz de utilizar estas técnicas
+ -  Decidir si utilizar un diccionario, el aprendizaje automático supervisado o el aprendizaje automático no supervisado.
+ -  Ser capaz de utilizar estas técnicas
 
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo

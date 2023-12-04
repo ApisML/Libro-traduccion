@@ -20,8 +20,8 @@ código, relájate ¡Y disfruta del viaje!
 **Objetivos:**
 
 - Obtener una visión general de las posibilidades de R y Python para el análisis y visualización de datos.
-- Comprender cómo funcionan juntos los diferentes aspectos de la recopilación, limpieza y análisis de datos
-- ¡Divertirse con los datos y las visualizaciones!
+ - Comprender cómo funcionan juntos los diferentes aspectos de la recopilación, limpieza y análisis de datos
+ - ¡Divertirse con los datos y las visualizaciones!
 
 
 ::: {.callout-note icon=false collapse=true}

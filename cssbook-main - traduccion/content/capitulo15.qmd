@@ -19,9 +19,9 @@ más útiles cuanto más grandes son tus proyectos.
 **Objetivos:**
 
 -  Ser capaz de ampliar sus análisis
--  Saber cuándo utilizar bases de datos
--  Saber cuándo utilizar la computación en nube
--  Saber sobre código fuente distribuido y contenedores
+ -  Saber cuándo utilizar bases de datos
+ -  Saber cuándo utilizar la computación en nube
+ -  Saber sobre código fuente distribuido y contenedores
 
 ::: {.callout-note icon=false collapse=true}
 

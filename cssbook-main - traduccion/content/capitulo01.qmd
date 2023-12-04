@@ -18,8 +18,8 @@ y académicos.
 **Objectivos:**
 
 - Entender el rol del análisis computacional en las ciencias sociales.
-- Entender las diferencias entre Python y R.
-- Saber cómo utilizar este libro.
+ - Entender las diferencias entre Python y R.
+ - Saber cómo utilizar este libro.
 
 ## El papel del análisis computacional en las ciencias sociales {#sec-ccs}
 

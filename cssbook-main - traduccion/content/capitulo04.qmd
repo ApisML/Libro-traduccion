@@ -17,8 +17,8 @@ mejores prácticas sobre cómo escribir y compartir código por ti mismo.
 **Objetivos:**
 
 - Comprender la importancia de reutilizar código al programar
-- Ayudar a los programadores principiantes a evitar atascarse
-- Explicar la "higiene computacional" y mostrar las mejores 
+ - Ayudar a los programadores principiantes a evitar atascarse
+ - Explicar la "higiene computacional" y mostrar las mejores 
 prácticas en R y Python para escribir y compartir código
 
 

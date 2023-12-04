@@ -15,8 +15,8 @@ funciones base en Python y (sobre todo) del paquete stringr en R.
 
 **Objetivos:**
 -  Comprender cómo se representa el texto en el ordenador
--  Ser capaz de limpiar y alterar texto
--  Comprender y ser capaz de utilizar expresiones regulares
+ -  Ser capaz de limpiar y alterar texto
+ -  Comprender y ser capaz de utilizar expresiones regulares
 
 
 ::: {.callout-note icon=false collapse=true}
@@ -99,7 +99,7 @@ caracteres y Python cadena.
 
 ::: {.callout-note appearance="simple" icon=false}
 ::: {#exm-text}
-Representación interna de textos..
+Representación interna de textos.
 
 ::: {.panel-tabset}
 ## Código Python

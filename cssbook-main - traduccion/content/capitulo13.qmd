@@ -14,8 +14,8 @@ representarlos visualmente.
 **Objetivos:**
 
 -  Comprender cómo se pueden representar y visualizar las redes
--  Realizar una descripción básica de redes
--  Realizar análisis de redes sociales
+ -  Realizar una descripción básica de redes
+ -  Realizar análisis de redes sociales
 
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo

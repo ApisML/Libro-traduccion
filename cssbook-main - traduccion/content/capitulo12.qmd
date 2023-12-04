@@ -21,8 +21,8 @@ sentido más estricto, para recuperar datos de sitios web que no ofrecen una API
 **Objetivos:**
 
 -  Ser capaz de utilizar las API para la recuperación de datos.
--  Ser capaz de escribir tu propio web scraper
--  Evaluar los fundamentos de las limitaciones legales, éticas y prácticas
+ -  Ser capaz de escribir tu propio web scraper
+ -  Evaluar los fundamentos de las limitaciones legales, éticas y prácticas
 
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo
@@ -65,7 +65,7 @@ from pandas import json_normalize
 import geopandas as gpd
 import pandas as pd
 
-# static web scraping
+# Recuperación de datos estáticos
 from urllib.request import urlopen
 from lxml.html import parse, fromstring
 
