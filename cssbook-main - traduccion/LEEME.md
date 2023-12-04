@@ -2,10 +2,10 @@
 
 Esto es una re-renderización en quarto de los archivos originales de latex+ipynb del libro.
 
-Esta es la fuente "oficial" del libro, y la que estamos utilizando para la publicación en acceso 
+Esta es la fuente "oficial" del libro en castellano, y la que estamos utilizando para la publicación en acceso 
 abierto [cssbook.net](https://cssbook.net) y las actualizaciones.
 
-Hay una [github action](https://github.com/vanatteveldt/cssbook/actions) para hacer las 
+En inglés, tenemos una [github action](https://github.com/vanatteveldt/cssbook/actions) para hacer las 
 actualizaciones automáticamente al confirmarlas [cssbook.net](https://cssbook.net), de forma que 
 puedas hacer cambios pequeños desde github y/p trabajar de forma local para luego realizar los 
 cambios. 
