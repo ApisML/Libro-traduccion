@@ -1,0 +1,55 @@
+# Prefacio {#sec-prefacio}
+
+¿Por qué escribir otro libro de texto sobre métodos? ¿No hay ya suficientes libros de texto? ¿Y 
+los excelentes recursos en línea? Nosotros llevamos años enseñando análisis computacional de la 
+comunicación para universidades y organizaciones y hemos visto la gran variedad de formatos que 
+hay:  diferentes alcances, desde cursos de un semestre hasta talleres cortos, multitud técnicas y 
+niveles. Pero nunca encontramos un libro que realmente se adaptase a nuestra audiencia. 
+Regularmente, estudiantes y colegas nos piden recomendaciones de libros, y los educadores y 
+administradores quieren saber qué ofrecer en una lista de lectura. Y habitualmente, nuestra 
+respuesta era algo así como: “Bueno, hay un muy buen libro sobre [R/Python/Neural Networks/...], 
+pero...”
+
+El “pero”, en casi todos los casos, tiene que ver con la audiencia: estudiantes de ciencias 
+sociales que tienen al menos algún conocimiento y están interesados en la investigación empírica 
+y los métodos cuantitativos, pero no tienen experiencia en programación. Quieren (o tienen que) 
+aprender programación para realizar los análisis que les interesan, pero no están interesados en 
+la programación en sí. No quieren limitar sus posibilidades a las herramientas diseñadas por otras 
+personas, pero tampoco quieren atender a toda una Introducción a las Ciencias de la Computación 
+para aprender un montón de conceptos y paradigmas que seguramente nunca necesiten.
+
+Por ello, durante años, hemos utilizado nuestros propios materiales para intentar lograr ese 
+equilibrio entre la enseñanza teórica de conceptos de programación y su aplicación práctica a la 
+hora de responder a las preguntas de los estudiantes. Este Este libro es nuestro intento de aunar 
+y sistematizar este enfoque de enseñanza del análisis de la comunicación.
+
+Nuestro segundo motivo para escribir este libro fue superar la “guerra de lenguajes” que a veces 
+es visible en el campo. En nuestra propia investigación y enseñanza, encontramos que tanto R como 
+Python son excelentes herramientas, cada una con sus fortalezas y debilidades. Con demasiada 
+frecuencia, los materiales didácticos existentes se centran en el lenguaje y no en el concepto 
+subyacente. Nosotros creemos que un buen libro de texto sobre métodos computacionales debería dar 
+instrucciones prácticas sobre la implementación de un concepto en un lenguaje determinado, pero 
+poniendo el foco en el concepto. Por esa razón, decidimos usar R y Python simultáneamente, 
+permitiendo a los estudiantes (y profesores) elegir cualquiera de los dos, y facilitar a los 
+lectores interesados ver las diferencias y similitudes entre los lenguajes.
+
+Escribir este libro también ha sido un ejercicio de planificación y coordinación: dos de nosotros 
+estábamos ubicados en Ámsterdam, otro en Salamanca, por lo que tuvimos que recurrir a muchas 
+videollamadas para dividir las tareas y discutir nuestros borradores. No somos precisamente 
+tecnófobos, pero reconocemos que es mucho más productivo (y agradable) compartir el espacio de una 
+misma habitación, como lo experimentamos durante un fin de semana de escritura en la isla de Texel. 
+Sin embargo, la pandemia de COVID-19 canceló todos los planes para seguir escribiendo en persona y, 
+con el surgimiento repentino de otras prioridades inesperadas, hizo falta más tiempo (y muchas más 
+reuniones) para que la versión final del libro viera la luz.
+
+Este libro no habría sido posible sin el apoyo continuo que recibimos durante años: de estudiantes, 
+colegas y otras personas. Fueron ellos y ellas los que dieron forma, no solo a nuestras ideas sobre 
+cómo analizar la comunicación computacionalmente, sino también a cómo enseñarla. Tampoco hubiera 
+sido posible sin la paciencia de Nel, Rodrigo y Sanne, cuando tuvimos que dedicar más horas de las 
+que pensábamos a lo que en un momento solo se conoció como “el libro” y que ahora, por fin, 
+podemos firmar.
+
+Wouter van Atteveldt
+Damian Trilling
+Carlos Arcila Calderón
+Amsterdam, Salamanca, Texel, & online
