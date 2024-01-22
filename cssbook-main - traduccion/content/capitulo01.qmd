@@ -8,7 +8,7 @@ import warnings; warnings.filterwarnings('ignore')
 **Resumen**
 Este capítulo explica la manera en la que los métodos tratados 
 en el libro se sitúan en el marco metodológico y epistemológico 
-de las ciencias sociales. Se explica por qué le uso de Python y 
+de las ciencias sociales. Se explica por qué el uso de Python y 
 R es fundamental para el análisis computacional de la comunicación 
 y, por último, cómo este libro puede ser utilizado por estudiantes 
 y académicos.
@@ -60,7 +60,7 @@ Sin embargo, esto no podría ser más incorrecto: como muestra el trabajo de
 Kitchin [@Kitchin2014;@Kitchin2014data], los enfoques computacionales pueden 
 estar bien integrados en las epistemologías existentes. Para que el campo avance, 
 el trabajo computacional y teórico debe ser simbiótico, con cada uno nutriendo 
-al otro y sin que ninguno reclame superioridad [@margolin19]. Así, la caja de 
+al otro y sin que ninguno reclame su superioridad [@margolin19]. Así, la caja de 
 herramientas de los científicos computacionales incluye tanto técnicas más basadas 
 en datos como más basadas en la teoría; algunas siendo más ascendentes e inductivas, 
 otras más descendentes y deductivas. Lo que importa a este respecto, y lo que a 
@@ -74,7 +74,7 @@ conciba como un proceso en cadena. Para probar, por ejemplo, una hipótesis
 teórica sobre la personalización en las noticias, podríamos imaginar un proceso 
 que empezara con el scraping de noticias en línea; siguiera con algunas técnicas 
 de procesamiento del lenguaje natural, como el Reconocimiento de Entidades Nombradas 
-(NER, por sus siglas en inglés); y, finalmente, comprobara si la mención de 
+(Named Entity Recognition o NER, por sus siglas en inglés); y, finalmente, comprobara si la mención de 
 personas influye en la ubicación de las noticias. Aquí podemos distinguir entre 
 las partes del proceso que son necesarias, pero no nos interesan intrínsecamente, 
 y las partes del proceso que sí responden a una pregunta realmente interesante. 
@@ -83,10 +83,10 @@ solo necesitamos hacerlo para responder a nuestra pregunta. Nos interesa saber s
 funciona bien y, sobre todo, qué sesgos puede tener que afecten a nuestros resultados 
 sustantivos, pero en realidad no estamos evaluando ninguna teoría sobre el 
 Reconocimiento de Entidades Nombradas. Sin embargo, estamos respondiendo a una 
-pregunta teóricamente interesante cuando analizamos el proceso en su conjunto, 
+pregunta interesante teóricamente cuando analizamos el proceso en su conjunto, 
 es decir, cuando aplicamos las herramientas para abordar un problema científico 
 social. Por supuesto, lo que es realmente interesante depende de la disciplina de 
-cada uno: Para un lingüista computacional, el funcionamiento interno del Reconocimiento 
+cada uno: para un lingüista computacional, el funcionamiento interno del Reconocimiento 
 de Entidades Nombradas puede ser en realidad la parte interesante, y nuestra 
 pregunta de investigación solo una "tarea complementaria".
 
@@ -106,7 +106,7 @@ de noticias o discursos parlamentarios, se está construyendo una (mejor) ratone
 Pero como científico social, el trabajo no acaba ahí. Hace falta utilizar 
 la ratonera para responder a las preguntas teóricamente interesantes.
 
-Lo que realmente esperamos es que los contenidos de este libro proporcionen 
+Esperamos es que los contenidos de este libro proporcionen 
 un marco de referencia que ayude a enfrentar los retos actuales de la investigación 
 tanto en el mundo académico como en la industria. Por un lado, el campo emergente 
 de las Ciencias Sociales Computacionales se ha convertido en una de las áreas de 
@@ -126,19 +126,19 @@ en una o varias de las técnicas que cubrimos con mayor profundidad. Nuestro obj
 es el ofrecer conocimientos prácticos suficientes para aplicar estas técnicas y 
 saber qué buscar. Aunque intentamos abarcar todo el campo sin sacrificar demasiada 
 profundidad al tratar cada técnica, nos hemos visto obligados a trazar algunos límites. 
-Una técnica que algunos lectores pueden echar en falta es el modelado basado en agentes 
-(ABM, por sus siglas en inglés). Por una parte, estas técnicas de simulación son 
-importantes en las ciencias sociales computacionales en general [@cioffi-revilla2014], 
-y recientemente se han aplicado también al análisis de la comunicación 
-[@Waldherr2014;@Wettstein2020]. Sin embargo, al revisar los planes de estudio de 
-los cursos actuales que enseñan el análisis computacional de la comunicación, 
+Por ejemplo, una técnica que algunos lectores pueden echar en falta es el modelado basado 
+en agentes (Agent-Based Modeling o ABM, por sus siglas en inglés). Es cierto que estas 
+técnicas de simulación son importantes en las ciencias sociales computacionales en 
+general [@cioffi-revilla2014], y recientemente se han aplicado también al análisis de 
+la comunicación [@Waldherr2014;@Wettstein2020]. Sin embargo, al revisar los planes de 
+estudio de los cursos actuales que enseñan el análisis computacional de la comunicación, 
 encontramos que el uso de simulaciones no parece estar en el centro de tales análisis 
 (todavía). En cambio, al observar el uso de técnicas computacionales en campos como los 
 estudios de periodismo [p. ej., @Boumans2016], los estudios de medios de comunicación 
-[p. ej., @Rieder2017], o el movimiento del texto como dato [@Grimmer2013], vemos un 
-conjunto de técnicas que se utilizan una y otra vez, y que por lo tanto hemos incluido 
-en nuestro libro. En concreto, además de las técnicas generales de análisis y 
-visualización de datos, se trata de técnicas de recopilación de datos como el *web 
+[p. ej., @Rieder2017], o el movimiento del texto como dato [@Grimmer2013], 
+vemos un conjunto de técnicas que se utilizan una y otra vez, y que, por lo tanto, 
+hemos incluido en nuestro libro. En concreto, además de las técnicas generales de análisis 
+y visualización de datos, presentamos técnicas de recopilación de datos como el *web 
 scraping* o el uso de API's; técnicas de tratamiento de texto como el procesamiento 
 del lenguaje natural y diferentes formas de convertir texto en números; técnicas 
 de aprendizaje automático supervisado y no supervisado, y análisis de redes.
@@ -174,7 +174,7 @@ Queríamos enseñar técnicas para el análisis computacional de la comunicació
 sin imponer una implementación específica. Esperamos que el lector aprenda de 
 nuestro libro, por ejemplo, cómo transformar un texto en atributos numéricos y 
 cómo elegir un modelo de aprendizaje automático adecuado, pareciéndole menos 
-importante en qué idioma se hace.
+importante en qué lenguaje se hace.
 
 Sin embargo, a veces hay razones de peso para elegir un lenguaje por encima 
 del otro. Por ejemplo, muchos modelos de aprendizaje automático del popular 
@@ -201,7 +201,7 @@ fuera necesario, y centrarnos, de forma más bien pragmática, en la
 aplicación de técnicas para el análisis computacional de la comunicación. 
 De la misma manera, si hubiéramos escrito un libro más conceptual sobre 
 nuevos métodos en nuestro campo, habríamos hecho más hincapié en los 
-aspectos epistemológicos, y habríamos pasado por alto los ejemplos de 
+aspectos epistemológicos y habríamos pasado por alto los ejemplos de 
 programación que constituyen el núcleo de este libro.
 
 Tampoco esperamos que los lectores de este libro posean muchos conocimientos 
@@ -210,14 +210,14 @@ ayuda, pero no hay ningún requisito estricto sobre qué es necesario
 saber. Igualmente, en términos de estadística, es útil haber oído 
 hablar de conceptos como la correlación o el análisis de regresión, 
 pero incluso si los conocimientos son bastante limitados, debería 
-ser fácil no perderse.
+ser fácil no perderse leyendo el libro.
 
 Esto también significa que es posible saltarse capítulos. Por ejemplo, 
 si ya trabajas con R y/o Python, es posible que no necesites las 
 instrucciones detalladas del principio. Aun así, el libro sigue un orden 
 lógico en el que cada capítulo se basa en los anteriores. Por ejemplo, 
 al explicar el aprendizaje automático supervisado sobre datos textuales, 
-esperamos que esté familiarizado con los capítulos anteriores que 
+esperamos que el lector esté familiarizado con los capítulos anteriores que 
 tratan del aprendizaje automático en general, o con el manejo de datos textuales.
 
 Este libro está diseñado de tal manera que pueda utilizarse como libro de 
@@ -227,7 +227,7 @@ pero es perfectamente posible utilizar este libro en un programa universitario,
 omitiendo las partes que puedan resultar demasiado complejas. Todos los 
 ejemplos de código en este libro no solo están impresos, sino que también 
 están disponibles en línea. Por lo tanto, tanto los estudiantes como los 
-científicos sociales que deseen refrescar sus conocimientos deberían poder 
+científicos sociales que deseen aumentar sus conocimientos deberían poder 
 utilizar este libro de forma autodidacta, sin necesidad de un curso formal. 
 Por último, este libro también puede servir de referencia a los lectores que 
 se pregunten: "¿Cómo se hacía esto?". Especialmente, si el lenguaje en el que 
@@ -240,7 +240,7 @@ en Python y viceversa.
 
 Independientemente del contexto en el que utilice este libro, algo es seguro: 
 la única forma de aprender métodos de análisis computacional es practicando 
-y jugueteando. Por este motivo, los ejemplos de código son, probablemente, 
+y jugando con el código. Por este motivo, los ejemplos de código son, probablemente, 
 la parte más importante del libro. En la medida de lo posible, los ejemplos 
 utilizan datos reales disponibles gratuitamente en Internet. Para asegurarnos 
 de que los ejemplos sigan funcionando dentro de cinco años, intentamos 
@@ -264,7 +264,7 @@ es necesariamente la única buena (ni mucho menos la mejor). Así que, después
 de conseguir que un ejemplo funcione, te recomendamos dedicar algo de tiempo 
 a jugar con él: prueba diferentes opciones, introduce tus propios datos, o 
 intenta conseguir el mismo resultado de una manera diferente. Lo más importante 
-que debes recordar es que: ¡No puedes romper nada! Así que prueba, diviértete, 
+que debes recordar es que ¡no puedes romper nada! Así que prueba, diviértete, 
 y si nada funciona, siempre puedes volver a empezar desde el ejemplo de código 
 del libro.
 
@@ -287,17 +287,18 @@ ambos lenguajes (como Google Colab o RStudio Cloud), en general es mejor instala
 un intérprete en el ordenador.
 
 Después de instalar Python o R, ya puedes ejecutar código en estos lenguajes, pero 
-también te vendrá bien tener un buen `Entorno de Desarrollo Integrado (IDE, por sus 
-siglas en inglés)` para desarrollar tus scripts (secuencias de comandos) de análisis 
-de datos. Para R recomendamos RStudio, cuya instalación es gratuita y que actualmente 
-es el entorno más popular para trabajar con R. Para Python recomendamos empezar con 
-JupyterLab o JupyterNotebook, que es un entorno de navegador para escribir y ejecutar 
-código Python. Todas estas herramientas están disponibles y bien documentadas para 
-Windows, MacOS y Linux. Una vez explicado cómo instalar R y Python, hay una sección 
-muy importante sobre la instalación de paquetes. Si planeas usar solo R o Python 
-(por ahora), siéntete libre de saltarte la parte sobre el otro lenguaje.
+también te vendrá bien tener un buen `Entorno de Desarrollo Integrado ( Integrated 
+Development Environment o IDE, por sus siglas en inglés)` para desarrollar tus scripts 
+(secuencias de comandos) de análisis de datos. Para R, recomendamos RStudio, cuya 
+instalación es gratuita y que actualmente es el entorno más popular para trabajar 
+con R. Para Python, recomendamos empezar con JupyterLab o JupyterNotebook, que es un 
+entorno de navegador para escribir y ejecutar código Python. Todas estas herramientas 
+están disponibles y bien documentadas para Windows, MacOS y Linux. Una vez explicado 
+cómo instalar R y Python, hay una sección muy importante sobre la instalación de paquetes. 
+Si planeas usar solo R o Python (por ahora), siéntete libre de saltarte la parte sobre 
+el otro lenguaje.
 
-Si quieres escribir programas Python más largos (a diferencia de, por ejemplo, 
+Si quieres escribir programas en Python más largos (a diferencia de, por ejemplo, 
 scripts cortos de análisis de datos) probablemente quieras instalar también un IDE 
 completo. Para ello recomendamos PyCharm2[^2], que tiene una versión gratuita con todo lo 
 que necesitas, y la versión premium también es gratuita para estudiantes, académicos y 
@@ -309,21 +310,21 @@ de descarga e instalación.
 . Una alternativa a instalar R, Python y las bibliotecas opcionales por separado y a 
 medida que las necesites (que explicaremos más adelante en este capítulo) es instalar 
 la llamada `Anaconda Distribution`, una de las plataformas más utilizadas y extensas 
-para realizar ciencia de datos. Anaconda es gratuita, código abierto y está concebida 
+para realizar ciencia de datos. Anaconda es gratuita, de código abierto y está concebida 
 para ejecutar código Python y R para el análisis de datos y el aprendizaje automático. 
 La instalación completa de Anaconda Distribution en el ordenador[^3] proporciona todo lo 
-que necesita para seguir los ejemplos de este libro e incluye entornos de desarrollo 
+necesario para seguir los ejemplos de este libro e incluye entornos de desarrollo 
 como Spyder, Jupyter y RStudio. También incluye un gran conjunto de paquetes preinstalados 
 de uso frecuente en la ciencia de datos y su propio gestor de paquetes, `conda`, que 
 te ayudará a instalar y actualizar otras bibliotecas o dependencias. En resumen, 
 Anaconda agrupa casi todo el software necesario para realizar análisis computacionales 
 de comunicación.
 
-Entonces, ¿Es mejor instalar Anaconda o instalar todo el software por separado como 
-se indica en este capítulo? Depende. A su favor, al descargar Anaconda se tiene todo 
+Entonces, ¿es mejor instalar Anaconda o instalar todo el software por separado como 
+se indica en este capítulo? Depende. Entre sus ventajas, al descargar Anaconda se tiene todo 
 instalado a la vez y no tienes que preocuparte por las dependencias (por ejemplo, los 
 usuarios de Windows normalmente no tienen instalado un compilador de C, pero algunos 
-paquetes pueden necesitarlo). En sus contras, es enorme y también instala muchas cosas 
+paquetes pueden necesitarlo). Pero como desventaja, es enorme y también instala muchas cosas 
 que no necesitas, por lo que, en esencia, obtienes una instalación no estándar, en la 
 que los programas y paquetes se almacenan en ubicaciones diferentes a las que tú (o tu 
 ordenador) podéis esperar. Además, como casi todos los ordenadores ya tienen instalada 
@@ -352,14 +353,14 @@ que se puede elegir la mejor forma de interactuar con R y, sobre todo, seleccion
 adecuados para el proyecto.
 
 Dicho esto, vamos a instalar R. La forma más fácil es ir a la página de RStudio CRAN en [cran.rstudio.com/](https://cran.rstudio.com/). [^4] 
-Haz clic en el enlace para instalar R para tu sistema operativo, e instala la última versión. 
+Haz clic en el enlace para instalar R en tu sistema operativo, e instala la última versión. 
 Si utilizas Linux, puedes instalar R a través del gestor de paquetes. Para Ubuntu linux, 
 lo mejor es seguir las instrucciones en [cran.r-project.org/bin/linux/ubuntu/](https://cran.r-project.org/bin/linux/ubuntu/).
 
 Una vez instalado R, pasaremos a instalar RStudio Desktop (la versión gratuita). Ve a 
 [rstudio.com/products/rstudio/download/#download](https://rstudio.com/products/rstudio/download/#download) 
-para descargar y ejecutar el instalador en el ordenador. Al abrir RStudio debería aparecer una 
-pantalla similar a la de la @fig-rstudio. Si es la primera vez que abres RStudio probablemente 
+para descargar y ejecutar el instalador en el ordenador. Al abrir RStudio, debería aparecer una 
+pantalla similar a la de la @fig-rstudio. Si es la primera vez que abres RStudio, probablemente 
 no veas el panel superior izquierdo (los scripts): puedes crear ese panel creando un nuevo 
 `R Script` a través del menú `file` (archivo) o con el icono verde de suma en la esquina 
 superior izquierda.
@@ -409,19 +410,19 @@ especificando las ubicaciones de los archivos (que probablemente serán diferent
 persona o en un ordenador diferente). Además, RStudio recuerda qué archivos estabas editando 
 para cada proyecto, por lo que, si estás trabajando en varios proyectos, es muy fácil cambiar 
 entre ellos. Recomendamos crear un proyecto ahora para el libro (y/o para cualquier proyecto 
-en el que esté trabajando), y siempre cambiar a un proyecto cuando abras RStudio
+en el que estés trabajando), y siempre cambiar a un proyecto cuando abras RStudio.
 
 
 :::
 
-En la parte derecha del espacio de trabajo de RStudio encontrarás dos ventanas adicionales. 
-En el panel superior derecho hay dos o más pestañas: *environment* (entorno) e *history* 
+En la parte derecha del espacio de trabajo de RStudio, encontrarás dos ventanas adicionales. 
+En el panel superior derecho, hay dos o más pestañas: *environment* (entorno) e *history* 
 (historial), y, dependiendo de los paquetes adicionales que hayas instalado, puede haber 
 alguna más. En *enviroment* puedes gestionar tu espacio de trabajo (el conjunto de elementos 
 que necesitas desplegar para realizar el análisis de datos) y tener una lista de los 
 objetos que le has añadido. También puedes importar conjuntos de datos con esta herramienta. 
 En la pestaña *history* tienes un inventario de las ejecuciones de código, que puedes 
-guardar en un fichero, o pasar directamente a consola o a un documento R.
+guardar en un fichero, pasar directamente a la consola o a un documento R.
 
 Ten en cuenta que en el entorno puedes guardar y cargar tu "espacio de trabajo" (todos 
 los datos que hay en la memoria del ordenador). Sin embargo, confiar en esta funcionalidad 
@@ -429,7 +430,7 @@ no suele ser una buena idea: solo guardará el estado de la sesión actual, mien
 lo más probable es que desees guardar el archivo de sintaxis de R y/o los datos. Si 
 tienes los datos de entrada sin procesar (por ejemplo, como un archivo csv, véase el 
 @sec-chap-filetodata) y el *script* de análisis, siempre puedes reproducir lo que has 
-estado haciendo. Sin embargo, si solo tienes una instantánea del espacio de trabajo, 
+estado haciendo. Pero si solo tienes una instantánea del espacio de trabajo, 
 conoces el estado hasta el que has llegado, pero es posible que no puedas reproducir 
 (o cambiar) cómo has llegado hasta ahí.
 
@@ -438,7 +439,7 @@ puedes explorar tu ordenador y gestionar todos los archivos que puedas utilizar 
 el proyecto, incluida la importación de conjuntos de datos. En *plots* (gráficos), 
 *help* (ayuda) y *viewer* (visor) podrás visualizar los gráficos, documentación y 
 resultados generales, respectivamente, que hayas ejecutado en tu *script*. Por último, 
-la pestaña *packages* (paquetes) te será de gran utilidad ya que te permitirá instalar 
+la pestaña *packages* (paquetes) te será de gran utilidad, ya que te permitirá instalar 
 o actualizar paquetes desde CRAN o incluso desde un archivo guardado en tu ordenador 
 con una interfaz sencilla.
 
@@ -544,7 +545,7 @@ En Jupyter, el código se introduce en celdas. Para empezar, escribe `print("Hel
 la celda vacía situada junto a `In [ ]:`. A continuación, haz clic en el botón *run* (ejecutar) 
 o pulsa control+Intro. Esto ejecutará el comando y mostrará el texto `"Hello world"` en el área 
 de salida justo debajo de la celda de entrada. Ten en cuenta que puedes crear más celdas 
-utilizando el icono más o con el menú *insert* (insertar). También puedes establecer el tipo de 
+utilizando el icono "más" o con el menú *insert* (insertar). También puedes establecer el tipo de 
 celda a través del menú *cell*: selecciona código para *scripts* de análisis (que es el valor 
 predeterminado), o Markdown para fragmentos de texto, que pueden utilizarse para explicar el 
 código y/o interpretar los resultados.
@@ -592,16 +593,16 @@ probable que hayas olvidado activar el paquete que incluye esa función.
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en cada capítulo
 
-Algunos paquetes, como `tidyverse` (R) y `pandas` (Python), dedicados el tratamiento de datos, se utilizan en 
+Algunos paquetes, como `tidyverse` (R) y `pandas` (Python), dedicados al tratamiento de datos, se utilizan en 
 casi todos los capítulos. Muchos capítulos también introducen paquetes específicos, como `igraph`/`networkx` 
-para el análisis de redes en el @sec-chap-network. Para facilitar llevar la cuenta de los paquetes necesarios 
+para el análisis de redes en el @sec-chap-network. Para no olvidar ninguno de los paquetes necesarios 
 en cada parte, cada capítulo (que incluye código) comienza con una nota similar a esta, en la que se indican 
 los principales paquetes introducidos en el mismo. También incluye el código necesario para instalar estos 
 paquetes, que por supuesto solo es necesario si no los has instalado antes. Recuerda que si estás usando 
 Anaconda para Python, debes reemplazar `!pip3 install` por `!conda install` en dicho código. En algunos 
 sistemas, puede que necesites usar `!pip install` en lugar de `!pip3 install`.
 
-Las notas también incluyen un bloque de código para importar todos los paquetes usados en el capítulo, 
+Estas notas también incluyen un bloque de código para importar todos los paquetes usados en el capítulo, 
 que necesitas ejecutar cada vez que uses los ejemplos correspondientes.
 
 :::
