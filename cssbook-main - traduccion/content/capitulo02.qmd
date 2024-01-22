@@ -7,13 +7,13 @@ import warnings; warnings.filterwarnings('ignore')
 
 **Resumen.**
   
-Este capítulo es una visita relámpago a algunas de las cosas interesantes (e informativas) 
+Este capítulo es una visita relámpago a algunas de las cosas interesantes (e instructivas) 
 que se pueden hacer con R y Python. Partiendo de una base de datos de tuits sobre COVID-19, 
 mostraremos cómo puedes realizar análisis utilizando análisis de texto, de redes y utilizando 
 información geográfica. El objetivo de este capítulo no es enseñarte todas estas técnicas 
 en detalle, sino que cada uno de los ejemplos muestre una posibilidad y te guíe al capítulo 
 donde se explicará en detalle. Así que no te preocupes demasiado por entender cada línea 
-código, relájate ¡Y disfruta del viaje!
+código, relájate ¡y disfruta del viaje!
 
 **Palabras clave.** fundamentos de la programación, análisis de datos
 
@@ -118,8 +118,8 @@ head(tw)
 :::
 :::
 
-Como puedes ver, la base de datos cuenta con casi 10.000 tuits, con su remitente, 
-ubicación e idioma, el texto, el número de retuits y si se trataba de una respuesta. 
+Como puedes ver, la base de datos cuenta con casi 10.000 tuits, con su remitente (autor), 
+ubicación e idioma, el texto, el número de retuits y si se trata de una respuesta. 
 Se puede leer el inicio de los tres mensajes más retuiteados, siendo un tuit (político) 
 de la India y dos tuits aparentemente políticos y con datos de Estados Unidos.
 
@@ -213,20 +213,21 @@ textplot_wordcloud(dtm_tags, max_words=100)
 
 **Topic model o modelado de temas** Mientras que una nube de palabras (o nube de etiquetas) muestra 
 qué palabras aparecen con más frecuencia, un `topic model` muestra qué palabras coinciden en los 
-mismos documentos. El Ejemplo [-@exm-funlda] utiliza la Asignación Latente de Dirichlet (o LDA, por 
-sus siglas en inglés), el algoritmo de análisis de *topic modeling* más común. Con este algoritmo, 
-se exploran los tuits agrupando automáticamente los *hashtags* anteriormente identificados en 10 
-*topics* (temas). Esta técnica no es determinista: si lo ejecutas de nuevo, puede que obtengas temas 
-ligeramente diferentes. Además, estos temas se intercambian aleatoriamente, ya que su numeración no 
-tiene ningún significado en especial. Introduciendo una *random seed*, es posible asegurarse de que, 
-al ejecutarse de nuevo, se obtendrán los mismos resultados. Como puedes ver, algunos temas son fáciles 
-de interpretar (como el tema 2 sobre distanciamiento social y el tema 8 sobre asistencia sanitaria), 
-pero siempre se recomienda examinar los documentos agrupados y los casos extremos, además de las palabras 
-(o etiquetas) principales, como se muestra aquí. Puedes jugar con este ejemplo utilizando una selección 
-diferente de palabras (modificando el código del Ejemplo [-@exm-funcloud]) o cambiando el número de temas. 
-También puedes cambiar (o eliminar) la *random seed* y ver cómo al ejecutar el mismo modelo varias veces 
-se obtienen resultados diferentes. Consulta la @sec-unsupervised para obtener más información sobre el 
-ajuste, la interpretación y la validación del modelado de temas.
+mismos documentos. El Ejemplo [-@exm-funlda] utiliza la Asignación Latente de Dirichlet (Latent 
+Dirichlet Allocation o LDA, por sus siglas en inglés), el algoritmo de análisis de *topic modeling* 
+más común. Con este algoritmo, se exploran los tuits agrupando automáticamente los *hashtags* 
+anteriormente identificados en 10 *topics* (temas). Esta técnica no es determinista: si lo ejecutas 
+de nuevo, puede que obtengas temas ligeramente diferentes. Además, estos temas se intercambian 
+aleatoriamente, ya que su numeración no tiene ningún significado en especial. Introduciendo una 
+*random seed*, es posible asegurarse de que, al ejecutarse de nuevo, se obtendrán los mismos resultados. 
+Como puedes ver, algunos temas son fáciles de interpretar (como el tema 2 sobre distanciamiento social 
+y el tema 8 sobre asistencia sanitaria), pero siempre se recomienda examinar los documentos agrupados 
+y los casos extremos, además de las palabras (o etiquetas) principales, como se muestra aquí. Puedes 
+jugar con este ejemplo utilizando una selección diferente de palabras (modificando el código del 
+Ejemplo [-@exm-funcloud]) o cambiando el número de temas. También puedes cambiar (o eliminar) la 
+*random seed* y ver cómo al ejecutar el mismo modelo varias veces se obtienen resultados diferentes. 
+Consulta la @sec-unsupervised para obtener más información sobre el ajuste, la interpretación y la 
+validación del modelado de temas.
 
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -393,12 +394,12 @@ lista de aristas en un gráfico. A partir de este gráfico, seleccionamos solo e
 conectado más grande y utilizamos un algoritmo de agrupación para analizar qué nodos (usuarios) 
 forman subredes cohesionadas. Por último, se utilizan varias opciones para establecer el color 
 y el tamaño de las aristas, los nodos y las etiquetas, y se representa gráficamente la red 
-resultante. Como puedes ver, el nodo central es Donald Trump, que es respondido por un gran 
+resultante. Como puedes ver, el nodo central es Donald Trump, a quién responden un gran 
 número de usuarios, algunos de los cuales son respondidos por otros usuarios. Puedes jugar 
 con diferentes opciones de trazado o intentar filtrar, por ejemplo, solo los tuits de un 
 determinado idioma. También puedes calcular fácilmente métricas de redes sociales como la 
-centralidad en esta red, y/o exportar la red para su posterior análisis en software especializado 
-de análisis de redes sociales. Ve al Capítulo [-@sec-chap-network] para más información sobre el 
+centralidad en esta red y/o exportar la red para su posterior análisis en software especializado 
+en análisis de redes sociales. Ve al Capítulo [-@sec-chap-network] para más información sobre el 
 análisis de redes, y al Capítulo [-@sec-chap-datawrangling] para los comandos de resumen 
 utilizados para crear la lista de aristas.
 
@@ -473,7 +474,7 @@ plot(g2)
 **Redes geográficas.**
 En el último ejemplo de este capítulo, combinaremos la información geográfica y de red para 
 mostrar qué regiones del mundo interactúan entre sí. Para ello, en el Ejemplo [-@exm-fungeonet] 
-vamos a unir dos veces la información del usuario a las base de datos de aristas creado anteriormente: 
+vamos a unir dos veces la información del usuario a la base de datos de aristas creada anteriormente: 
 una para el remitente y otra para el usuario al que se responde. A continuación, adaptamos 
 el código anterior para trazar el mapa añadiendo una línea para cada nodo de la red. 
 Como puede verse, los usuarios de las principales regiones (EE.UU., UE, India) interactúan 
