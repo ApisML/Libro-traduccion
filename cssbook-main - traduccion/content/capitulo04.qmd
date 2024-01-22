@@ -9,7 +9,7 @@ import warnings; warnings.filterwarnings('ignore')
 **Resumen.**
 Programar ya no es una actividad solitaria: casi todas las preguntas, problemas y 
 mensajes de error se han encontrado y resuelto ya. Este capítulo explica las formas 
-más comunes de colaboración y las fuentes de ayuda externa, además de esbozar las 
+de colaboración y las fuentes de ayuda externa más comunes, además de esbozar las 
 mejores prácticas sobre cómo escribir y compartir código por ti mismo.
 
 **Palabras clave.** paquete, biblioteca, errores, higiene computacional, cuadernos
@@ -18,13 +18,13 @@ mejores prácticas sobre cómo escribir y compartir código por ti mismo.
 
 - Comprender la importancia de reutilizar código al programar
  - Ayudar a los programadores principiantes a evitar atascarse
- - Explicar la "higiene computacional" y mostrar las mejores 
+ - Explicar qué es "higiene computacional" y mostrar las mejores 
 prácticas en R y Python para escribir y compartir código
 
 
 En el capítulo [-@sec-chap-programmingconcepts] has aprendido a escribir 
 tus primeras líneas de código: has creado objetos de diferentes tipos, 
-utilizado y escrito algunas funciones, y has explorado las principales 
+utilizado y escrito algunas funciones y has explorado las principales 
 estructuras de control. Seguramente estés ansioso por escribir tu primera 
 pieza de código compleja y producir algún *script* interesante de procesamiento 
 o análisis de datos. En este capítulo, te prepararemos para hacerlo con 
@@ -40,7 +40,7 @@ inevitablemente, verás a menudo) dejen de ser frustrantes y se conviertan en
 una herramienta útil. Por último, hablaremos de “buenas prácticas” a la hora 
 de escribir código.
 
-## Reutilizar código: No necesitamos reinventar la rueda {#sec-code}
+## Reutilizar código: no necesitamos reinventar la rueda {#sec-code}
 
 Igual que cualquier lengua humana, los lenguajes de programación constan de vocabulario, 
 reglas sintácticas y expresiones. Utilizando las palabras y la gramática adecuadas, puedes 
@@ -52,7 +52,7 @@ pensamiento. En lugar de eso, utilizas reglas preexistentes, ideas, percepciones
 narrativas diferentes para crear tus propios mensajes e interactuar con el mundo. Lo mismo 
 ocurre con la codificación: nunca empiezas de cero.
 
-Si quisieras, podrías codificarlo todo desde el principio, ¡Incluso usando solo 0 y 1! Al 
+Si quisieras, podrías codificarlo todo desde el principio, ¡incluso usando solo 0 y 1! Al 
 leer los capítulos anteriores, puede que hayas empezado a pensar que las operaciones complejas 
 serán agotadoras y te llevarán mucho tiempo. Parece que hay un larguísimo camino a recorrer 
 entre las operaciones básicas que hicimos hasta un modelo estadístico útil.
@@ -77,8 +77,8 @@ coloca un comentario con un enlace en tu código para indicar en qué te has ins
 Otra forma es construir o importar funciones que resuman muchas líneas de código en un comando más 
 simple, como explicamos en la Sección [-@sec-functions]. Las funciones son formas realmente poderosas 
 de reutilizar código, ya que no tienes que escribir el mismo código una y otra vez si lo necesitas en 
-varios lugares. Los paquetes son probablemente el enfoque más elegante para reciclar el trabajo realizado 
-por otros compañeros. En la Sección [-@sec-installing] ya aprendiste cómo instalar un paquete, y probablemente notaste 
+varios lugares. Los paquetes son probablemente la forma más elegante de reciclar el trabajo realizado 
+por otros compañeros. En la Sección [-@sec-installing] ya aprendiste cómo instalar un paquete y probablemente notaste 
 lo fácil que es traer muchas funcionalidades pre-construidas a tu espacio de trabajo. También puedes escribir 
 y publicar tu propio paquete en el futuro para ayudar a tus compañeros a escribir menos código y ser más 
 eficientes en su trabajo diario (ver también la Sección [-@sec-publishingsource]).
@@ -87,7 +87,7 @@ Aquí pueden surgir muchas preguntas: ¿Qué reutilizar? ¿Cuándo utilizar una 
 persona en lugar de escribir el código uno mismo? ¿Qué *scripts* y fuentes son fiables? ¿Cuál es el 
 mejor paquete para elegir? ¿Cuántos paquetes debemos utilizar dentro de un mismo proyecto? ¿Debemos
 preocuparnos por las versiones de los paquetes? ¿Y debemos conocer todos los paquetes que se publican 
-en nuestro campo? Por supuesto, no hay una única respuesta a estas preguntas y el obtener la más adecuada 
+en nuestro campo? Por supuesto, no hay una única respuesta a estas preguntas y obtener la más adecuada 
 será, probablemente, cuestión de práctica. En general, podemos decir que una premisa es reutilizar y 
 compartir el código todo lo que se pueda, siempre teniendo en cuenta que estaremos limitados por 
 restricciones de calidad, disponibilidad, parsimonia, actualizaciones y experiencia. En otras palabras,
@@ -100,7 +100,7 @@ Es una métrica bastante sencilla que responde a la pregunta: "¿Cuántas edicio
 caracteres) tengo que aplicar para transformar la cadena1 en la cadena2?". Esto se puede utilizar para 
 detectar plagios, pero también nos puede interesar para determinar, por ejemplo, si un periódico ha 
 copiado algún contenido de otro sitio, aunque se hayan aplicado pequeños cambios. Podrías intentar escribir 
-algún código para hacer este cálculo (¡Y seguro que podrías hacerlo invirtiendo algo de tiempo!), pero 
+algún código para hacer este cálculo (¡y seguro que podrías hacerlo invirtiendo algo de tiempo!), pero 
 es un problema tan común que ya ha sido resuelto múltiples veces. Podrías, por ejemplo, buscar algunas 
 funciones conocidas para resolver el problema y copiarlas y pegarlas en tu código. Puedes encontrar un 
 gran número de implementaciones diferentes tanto para Python como para R aquí: 
@@ -115,9 +115,9 @@ antes de poder utilizar tu código.
 
 Entendemos que seleccionar los paquetes puede ser bastante abrumador, con tantas opciones diferentes de 
 distintos contribuidores. De hecho, a veces una misma tarea, como el modelado de temas, puede realizarse 
-utilizando varios paquetes diferentes. Entonces, ¿Cómo encontrar y elegir el mejor? A parte de recursos 
+utilizando varios paquetes diferentes. Entonces, ¿cómo encontrar y elegir el mejor? Aparte de recursos 
 como este libro, la guía más importante es, probablemente, la comunidad que te rodea: usar paquetes que 
-mucha gente utiliza es un indicador de que están bien mantenidos y documentados y que hay una comunidad 
+mucha gente utiliza es un indicador de que están bien mantenidos y documentados y de que hay una comunidad 
 a la que pedir ayuda si es necesario. Por otra parte, como todos los paquetes de Pypi y CRAN se pueden 
 descargar e instalar de forma gratuita, también puedes intentar comparar y ver qué hacen los distintos 
 paquetes. Al hacer esto, siempre es recomendable comprobar su documentación y su página de GitHub: los 
@@ -132,10 +132,10 @@ nuevos paquetes como 'SpaCy', que resultan opciones sencillas y sofisticadas par
 lenguaje natural. Entonces, ¿Cuál deberíamos haber incluido en este libro? ¿El que es bien conocido (con 
 una documentación excelente, por cierto) y siguen utilizando miles de profesionales y estudiantes de todo 
 el mundo, o el que está penetrando en el mercado por su facilidad y sus ventajas? Además, de elegir la 
-segunda opción, ¿Estamos seguros de que el paquete más de moda va a ser estable en el tiempo o de que no 
+segunda opción, ¿estamos seguros de que el paquete más de moda va a ser estable en el tiempo o de que no 
 va a ser sustituido por otro diferente en apenas unos meses?
 
-No existe una regla de oro a la hora reutilizar el código y los paquetes, pero es precisamente este escenario 
+No existe una regla de oro a la hora de reutilizar el código y los paquetes, pero es precisamente este escenario 
 dinámico el que nos proporciona un campo apasionante y provocador, obligándonos a mantenernos al día.
 
 ## Entender los errores y pedir ayuda {#sec-errors}
@@ -143,8 +143,8 @@ dinámico el que nos proporciona un campo apasionante y provocador, obligándono
 Aunque la reutilización de código hace que escribir código sea más fácil y menos propenso a errores, todo 
 programador se equivoca. La programación puede ser una tarea frustrante: te vas a encontrar con mensajes de 
 error, fallos y problemas que no sabrás cómo solucionar. Esta sección muestra cómo los mensajes de error son 
-útiles más allá del miedo que provocan, y enumera los principales mensajes de error encontrados al empezar. 
-También explica cómo buscar ayuda dentro de la documentación de R/Python, cómo usar recursos en línea, y cómo 
+útiles más allá del miedo que provocan y enumera los principales mensajes de error encontrados al empezar. 
+También explica cómo buscar ayuda dentro de la documentación de R/Python, cómo usar recursos en línea y cómo 
 formular preguntas a tu instructor o comunidad para que obtengas una respuesta útil.
 
 Si has probado los conceptos del Capítulo [-@sec-chap-programmingconcepts], probablemente ya te habrás encontrado 
@@ -158,7 +158,7 @@ por diferentes medios.
 ### Mensajes de error
 
 Hay dos estrategias comunes para evitar quedarse atascado y seguir adelante con la tarea: una es comprender el tipo 
-de error que se obtiene, y la otra es saber dónde acudir para obtener ayuda. Nosotros añadiríamos una más: ¡Tener 
+de error que se obtiene, y la otra es saber dónde acudir para obtener ayuda. Nosotros añadiríamos una más: ¡tener 
 paciencia y no desesperar!
 
 Tanto R como Python producen mensajes de advertencia o error cuando algo va mal en tu código. Los investigadores 
@@ -180,7 +180,7 @@ de hecho, explica exactamente lo que ha ido mal. Esto te ayudará a entender qu�
 
 Si recibes un mensaje de error que no entiendes u obtienes un resultado incorrecto en tu código, tienes tres opciones 
 para obtener más información: utilizar los comandos de ayuda para saber más sobre cualquier objeto o función '(help(object)' 
-tanto en R como en Python); leer la documentación de R base, Python base o de cualquier paquete individual (¡Hay un montón 
+tanto en R como en Python); leer la documentación de R base, Python base o de cualquier paquete individual (¡hay un montón 
 en línea!), o echar un vistazo a la maravillosa comunidad de programadores de todo el mundo, leer lo que han discutido 
 hasta ahora o incluso plantear una pregunta para desafiar su ingenio.
 
@@ -197,14 +197,14 @@ ese error y que otros ya hayan dado una respuesta a lo que significa y, sobre to
 Dependiendo de la complejidad y novedad de tu problema, puedes encontrar una respuesta útil en unos minutos o tardar horas. 
 No te desesperes si visitas muchos debates sin entenderlo todo a la primera: puede que tengas que volver a algunos de ellos 
 después de leerlos todos. Además, algunas respuestas incluirán el código exacto que necesitas (listo para copiar y pegar), 
-código que hay que adaptar (por ejemplo, cambiando el nombre de tus variables) o en pseudocódigo (descripción informal del 
-código). En todos los casos, tú serás el responsable de dar sentido a la enorme (y a veces desordenada) cantidad de fuentes 
-que encontrarás.
+código que hay que adaptar (por ejemplo, cambiando el nombre de tus variables) o estarán escritas en pseudocódigo (descripción 
+informal del código). En todos los casos, tú serás el responsable de dar sentido a la enorme (y a veces desordenada) 
+cantidad de fuentes que encontrarás.
 
 Por supuesto, es posible que no consigas lo que necesitas en discusiones previas a tu problema. En ese caso podrás proponer 
 tu propia pregunta y esperar a que alguien te responda. Si decides hacer esto, recuerda algunos consejos. En primer lugar, 
-asegúrate de que la respuesta no se encuentra en otro lugar dentro del mismo sitio web (¡La primera respuesta podría ser 
-solo un enlace a un post anterior!). En segundo lugar, no te preocupes por si tu pregunta es tonta o demasiado básica: en 
+asegúrate de que la respuesta no se encuentra en otro lugar dentro del mismo sitio web (¡la primera respuesta podría ser 
+solo un enlace a un post anterior!). En segundo lugar, no te preocupes por si tu pregunta resulta tonta o demasiado básica: en 
 la comunidad encontrarás todo tipo de programadores, desde los que están dando sus primeros pasos hasta los más avanzados. 
 En tercer lugar, sé claro, específico y céntrate en lo que necesitas resolver. Este es, probablemente, el consejo más 
 importante: es necesario que otros programadores entiendan lo que necesitas en pocas palabras (sin discusiones filosóficas 
@@ -222,34 +222,34 @@ Por supuesto, cada programa es diferente y no hay una única forma de resolver t
 estrategias sencillas que te ayudarán a depurar tu código. El principio básico subyacente es comprender mejor qué está ocurriendo.
 
 -  Ejecuta más. Por ejemplo, si tienes un “bucle *for*”, prueba a añadir una sentencia 'print' al bucle, de forma que devuelva 
-el valor actual que se procesa, alguna otra información que te ayude a entender qué datos se están procesando, o qué resultado 
+el valor actual que se procesa, alguna otra información que te ayude a entender qué datos se están procesando o qué resultado 
 intermedio se consigue en cada paso. Existen herramientas más avanzadas para realizar un seguimiento de los valores, como los 
 llamados “'debuggers'” (depuradores) en IDEs avanzados o el módulo 'logging' (de registro) en Python, pero un par de funciones 
 de ejecución adicionales pueden servir para el mismo propósito.
-   -  Lleva la cuenta de qué bloques de código se han ejecutado y con qué frecuencia. Por ejemplo, puede que tengas alguna sentencia 'if', pero resulta que la condición nunca es True, por lo nunca se ejecuta el bloque de código completo. Puedes crear un entero con valor 0 al principio del código, y luego incrementarlo en uno dentro del bloque de código. Si lo ejecutas después, sabrás cuántas veces se ha visitado el bloque.
+   -  Lleva la cuenta de qué bloques de código se han ejecutado y con qué frecuencia. Por ejemplo, puede que tengas alguna sentencia 'if', pero resulta que la condición nunca es True, por lo nunca se ejecuta el bloque de código completo. Puedes crear un entero con valor 0 al principio del código y luego incrementarlo en uno dentro del bloque de código. Si lo ejecutas después, sabrás cuántas veces se ha visitado el bloque.
    -  Redúcelo. Elimina (comenta) todo lo que no sea estrictamente necesario y comprueba si puedes hacer funcionar una versión simplificada de tu código, antes de intentar ampliarlo.
    -  Añade comprobaciones de coherencia. Por ejemplo, si desde un punto de vista teórico, dos listas deben tener la misma longitud, compruébalo con la función de longitud; del mismo modo, si sabes que un objeto debe tener un valor concreto (por ejemplo, porque conoces el resultado), comprueba esta suposición.
 
 Finalmente, cuando eres consciente de que pueden surgir algunos errores típicos y no quieres que tu *script* se detenga o se 
 bloquee, puedes añadir una 'exception' (excepción) en tu código. Supongamos, por ejemplo, que estás construyendo una función 
 para conectarte a una API (ver Sección [-@sec-apis]). Puede haber muchas razones para obtener un error, como un problema de 
-conexión a Internet, un problema del servidor, o un documento faltante. En este caso, podrías decidir omitir el error y 
+conexión a Internet, un problema del servidor o un documento faltante. En este caso, podrías decidir omitir el error y 
 continuar con las siguientes líneas. Incluso podrías dar instrucciones más detalladas de qué hacer (por ejemplo, esperar cinco 
 minutos e intentarlo de nuevo). Incluir estas excepciones es, aunque pueda parecer lo contrario, una buena práctica y ayudará a 
 que tu código sea más robusto y estable.
 
 Hagamos el Ejemplo [-@exm-if1] del capítulo anterior más robusto para que no falle si se encuentra con un enunciado no válido. 
 Por ejemplo, en Python, el objeto 'None' no tiene una longitud definida; y en R, es ilegal calcular el número de caracteres de 
-un factor. Deberías detenerte a pensar en cómo quieres tratar esto: quieres que su *script* simplemente falle (y limpie los datos), 
+un factor. Deberías detenerte a pensar en cómo quieres tratar esto: quieres que su *script* simplemente falle (y limpie los datos) 
 o quieres lidiar con el error de alguna manera. Si tienes poco control sobre los datos de entrada y/o si el proceso con el que 
 estás tratando lleva mucho tiempo, puede que quieras manejar estos errores en lugar de hacer que tu *script* falle. En el 
 Ejemplo [-@exm-tryexcept], mostramos cómo usar una construcción 'try/except' (intento/excepción): indicarás qué bloque de código 
 quieres probar (por ejemplo, ejecutar como normal), y, en el siguiente bloque, indicarás qué debería pasar si eso provoca un error.
 
-Ten en cuenta que el uso de sentencias 'try ... except' como ésta es bastante común en el código Python, en R no es necesario con 
+Ten en cuenta que el uso de sentencias 'try ... except' como esta es bastante común en el código Python, pero en R no es necesario con 
 tanta frecuencia. Por ejemplo, si una función de Python (como 'int') no puede convertir la entrada en un entero, lanzará una excepción. 
 Sin embargo, la función de R 'as.numeric' lo que hará será devolver que un valor falta. Por lo tanto, en R normalmente solo se encuentran 
-estas sentencias cuando se utilizan recursos externos, por ejemplo, cuando se utiliza una API o se hace *scrapping* una página web. 
+estas sentencias cuando se utilizan recursos externos, por ejemplo, cuando se utiliza una API o se hace *scrapping* de una página web. 
 Consulta el Capítulo [-@sec-chap-scraping] para obtener más detalles sobre estos temas.
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -296,15 +296,15 @@ for (x in headlines){
 
 ## Buenas prácticas: Código bonito, GitHub y cuadernos {#sec-practices}
 
-En esta sección se ofrece una breve explicación de "higiene computacional": cómo estructurar el código para poder 
-entenderlo más tarde, la importancia de la nomenclatura y la documentación, el uso de versiones y repositorios en 
-línea como GitHub, y el uso de la programación alfabetizada (por ejemplo, mediante el uso de RMarkdown o cuadernos 
-Jupyter) para explicar, compartir y publicar código.
+En esta sección se ofrece una breve explicación algunas prácticas de "higiene computacional": cómo estructurar el 
+código para poder entenderlo más tarde, la importancia de la nomenclatura y la documentación, el uso de versiones 
+y repositorios en línea como GitHub y el uso de la programación alfabetizada (por ejemplo, mediante el uso de RMarkdown 
+o cuadernos Jupyter) para explicar, compartir y publicar código.
 
 Programar es mucho más que aprender las reglas básicas y crear un mensaje. Si quieres utilizar el código para 
 comunicar ideas y trabajar con tus compañeros, tendrás que cuidar muchos detalles de contenido y forma para garantizar 
 la comprensión y reproducibilidad de los *scripts*. Esto se aplica incluso al código que escribes para "uso privado", 
-porque es muy probable que olvides tus ideas originales de un día para otro, o que más tarde te des cuenta de que 
+porque es muy probable que olvides tus ideas originales de un día para otro o que más tarde te des cuenta de que 
 necesitas compartirlo con otra persona para pedirle ayuda. Así pues, en lugar de escribir código personal, obtuso e 
 ilegible sin adoptar ninguna convención social, te recomendamos dedicar algo de esfuerzo extra a hacer que tus *scripts* 
 sean claros y estén listos para ser compartidos.
@@ -324,15 +324,15 @@ el mundo del código te serán útiles estos consejos, pero si eres un alumno m�
 más específicos en las fuentes detalladas de cada lenguaje y comunidad.
 
 En el caso de los nombres, te animamos a que utilices nombres significativos o abreviaturas estándar para los objetos, utilizando 
-minúsculas o mayúsculas mixtas (¡Recuerda que tanto Python como R distinguen entre mayúsculas y minúsculas!), evitando caracteres 
-especiales y operadores (como '\&', '@' o '\%'), y sin exceder los 32 caracteres. Normalmente se empieza con una letra[^3] 
-(mayúscula cuando se define una clase), seguida de otras letras o números, y utilizando guiones bajos para separar las palabras 
+minúsculas o mayúsculas mixtas (¡recuerda que tanto Python como R distinguen entre mayúsculas y minúsculas!), evitando caracteres 
+especiales y operadores (como '\&', '@' o '\%') y sin exceder los 32 caracteres. Normalmente se empieza con una letra[^3] 
+(mayúscula cuando se define una clase), seguida de otras letras o números y utilizando guiones bajos para separar las palabras 
 si es necesario (por ejemplo, 'data_2020' o 'Filter_Text'). Algunos sugieren que los nombres de las variables sean sustantivos y 
 los de las funciones verbos, lo que resulta lógico si se piensa en la naturaleza de estos objetos.
 
 Mientras estés escribiendo código, ten también en cuenta los espacios en blanco y las sangrías: debes utilizarlos para dar una 
 estructura adecuada al código al crear bloques. En el caso de R, presta también atención al uso de llaves: la convención es que 
-la llave de apertura comienza después de algún código y siempre va seguida de una nueva línea; y la llave de cierre va en su propia 
+la llave de apertura comienza después de algún código y siempre va seguida de una nueva línea, y que la llave de cierre va en su propia 
 línea excepto si hay más instrucciones en el bloque. No escribas líneas muy largas (más de 80 caracteres) para que el código quepa 
 en la pantalla y evitar el desplazamiento lateral. Una correcta separación de palabras, líneas y bloques hará que tu *script* sea 
 más legible.
@@ -344,10 +344,10 @@ para aclarar tu código cuando no está claro por sí mismo. Puedes hacerlo de m
 aparte), pero la forma más natural y directa es incluir algunos comentarios en el código. Estos comentarios deben incluirse tanto al 
 principio del *script* para dar una visión general o introducción, como dentro del propio código (en líneas independientes o al final 
 de una línea) para dar orientaciones específicas. En muchos casos, necesitarás leer tu código más adelante (por ejemplo, cuando tengas 
-que revisar un artículo o un análisis), y los momentos dedicados a documentar tu código te ahorrarán mucho tiempo después.
+que revisar un artículo o un análisis) y los momentos dedicados a documentar tu código te ahorrarán mucho tiempo después.
 
 R y Python utilizan el signo de almohadilla `\#` para crear estos comentarios. El comentario siempre comenzará después de la almohadilla. 
-Si el primer carácter de tu línea es un `\#` todo el texto incluido será considerado como un comentario; pero si ya has escrito algún 
+Si el primer carácter de tu línea es un `\#`, todo el texto incluido será considerado como un comentario; pero si ya has escrito algún 
 código en una línea e incluyes un `\#` después del código, el código inicial será ejecutado y siempre verás el comentario a su lado. 
 Normalmente, combinarás estas dos formas de documentar tu *script*. Como regla general, inserta un comentario que explique las opciones 
 e intenciones del código si este no resulta obvio por sí mismo. Así, si una línea dice 'df = df - 1', un comentario como “Disminuir df 
@@ -377,11 +377,11 @@ muestra el repositorio que hemos utilizado para escribir este libro).
 
 ![El repositorio en línea GitHub.](img/ch04_github.png){#fig-github}
 
-Una vez que subas (“*commit and push*”) tu código a GitHub, podrás acceder a él desde cualquier lugar, y podrás hacer un seguimiento 
+Una vez que subas (“*commit and push*”) tu código a GitHub, podrás acceder a él desde cualquier lugar y podrás hacer un seguimiento 
 de los cambios históricos, lo que en la práctica te permitirá tener varias versiones en el mismo lugar. Tú decidirás si haces público 
-el código o lo mantienes privado, y a quién permites editar el repositorio. Cuando trabajes en colaboración te sentirás como si 
+el código o lo mantienes privado y a quién permites editar el repositorio. Cuando trabajes en colaboración te sentirás como si 
 estuvieras editando una wiki, mientras que utilizar una página web para tu proyecto y una red de amigos (seguidores) se parecerá más 
-a una red social. Puedes trabajar localmente o incluso desde una interfaz web, y luego sincronizar los cambios. Si permites que tus 
+a una red social. Puedes trabajar localmente o incluso desde una interfaz web y luego sincronizar los cambios. Si permites que tus 
 colegas descarguen (o clonen) tu repositorio, estarás haciendo una buena contribución a la comunidad de desarrolladores. Puedes incluso 
 controlar tu impacto. Además de código, también puedes subir otro tipo de archivos, incluidos cuadernos, y organizarlos en carpetas, 
 igual que haces en tu propio ordenador.
@@ -389,15 +389,15 @@ igual que haces en tu propio ordenador.
 Una buena práctica extendida a la hora de compartir código es el uso de *literate programming* (programación literaria): una forma 
 elegante, práctica y pedagógica de documentar y ejecutar el código base. Ya hemos mencionado en esta sección la importancia de 
 incluir documentación dentro de tu código (utilizando el signo `\#` y *docstrings*), pero también es posible ampliar la documentación 
-(con textos formateados, imágenes ¡E incluso ecuaciones!) y juntarlo todo para presentar en una estructura lógica todo lo necesario 
+(con textos formateados, imágenes ¡e incluso ecuaciones!) y juntarlo todo para presentar en una estructura lógica todo lo necesario 
 para entender el código y ejecutar las líneas paso a paso.
 
 Existen diferentes enfoques a la hora de implementar esta programación literaria en entornos web y locales, pero el estándar en R 
-y Python es el uso de notebooks. En los cuadernos puedes alternar un procesador de texto y una celda ejecutable para colocar texto 
-formateado entre bloques de código. Haciendo esto puedes incluir documentación completa de tus *scripts*, y lo que es aún más 
+y Python es el uso de notebooks. En los cuadernos, puedes alternar un procesador de texto y una celda ejecutable para colocar texto 
+formateado entre bloques de código. Haciendo esto, puedes incluir documentación completa de tus *scripts*, y lo que es aún más 
 importante, puedes ejecutar cada celda una a una (cargando los resultados en memoria mientras el cuaderno está abierto). Este último 
 punto te permite evitar el riesgo de ejecutar todo el *script* a la vez, al tiempo que te da más control de las salidas intermedias 
-producidas en tu código. Una vez que te acostumbres a los cuadernos, ¡Seguro que no vuelves a escribir código para el análisis de datos 
+producidas en tu código. Una vez que te acostumbres a los cuadernos, ¡seguro que no vuelves a escribir código para el análisis de datos 
 en un editor básico!
 
 La herramienta más habitual en R es el R Markdown Notebook, y en Python, el Jupyter Notebook (véase la figura [-@fig-notebooks]), 
