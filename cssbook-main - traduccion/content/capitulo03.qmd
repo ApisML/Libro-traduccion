@@ -64,7 +64,7 @@ R y Python, es hora de dar un pequeño paso atrás y aprender más sobre cómo
 realmente funciona todo tras bastidores.
 
 En ambos lenguajes, se escribe un 'script' o 'programa' que contiene los comandos 
-para el ordenador. Pero antes de abordar la programación real y a los emocionantes 
+para el ordenador. Pero antes de pasar a la programación real y a los emocionantes 
 análisis, necesitamos entender cómo se pueden representar y almacenar los datos.
 
 Independientemente de si usas R o Python, ambos almacenan tus datos en memoria 
@@ -175,7 +175,7 @@ print(c)
 ### Almacenamiento de valores individuales: Números enteros, números de coma flotante, *booleans*
 
 Cuando trabajamos con números, distinguimos entre *integers* (números enteros, abreviado *int*) 
-y números de coma flotante (números con punto decimal, llamados '"numeric"' en R y *“floating point numbers”* 
+y números de coma flotante (o números con punto decimal, llamados '"numeric"' en R y *“floating point numbers”* 
 en inglés). Tanto Python como R determinan automáticamente el tipo de datos al crear un objeto, 
 pero difieren en su comportamiento por defecto al almacenar un número que puede representarse como 
 un *int*: R lo almacenará como un 'float' (número de coma flotante) de todos modos y habrá 
@@ -195,7 +195,7 @@ tu edad o el número de casas que tienes), tiene sentido restringir el objeto a 
 También tenemos un tipo de datos que es aún más restringido y solo puede tomar dos valores: verdadero o falso. 
 Se llama '"logical"' (lógico) (R) o '"bool"' (Python). Ten en cuenta que los valores booleanos distinguen 
 entre mayúsculas y minúsculas: mientras que en R debes escribir todo el valor en mayúsculas (TRUE, FALSE), 
-en Python solo escribimos la primera letra en mayúsculas: True, False. Como puedes ver en el Ejemplo [-@exm-var3], 
+en Python solo escribimos la primera letra en mayúsculas (True, False). Como puedes ver en el Ejemplo [-@exm-var3], 
 un objeto de este tipo se comporta exactamente igual que un entero al que solo se le permite ser 0 o 1, y 
 se puede convertir fácilmente a un entero.
 
@@ -305,7 +305,7 @@ barra invertida (`\'`). Ocurre lo mismo para las cadenas entre comillas dobles. 
 para incluir una barra invertida real en un texto, también anulas su función con una barra 
 invertida, de modo que se obtiene una barra invertida doble (`\\`).
 
-El ejemplo de Python también muestra un concepto introducido en Python 3.6: la cadena f. 
+El ejemplo de Python también muestra un concepto introducido en Python 3.6: la cadena f (*f-string*). 
 Se trata de cadenas prefijadas con la letra f que cuentan con un formato específico. Esto 
 significa que estas cadenas insertarán automáticamente un valor dónde las llaves indiquen 
 que es necesario. Con ello, se puede escribir: 'print(f "The value of i is {i}")' para 
@@ -338,10 +338,10 @@ En ambos casos, el tipo de datos subyacente es el mismo: datos sin procesar.
 Hasta ahora, nos hemos centrado en los tipos de datos básicos iniciales o *"vector objects"* (objetos vectoriales), 
 como se denominan en R. Sin embargo, a menudo queremos agrupar varios de estos objetos. Por ejemplo, 
 no queremos crear manualmente miles de objetos llamados tweet0001, tweet0002, ..., tweet9999… Es más 
-cómodo tener una lista llamada tuits que los contenga a todos. Existen múltiples nombres para este 
+cómodo tener una lista llamada "tuits" que los contenga a todos. Existen múltiples nombres para este 
 tipo de estructuras de datos combinadas:  *lists* (listas), *vectors* (vectores), *arrays*, series y 
 más. La idea es siempre la misma: tomamos varios objetos (ya sean números, cadenas o cualquier otra 
-cosa) y creamos un objeto que los combina todos (Ejemplo [-@exm-1darray1]).
+cosa) y creamos un objeto que los combine todos (Ejemplo [-@exm-1darray1]).
 
 ::: {.callout-note appearance="simple" icon=false}
 
@@ -373,7 +373,7 @@ Como puedes ver, ahora tenemos un nombre ('scores') para referirnos a todas las
 puntuaciones. El objeto de Python del ejemplo [-@exm-1darray1] se llama 'list', 
 el objeto de R, 'vector'. Hay muchos más datos combinados de este tipo, con 
 propiedades ligeramente diferentes que puede ser importante conocer. En primer 
-lugar, si se pueden mezclar diferentes tipos (digamos, enteros y cadenas); 
+lugar, si se pueden mezclar, o no, diferentes tipos de datos (digamos, enteros y cadenas); 
 en segundo lugar, qué ocurre si cambias el *array*. Vamos a discutir ambos 
 casos y a mostrar cómo se relacionan con diferentes tipos de conjuntos en 
 Python y R. Pero antes, vamos a mostrarte cómo trabajar con ellos.
@@ -432,7 +432,7 @@ en el segundo, por la del 1º y el 10º ("8" "5"); y, por último, por todos
 los elementos comprendidos entre el 1º y el 4º ("8" "8" "7" "6"). Podemos 
 indicar un rango fácilmente utilizando `:`. Después de los dos puntos, 
 proporcionamos el 'index' (posición) del último elemento (en R), mientras 
-que Python se detiene justo antes de esa posición.[^2] Si queremos pasar 
+que Python se detiene justo antes de esa posición.[^2] Si queremos introducir 
 varios valores concretos en vez de un rango, en R necesitaremos crear un 
 vector de estos índices utilizando `c()` (Ejemplo [-@exm-1darray2]). Tómate 
 un momento para comparar las diferentes formas de indexación entre Python 
@@ -575,9 +575,9 @@ my_list[[3]](16)
 :::
 
 A los usuarios de Python a menudo les gusta el hecho de que las listas dan mucha flexibilidad, 
-ya que aceptan felizmente entradas de tipos muy diferentes. Pero a veces ellos también quieren 
+ya que aceptan felizmente entradas de tipos muy diferentes. Pero, a veces, ellos también quieren 
 una estructura más estricta como el vector de R. Esto puede ser especialmente interesante 
-para cálculos de alto rendimiento, y por lo tanto, tal estructura está disponible en el paquete 
+para cálculos de alto rendimiento, por lo que tal estructura está disponible en el paquete 
 'numpy' (que significa Números en Python): el 'numpy array'. Hablaremos de ello con más detalle 
 cuando tratemos los marcos de datos en el capítulo [-@sec-chap-filetodata].
 
@@ -591,7 +591,7 @@ un objeto $y$ igual a $x$ (`y=x`). En R, ambos objetos se mantienen separados, p
 $x$ no afecta a $y$, que es probablemente lo que esperas. En Python, sin embargo, ahora tenemos dos 
 variables (nombres) que apuntan o hacen referencia al mismo objeto, y si cambiamos $x$ también 
 cambiamos $y$ y viceversa, lo que puede pillarnos por sorpresa. Si lo que quieres es copiar un 
-objeto en Python, es mejor ejecutar 'x.copy()'. Presta atención al Ejemplo [-@exm-mutable] para ver ejemplo.
+objeto en Python, es mejor ejecutar 'x.copy()'. Presta atención al Ejemplo [-@exm-mutable] para verlo.
 
 Ten en cuenta que esto solo es importante para los objetos mutables, es decir, los objetos que se 
 pueden cambiar. Por ejemplo, las listas en Python y R y los vectores en R son mutables porque puedes 
@@ -759,7 +759,7 @@ otro diccionario con las claves "teléfono de oficina", "teléfono móvil", etc.
 Esto se hace muy a menudo, y encontrarás muchos ejemplos de este tipo de estructuras 
 de datos. Sin embargo, hay una restricción: las claves de un diccionario (a diferencia 
 de los valores) no pueden ser mutables. Después de todo, imagina que pudieras 
-usar una lista como clave en un diccionario, y si al mismo tiempo, algún otro 
+usar una lista como clave en un diccionario y, si al mismo tiempo, algún otro 
 puntero a esa misma lista pudiera cambiarla, esto solo produciría confusión.
 
 ### De una a más dimensiones: Matrices y *arrays* n-dimensionales
@@ -803,7 +803,7 @@ print(my_matrix2)
 En Python, la representación más sencilla es simplemente construir una lista 
 de listas. De hecho, esto es lo que se hace a menudo, pero tiene la desventaja 
 de que no hay formas fáciles de obtener, por ejemplo, las dimensiones (la forma) 
-de la tabla, o de imprimirla en un formato ordenado. Para obtener todo eso, 
+de la tabla o de imprimirla en un formato ordenado. Para obtener todo eso, 
 se puede transformar la lista de listas en un 'array', una estructura de datos 
 proporcionada por el paquete 'numpy' (para más detalles, véase el capítulo [-@sec-chap-filetodata]).
 
@@ -811,7 +811,7 @@ Para crear una matriz en R, hay que utilizar la función 'matrix' y crear un vec
 de valores indicando cuántas filas y columnas habrá en él. También tenemos que 
 decirle a R si el orden de los valores está determinado por la fila o no. En el 
 Ejemplo [-@exm-2darray], creamos dos matrices en las que variamos el argumento 
-'byrow' para que sea 'TRUE' y 'FALSE', respectivamente, para ilustrar cómo cambia 
+'byrow' para que sea 'TRUE' y 'FALSE', respectivamente, para ilustrar cómo cambian 
 los valores de la matriz, incluso cuando la forma ($2 \times3$) permanece idéntica. 
 Como puedes imaginar, podemos operar con matrices, como por ejemplo sumar dos de ellas.
 
@@ -870,10 +870,10 @@ print(authors)
 ## Estructuras de control en Python y R.
 
 Esta sección y la siguiente explican el funcionamiento de estructuras de control como 
-bucles, condiciones y funciones. Éstas existen (y son muy útiles) tanto en Python como 
+bucles, condiciones y funciones. Estas existen (y son muy útiles) tanto en Python como 
 en R. En R, sin embargo, no son muy necesarias, ya que la mayoría de las funciones pueden 
 trabajar en columnas enteras de una sola vez, mientras que en Python a menudo se realizan 
-las operaciones en cada fila de una columna y a veces ni si quiera se utilizan marcos de 
+las operaciones en cada fila de una columna y a veces ni siquiera se utilizan marcos de 
 datos. Por lo tanto, si solo tienes interés en aprender a utilizar R, puedes saltarte el 
 resto de este capítulo por ahora y volver más tarde cuando estés preparado para aprender 
 más. Si estás aprendiendo Python, te recomendamos encarecidamente que continúes con este 
@@ -962,8 +962,8 @@ lista, puedes simplificarlo iterando o haciendo un bucle sobre los elementos,
 en este caso, de la lista. Observa que obtienes los mismos resultados, 
 pero con el bucle puedes automatizar tu operación escribiendo pocas líneas 
 de código. Como insistiremos en este libro, una buena práctica en codificación 
-es ser eficientes y armónicos en la cantidad de código que escribimos, lo cual 
-es otra justificación para usar bucles.
+consiste en ser eficientes y armónicos en la cantidad de código que escribimos, 
+lo cual es otra justificación para usar bucles.
 
 ::: {.callout-note appearance="simple" icon=false}
 
@@ -1015,10 +1015,10 @@ for (x in headlines){
 Puede que estés acostumbrado a copiar y pegar la sintaxis, cambiándola 
 ligeramente, cuando trabajas con algún programa estadístico: ejecutas 
 un análisis y luego repites el mismo análisis con diferentes conjuntos 
-de datos o diferentes especificaciones. Pero esto es propenso a errores 
+de datos o diferentes especificaciones. Pero es propenso a errores 
 y difícil de mantener, ya que implica mucho trabajo extra si se quiere 
 cambiar algo. En la mayoría de casos en los que tienes que utilizar una 
-y otra vez el mismo código, sería mejor que utilizaras un bucle *for*.
+y otra vez el mismo código, será mejor que utilices un bucle *for*.
 
 :::
 
@@ -1171,7 +1171,7 @@ for (x in headlines) {
 
 ## Funciones y métodos {#sec-functions}
 
-Las funciones (*sentence*, en inglés) y  los métodos son conceptos fundamentales 
+Las funciones (*sentence*, en inglés) y los métodos son conceptos fundamentales 
 a la hora de escribir código en programación orientada a objetos. Ambos son 
 objetos que utilizamos para almacenar un conjunto de sentencias y operaciones 
 que podemos utilizar más adelante sin tener que volver a escribir toda la sintaxis. 
@@ -1243,8 +1243,8 @@ puedes almacenar el resultado de la función como un objeto de forma normal.
 
 Como puedes ver en la sintaxis anterior, tienes algunas opciones a la hora de especificar 
 los argumentos. En primer lugar, puedes especificarlos por nombre o por posición. 
-Si incluyes el nombre '(f(param1=arg1))' vinculas explícitamente ese argumento a ese parámetro. 
-Si no incluyes el nombre '(f(arg1, arg2))' el primer argumento coincide con el primer parámetro 
+Si incluyes el nombre '(f(param1=arg1))', vinculas explícitamente ese argumento a ese parámetro. 
+Si no incluyes el nombre '(f(arg1, arg2))', el primer argumento coincide con el primer parámetro 
 y así sucesivamente. Ten en cuenta que puedes combinar estas opciones, especificando algunos 
 parámetros por su nombre y otros por su posición.
 
@@ -1259,7 +1259,7 @@ de especificar los argumentos obligatorios por su nombre depende de la función:
 lo que hace el argumento, puedes especificarlo por su posición, pero en caso de duda suele 
 ser mejor especificarlos por su nombre.
 
-Por último, ten en cuenta que en Python indicas explícitamente el valor resultante de la 
+Por último, ten en cuenta que, en Python, indicas explícitamente el valor resultante de la 
 función con 'return value'. En R, el valor de la última expresión se devuelve automáticamente, 
 aunque también puedes ejecutar 'return(valor)'.
 
