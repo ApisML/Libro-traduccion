@@ -93,13 +93,13 @@ de frecuencia, tabulaciones cruzadas y estadísticas de resumen (media, mediana,
 preguntas de investigación o hipótesis requieren un análisis más complejo. En el análisis computacional de la comunicación, en esta 
 fase puede invertirse una cantidad de tiempo considerable.
 
-El análisis exploratorio de datos (EDA, por sus siglas en inglés), tal y como fue concebido originalmente por @tukey1977exploratory, 
-puede ser una manera excelente de preparar y evaluar datos, así como para comprender sus propiedades y generar ideas en cualquier fase 
-de la investigación. Es prácticamente obligatorio realizar algún EDA antes de cualquier análisis sofisticado, para saber si los datos 
-están suficientemente limpios, si hay valores perdidos o atípicos, y cómo están conformadas las distribuciones. Además, antes de realizar 
-cualquier análisis multivariante o inferencial, necesitaremos conocer las frecuencias específicas de cada variable, sus medidas de 
-tendencia central, su dispersión, etcétera. También es útil integrar las frecuencias de las distintas variables en una única tabla para 
-tener una primera idea de sus interrelaciones.
+El análisis exploratorio de datos (Exploratory Data Analysis o EDA, por sus siglas en inglés), tal y como fue concebido originalmente 
+por @tukey1977exploratory, puede ser una manera excelente de preparar y evaluar datos, así como para comprender sus propiedades y generar 
+ideas en cualquier fase de la investigación. Es prácticamente obligatorio realizar algún EDA antes de cualquier análisis sofisticado, 
+para saber si los datos están suficientemente limpios, si hay valores perdidos o atípicos y cómo están conformadas las distribuciones. 
+Además, antes de realizar cualquier análisis multivariante o inferencial, necesitaremos conocer las frecuencias específicas de cada 
+variable, sus medidas de tendencia central, su dispersión, etcétera. También es útil integrar las frecuencias de las distintas variables 
+en una única tabla para tener una primera idea de sus interrelaciones.
 
 Para ilustrar cómo hacer esto en R y Python, utilizaremos datos de encuestas representativas existentes para analizar cómo el apoyo a los 
 migrantes o refugiados en Europa cambia con el tiempo y difiere por país. El Eurobarómetro (disponible gratuitamente en el Instituto 
@@ -109,7 +109,7 @@ los estadísticos básicos para responder a estas preguntas y, en la siguiente s
 multivariable de los datos del Eurobarómetro realizado en noviembre de 2017 a 33.193 europeos.
 
 Para la mayor parte del EDA, utilizaremos 'tidyverse' en R y 'pandas', 'numpy' y 'scipy' en Python (Ejemplo [-@exm-load]). Después de cargar 
-una versión limpia de los datos de data[^1] almacenados en un archivo csv (utilizando la función read_csv de tidyverse en R y la 
+una versión limpia de los datos 'data'[^1] almacenados en un archivo csv (utilizando la función read_csv de tidyverse en R y la 
 función 'read_csv' de 'pandas' en Python), y de comprobar las dimensiones de nuestro marco de datos (33193 x 17), querremos obtener una 
 imagen global de cada una de nuestras variables creando una tabla de frecuencias. Esta tabla muestra la frecuencia de los diferentes 
 resultados para cada caso en una distribución. Esto significa que podemos saber cuántos casos tenemos para cada número o categoría en 
@@ -117,12 +117,12 @@ la distribución de cada variable, algo muy útil para empezar a entender nuestr
 
 
 ::: {.callout-note icon=false collapse=true}
-## pandas frente a solo 'numpy'/'scipy' 
+## pandas frente a 'numpy'/'scipy' 
 En este libro, utilizamos con frecuencia los marcos de datos de pandas: nos hacen la vida mucho más fácil en comparación con los tipos 
 de datos nativos que hay en Python (Sección [-@sec-datatypes]). Además, integran mucha funcionalidad de paquetes matemáticos y 
 estadísticos subyacentes como 'numpy' y 'scipy'. Sin embargo, no es necesario forzar los datos en un marco de datos si otra estructura 
 diferente es más conveniente para tu *script*. 'numpy' y 'scipy' calcularán sin problemas la media, la media, la asimetría y la curtosis 
-de los valores de una lista, o la correlación entre dos listas. Qué utilizar depende de ti.
+de los valores de una lista, o la correlación entre dos listas. Qué paquete utilizar depende de ti.
  
 :::
 
@@ -198,16 +198,16 @@ d2 %>%
 :::
 
 Antes de profundizar en el análisis entre variables, es posible que te hayas dado cuenta de que pueden faltar algunos valores en los 
-datos. Estos valores representan una cantidad importante de datos en muchos análisis sociales y de comunicación reales (¡Recuerda que no 
+datos. Estos valores representan una cantidad importante de datos en muchos análisis sociales y de comunicación reales (¡recuerda que no 
 se te puede obligar a responder a todas las preguntas en una encuesta telefónica o cara a cara!) Desde un punto de vista estadístico, 
-tenemos muchas opciones para tratar los valores que faltan: Podríamos descartar las filas o columnas que contengan alguno de ellos, o 
+tenemos muchas opciones para tratar los valores que faltan: Podríamos descartar las filas o columnas que contengan alguno de ellos o 
 imputar los valores que faltan prediciéndolos en función de su relación con otras variables (como hicimos en el apartado [-@sec-calculate] 
-sustituyendo los valores que faltan por la media de la columna). Va más allá del alcance de este capítulo explicar todos los métodos de 
+sustituyendo los valores que faltaban por la media de la columna). Va más allá del alcance de este capítulo explicar todos los métodos de 
 imputación (y, de hecho, introducir la media tiene algunos inconvenientes graves cuando se utiliza en análisis posteriores), pero al 
 menos deberíamos saber cómo identificar los valores perdidos en nuestros datos y cómo eliminar los casos que los contienen de nuestro 
 conjunto de datos.
 
-En el caso de la variable 'support_refugees' podemos contar sus valores perdidos (6.576 casos) con la función nativa de R 'is.na' y el 
+En el caso de la variable 'support_refugees', podemos contar sus valores perdidos (6.576 casos) con la función nativa de R 'is.na' y el 
 método 'isna'[^2] de pandas. A continuación, podemos eliminar todos los casos que contengan estos valores en nuestro conjunto de datos 
 utilizando la función 'drop_na' de 'tidyr' en R y la función 'dropna' de 'pandas' en Python[^3] (Ejemplo [-@eexm-na]). Al hacer esto, obtendremos un conjunto de datos más limpio y podremos continuar con un EDA más sofisticado, con tabulaciones cruzadas y estadísticas de resumen para el grupo de casos.
 
@@ -288,7 +288,7 @@ d2 %>%
 La visualización de datos es una técnica excelente tanto para que tú mismo entiendas los datos, como para comunicárselos a otros. Basada 
 en 'ggplot2' en R y 'matplotlib' y 'seaborn' en Python, esta sección abarca histogramas, gráficos de líneas y barras, diagramas de 
 dispersión y mapas de calor. También aborda la combinación de varios gráficos, la comunicación de la incertidumbre con gráficos de 
-caja y cintas, y el trazado de datos geoespaciales. De hecho, la visualización de datos es un paso importante tanto en EDA como en el 
+caja y de cintas, y el trazado de datos geoespaciales. De hecho, la visualización de datos es un paso importante tanto en EDA como en el 
 análisis avanzado, ya que podemos utilizar gráficos para obtener información importante sobre nuestros datos. Por ejemplo, si queremos 
 visualizar la edad y el apoyo a los refugiados de los ciudadanos europeos, podemos trazar un histograma y un gráfico de barras, 
 respectivamente.
@@ -341,14 +341,14 @@ y no se debe hacer con cada uno y enlaza con la Graph Gallery para obtener ejemp
 :::
 
 ### Trazar frecuencias y distribuciones
-En el caso de los datos nominales, la forma más directa de visualizarlos es simplemente contar la frecuencia del valor y luego 
+En el caso de los datos nominales, la forma más directa de visualizarlos es simplemente contar la frecuencia de cada valor y luego 
 representarla como un gráfico de barras. Por ejemplo, cuando representamos el apoyo para ayudar a los refugiados (Ejemplo [-@exm-bar]) 
 se puede ver rápidamente que la opción “bastante de acuerdo” es la respuesta más frecuentemente expresada.
 
 ::: {.callout-note appearance="simple" icon=false}
 
 ::: {#exm-bar}
-Gráfico de barras del apoyo a los refugiados
+Gráfico de barras sobre el apoyo a los refugiados
 
 ::: {.panel-tabset}
 ## Código Python
@@ -368,12 +368,12 @@ ggplot(data=d2) +
 :::
 
 Sin embargo, si tenemos variables continuas, un gráfico de barras de este tipo daría lugar a demasiadas barras: podríamos perder 
-la vista general (y la creación del gráfico podría consumir muchos recursos). En lugar de eso, agruparemos los datos en intervalos, 
-como grupos de edad. De ahí que se utilicen histogramas para examinar la distribución de una variable continua 
+la visión general (y la creación del gráfico podría consumir muchos recursos). En lugar de eso, agruparemos los datos en intervalos, 
+como, por ejemplo, grupos de edad. De ahí que se utilicen histogramas para examinar la distribución de una variable continua 
 (función 'ggplot2 geom_histogram' en R y función 'hist' de 'pandas' en Python) y gráficos de barras para inspeccionar la distribución 
 de una categórica (función 'ggplot2 geom_bar()' en R y función 'plot' de 'matplotlib' en Python). En el ejemplo [-@exm-hist] puedes ver 
 fácilmente la forma de la distribución de la variable edad, con muchos valores cercanos a la media y una cola ligeramente mayor a 
-la derecha (¡No muy lejos de una distribución normal!).
+la derecha (¡no muy lejos de una distribución normal!).
 
 ::: {.callout-note appearance="simple" icon=false}
 
@@ -432,21 +432,21 @@ ggplot(d2, aes(y=fct_rev(country), x=age))+
 ### Trazar relaciones
 
 Tras haber inspeccionado las distribuciones de variables individuales, querrás comprobar cómo se relacionan dos variables. Vamos a 
-discutir dos formas de hacerlo: trazando los datos a lo largo del tiempo y diagramas de dispersión para ilustrar la relación entre dos 
-variables continuas.
+discutir dos formas de hacerlo: trazando los datos a lo largo del tiempo y con diagramas de dispersión para ilustrar la relación 
+entre dos variables continuas.
 
-El Eurobarómetro recoge datos durante 15 días (en el ejemplo, del 5 al 19 de noviembre de 2017) y puede ser interesante comprobar si 
-el nivel de apoyo a los refugiados o incluso a los migrantes en general cambia con el tiempo. Por suerte, se trata de una serie 
-temporal sencilla y puedes representarla con un gráfico de líneas. En primer lugar, debes utilizar una variable numérica para el 
-nivel de apoyo ('support_refugees_n', que va de 1 a 4, siendo 4 el máximo apoyo) y agruparla por días para obtener la media de cada 
-día. En el caso de R, puedes representar las dos series utilizando la función base 'plot', o puedes utilizar la función 'geom_line' de 
-'ggplot2'. En el caso de Python, puedes utilizar la función 'plot' de 'matplotlib' o la función 'lineplot' de 'seaborn'. Empecemos por 
-ver cómo el Ejemplo [-@exm-line] crea un gráfico sobre el apoyo medio a los refugiados por día.
+El Eurobarómetro recoge datos obtenidos durante 15 días (en el ejemplo, del 5 al 19 de noviembre de 2017) y puede ser interesante 
+comprobar si el nivel de apoyo a los refugiados o incluso a los inmigrantes en general cambia con el tiempo. Por suerte, se trata 
+de una serie temporal sencilla y puedes representarla con un gráfico de líneas. En primer lugar, debes utilizar una variable numérica 
+para el nivel de apoyo ('support_refugees_n', que va de 1 a 4, siendo 4 el máximo apoyo) y agruparla por días para obtener la media 
+de cada día. En el caso de R, puedes representar las dos series utilizando la función base 'plot' o puedes utilizar la función 
+'geom_line' de 'ggplot2'. En el caso de Python, puedes utilizar la función 'plot' de 'matplotlib' o la función 'lineplot' de 'seaborn'. 
+Empecemos por ver cómo el Ejemplo [-@exm-line] crea un gráfico sobre el apoyo medio a los refugiados por día.
 
 ::: {.callout-note appearance="simple" icon=false}
 
 ::: {#exm-line}
-Gráfico de líneas sobre la ayuda media a los refugiados por día
+Gráfico de líneas sobre el apoyo medio a los refugiados por día
 
 ::: {.panel-tabset}
 ## Código Python
@@ -588,7 +588,7 @@ ggplot(support_combined,
 
 Un gráfico de dispersión utiliza puntos para representar los valores de dos variables en un plano cartesiano (con coordenadas para 
 los ejes $x$ e $y$). En R, se dibuja utilizando la función 'geom_point' (y 'geom_smooth' para crear una línea de regresión) de 'ggplot2', 
-y, en Python, utilizando la función 'scatterplot' de 'seaborn' (y añade 'lmplot' para incluir la línea de regresión como se muestra en 
+y, en Python, utilizando la función 'scatterplot' de 'seaborn' (y se añade 'lmplot' para incluir la línea de regresión como se muestra en 
 el Ejemplo [-@exm-scatter2]).
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -616,16 +616,16 @@ ggplot(support_combined,
 :::
 
 Si observas la dispersión de puntos en el ejemplo proporcionado, podrás deducir que podría existir una correlación positiva entre 
-las dos variables o, en otras palabras, cuanto mayor sea el apoyo medio a los refugiados, mayor será el apoyo medio a los inmigrantes 
-a lo largo del tiempo.
+las dos variables o, en otras palabras, que cuanto mayor sea el apoyo medio a los refugiados, mayor será el apoyo medio a los 
+inmigrantes a lo largo del tiempo.
 
 Podemos comprobar y medir la existencia de esta correlación calculando el coeficiente de correlación de Pearson o *r* de Pearson, que es 
 la función de correlación más conocida. Como probablemente recuerdes de las clases de estadística, una correlación se refiere a una 
 relación entre dos variables continuas y suele aplicarse para medir relaciones lineales (aunque también existen coeficientes de 
 correlación no lineales, como la $\rho$ de Spearman). En concreto, la r de Pearson mide la correlación lineal entre dos variables 
-(*X* e *Y*), produciendo un valor entre $-1$ y $+1$ donde 0 representa la ausencia de correlación y valores cercanos a 1, una 
+(*X* e *Y*), produciendo un valor entre $-1$ y $+1$ donde 0 representa la ausencia de correlación y, los valores cercanos a 1, una 
 fuerte correlación. Los signos ($+$  o $-$) representan el sentido de la relación (siendo positivo si dos variables varían en el mismo 
-sentido, y negativo si varían en sentido contrario). El coeficiente de correlación suele representarse con *r* o la letra griega $\rho$, 
+sentido y negativo si varían en sentido contrario). El coeficiente de correlación suele representarse con *r* o la letra griega $\rho$, 
 y se expresa matemáticamente como:
 
 
@@ -696,11 +696,11 @@ pivot_data= d2 %>%
 :::
 :::
 
-En la primera figura que obtenemos en el ejemplo [-@exm-heatmap], cuanto más claro es el azul mayor es el apoyo en cada combinación 
-de país-género. Se puede ver que el nivel de apoyo es similar en países como Eslovenia o España, y es diferente en la República Checa 
-o Austria. También parece que las mujeres muestran un mayor nivel de apoyo. Para este mapa de calor por defecto podemos utilizar 
+En la primera figura que obtenemos en el ejemplo [-@exm-heatmap], cuanto más claro es el azul, mayor es el apoyo en cada combinación 
+de país-género. Se puede ver que el nivel de apoyo es similar en países como Eslovenia o España, y que es diferente en la República Checa 
+o Austria. También parece que las mujeres muestran un mayor nivel de apoyo. Para este mapa de calor por defecto, podemos utilizar 
 la función 'geom_tile' de 'ggplot2' en R y la función 'heatmap' de 'seaborn' en Python. Para personalizar los colores de la escala 
-(por ejemplo, si queremos una escala de azules) podemos utilizar la función 'scale_fill_gradient' de 'ggplot2' en R o el parámetro 
+(por ejemplo, si queremos una escala de azules), podemos utilizar la función 'scale_fill_gradient' de 'ggplot2' en R o el parámetro 
 'cmap' de la función 'heatmap' de 'seaborn' en Python.
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -728,11 +728,11 @@ ggplot(pivot_data, aes(x = gender,
 :::
 :::
 
-Como podrás ver, uno de los objetivos de EDA es explorar la varianza de nuestras variables, lo que incluye cierta incertidumbre 
+Como podrás ver, uno de los objetivos del EDA es explorar la varianza de nuestras variables, lo que incluye cierta incertidumbre 
 sobre su comportamiento. Te vamos a presentar dos gráficos básicos para comunicar visualmente esta incertidumbre. En primer lugar, 
 en algunos casos, las gráficas de cintas y de área pueden ayudarnos a identificar claramente un intervalo predefinido de una variable 
 para interpretar su varianza. Marquemos este intervalo en 0,15 puntos en los gráficos antes mencionados del apoyo medio a los refugiados 
-e inmigrantes por día, y podremos ver que las líneas tienden a converger más en el último día y están más separadas en el cuarto día. 
+e inmigrantes por día y podremos ver que las líneas tienden a converger más en el último día y están más separadas en el cuarto día. 
 Esta sencilla representación puede realizarse en R utilizando la función 'geom_ribbon' de 'ggplot2' y, en Python, utilizando el 
 parámetro 'ci' de la función 'lineplot' de 'seaborn'.
 
@@ -784,12 +784,12 @@ ggplot(support_long,
 ### Trazar datos geoespaciales
 
 El trazado de datos geoespaciales es una de las mejores herramientas para comparar países o regiones. Los mapas son muy fáciles de 
-entender y pueden tener un gran impacto en todo tipo de lectores, lo que los convierte en una representación muy útil para una amplia 
+entender y pueden tener un gran impacto en todo tipo de audiencias, lo que los convierte en una representación muy útil para una amplia 
 gama de estudios de los que debe ocuparse cualquier analista computacional. Los datos geoespaciales se basan en la ubicación concreta 
 de cualquier país, región, ciudad o zona geográfica, marcada por sus coordenadas, latitud y longitud, que posteriormente pueden construir 
 puntos y áreas poligonales. Las coordenadas son, normalmente, obligatorias para trazar cualquier dato en un mapa, pero no siempre se 
 encuentran entre nuestros datos. En esos casos, debemos unir la información geográfica de que disponemos (por ejemplo, el nombre de un 
-país) con sus coordenadas para disponer de un marco de datos preciso para trazar datos geoespaciales. Algunas bibliotecas en R y Python 
+país) con sus coordenadas para obtener un marco de datos preciso con el que trazar datos geoespaciales. Algunas bibliotecas en R y Python 
 pueden leer e interpretar directamente distintos tipos de información geoespacial reconociendo cadenas de caracteres como "Francia" o 
 "París" para convertirlas en coordenadas.
 
@@ -946,7 +946,7 @@ como 'bokeh' o 'plotly' para gráficos interactivos.
 
 ## Análisis de grupos y reducción de la dimensionalidad {#sec-clustering}
 
-Hasta ahora, hemos revisado las técnicas estadísticas tradicionales de exploración y visualización que cualquier científico social 
+Hasta ahora, hemos revisado las técnicas estadísticas tradicionales de exploración y visualización que todo científico social 
 debería conocer. El siguiente paso, más computacional, en su flujo de trabajo EDA es utilizar el aprendizaje automático (ML, 
 *machine learning*, en inglés) para hacer que el ordenador "aprenda" sobre nuestros datos y, a su vez, proporcione más conocimientos 
 preliminares. El ML es una rama de la inteligencia artificial que utiliza algoritmos para interactuar con los datos y descubrir patrones 
@@ -955,18 +955,17 @@ y aprendizaje automático no supervisado (UML, por sus siglas en inglés). En el
 distinción. Por ahora, nos basta con decir que la principal característica de los métodos no supervisados es que no tenemos ninguna 
 medida disponible para una variable dependiente, etiqueta o categorización, que queremos predecir. En su lugar, queremos identificar 
 patrones en los datos sin saber de antemano qué aspecto pueden tener. En este sentido, el aprendizaje automático no supervisado es, 
-en gran medida, una técnica inductiva y ascendente (véase el Capítulo [-@sec-chap-introduction] y
-@Boumans2016).
+en gran medida, una técnica inductiva y ascendente (véase el Capítulo [-@sec-chap-introduction] y@Boumans2016).
 
-En este capítulo, nos centraremos en UML como medio para encontrar grupos y dimensiones latentes en nuestros datos, lo que también 
+En este capítulo, nos centraremos en el UML como medio para encontrar grupos y dimensiones latentes en nuestros datos, lo que también 
 puede ayudar a reducir nuestro número de variables. En concreto, utilizaremos R (con sus funciones nativas) y 'scikit-learn' de Python 
 para realizar $k$-medias para el análisis de grupos, análisis de grupos jerárquico y análisis de componentes principales (PCA, por 
 sus siglas en inglés), así como la descomposición de valor singular (SVD, por sus siglas en inglés), estrechamente relacionada.
 
-En la minería de datos, utilizamos el análisis de grupos como técnica UML, de forma que su objetivo es encontrar la relación entre 
+En la minería de datos, utilizamos el análisis de grupos como técnica UML, ya que su objetivo es encontrar la relación entre 
 un conjunto de variables descriptivas. Mediante el análisis de grupos podemos identificar grupos subyacentes en nuestros datos, a los 
 que llamaremos, simplemente, grupos. Imaginemos que queremos explorar cómo pueden agruparse los países europeos en función de su apoyo 
-medio a los refugiados/migrantes, edad y nivel educativo. Podríamos crear algunos grupos a priori (como los países del sur frente a los 
+medio a los refugiados y/o migrantes, edad y nivel educativo. Podríamos crear algunos grupos a priori (como los países del sur frente a los 
 del norte), pero el análisis de grupos resulta un mejor método para dejar que los datos "hablen" y, luego, crear los grupos más 
 apropiados para este caso concreto. Como en todo UML, los grupos vendrán sin etiquetar y el analista computacional se encargará de 
 encontrar una etiqueta apropiada y significativa para cada grupo con el fin de comunicar mejor los resultados.
@@ -979,15 +978,14 @@ especialmente útil para grandes conjuntos de datos.
 
 $k$-medias para el análisis de grupos es un método que toma cualquier número de observaciones (casos) y las agrupa en un número 
 determinado de grupos basándose en la proximidad de cada observación a la media del grupo formado (centroide). Matemáticamente, 
-medimos esta proximidad como la distancia de cualquier punto dado a su centro de grupo, y puede expresarse como:
+medimos esta proximidad como la distancia de cualquier punto dado a su centro de grupo y puede expresarse como:
 
 $$J = \sum_{n=1}^{N} \sum_{k=1}^{K} r_{nk} \|x_n - \mu_k\|^2$$
 
 Dónde $\|x_n - \mu_k\|$ es la distancia es la distancia entre el punto $x_n$ ay el centro del cluster $\mu_k$.
 
 En lugar de tomar la media, algunas variaciones de este algoritmo toman la mediana ($k$-mediana) o una observación representativa, 
-también llamada medoide ($k$-medoides o partición en torno a medoides, PAM, por sus siglas en inglés) como forma de optimizar el 
-método inicial.
+también llamada medoide ($k$-medoides o partición en torno a medoides, PAM, por sus siglas en inglés) como forma de optimizar el método inicial.
 
 Dado que $k$-medias para el análisis de grupos calcula las distancias entre los casos, estas distancias tienen que ser significativas, 
 lo que solo ocurre si las escalas en las que se miden las variables son comparables. Si todas sus variables se miden en la misma escala 
@@ -999,13 +997,13 @@ continuas: escalando los datos (para que sean comparables) y evitando los valore
 ejemplo [-@exm-elbow], utilizaremos las variables apoyo a los refugiados ('support_refugees_n'), apoyo a los inmigrantes 
 ('support_migrants_n'), edad ('age') y nivel educativo (número de años de educación) ('educational_n') y crearemos un marco de datos, 
 'd3', con la media de todas estas variables para cada país (cada observación será un país). $k$-medias requiere que especifiquemos el 
-número de grupos, $k$, de antemano. Esta es una cuestión delicada, y (al margen de decidir $k$ al azar), es necesario volver a estimar 
+número de grupos, $k$, de antemano. Esta es una cuestión delicada, y (en vez de decidir $k$ al azar), es necesario volver a estimar 
 el modelo varias veces con diferentes $k$s.
 
 El método más sencillo para obtener el número óptimo de grupos consiste en estimar la variabilidad dentro de los grupos para distintas 
 ejecuciones. Esto significa que debemos ejecutar $k$-medias para diferentes números de grupos (por ejemplo, de 1 a 15 grupos) y luego 
 elegir el número de grupos que disminuya la variabilidad manteniendo el mayor número de grupos. Al generar y trazar un vector con la 
-variabilidad, o más técnicamente, la suma de cuadrados dentro de un grupo (WSS, por sus siglas en inglés) obtenida después de cada 
+variabilidad o, más técnicamente, la suma de cuadrados dentro de un grupo (WSS, por sus siglas en inglés) obtenida después de cada 
 ejecución, es fácil identificar el número óptimo: basta con observar la flexión (rodilla o codo) para encontrar el punto en el que 
 disminuye más y obtener entonces el número óptimo de grupos (en nuestro ejemplo, tres grupos).
 
@@ -1069,14 +1067,14 @@ ggplot(wss, aes(x=k, y=ss)) +
 
 Ahora podemos calcular nuestro modelo final (Ejemplo [-@exm-kmeans]). Empezaremos por generar 25 centroides aleatorios (el algoritmo 
 elegirá el que optimice el coste). El valor por defecto de este parámetro es 1, pero te recomendamos establecerlo con un número mayor 
-(es decir, de 20 a 50) para garantizar el máximo beneficio del método. La función base de R 'kmeans' y la función 'KMeans' de 
+(es decir, de 20 a 50) para garantizar el máximo rendimiento al método. La función base de R 'kmeans' y la función 'KMeans' de 
 'scikit-learn' en Python producirán la agrupación. Puedes ver la media (escalada) para cada variable en cada grupo, así como el grupo 
 correspondiente para cada observación.
 
 ::: {.callout-note appearance="simple" icon=false}
 
 ::: {#exm-kmeans}
-Uso de Kmeans para agrupar países en función de la ayuda media a refugiados e inmigrantes, la edad y el nivel educativo
+Uso de Kmeans para agrupar países en función del apoyo medio a la ayuda a refugiados e inmigrantes, la edad y el nivel educativo
 
 ::: {.panel-tabset}
 ## Código Python
@@ -1102,8 +1100,8 @@ print(km.res)
 :::
 :::
 
-Utilizando la función 'fviz_cluster' de la biblioteca 'factoextra' en R, o la función 'scatter' de 'pyplot' en Python, puedes obtener 
-una visualización de los grupos. En el ejemplo [-@exm-kmeans2] se puede identificar claramente que los grupos corresponden a los países 
+Utilizando la función 'fviz_cluster' de la biblioteca 'factoextra' en R o la función 'scatter' de 'pyplot' en Python, puedes obtener 
+una visualización de los grupos. En el ejemplo [-@exm-kmeans2], se puede identificar claramente que los grupos corresponden a los países 
 nórdicos (más apoyo a los extranjeros, más educación y edad), los países del centro y sur de Europa (apoyo medio, menor educación y 
 edad) y los países del este de Europa (menos apoyo, menor educación y edad)[^10] .
 
@@ -1141,16 +1139,16 @@ fviz_cluster(km.res, d3_s, ellipse.type="norm")
 ### Análisis de grupos jerárquico
 
 Otro método para realizar análisis de grupos es la agrupación jerárquica, que construye una jerarquía de grupos que podemos visualizar 
-en un dendograma. Este algoritmo tiene dos versiones: un enfoque ascendente o aglomerativo (las observaciones comienzan en sus propios 
-grupos), y un enfoque descendente o divisivo (todas las observaciones comienzan en un grupo). En este capítulo seguiremos el enfoque 
+en un dendograma. Este algoritmo puede tener dos versiones: un enfoque ascendente o aglomerativo (las observaciones comienzan en sus propios 
+grupos) y un enfoque descendente o divisivo (todas las observaciones comienzan en un grupo). En este capítulo seguiremos el enfoque 
 ascendente y, cuando observes el dendograma, te darás cuenta de cómo esta estrategia combina repetidamente los dos grupos más cercanos 
 de la parte inferior en uno más grande en la parte superior. La distancia entre los grupos se estima inicialmente para cada par de puntos 
 de observación y, a continuación, se coloca cada punto en su propio grupo con el fin de obtener el par de puntos más cercano y calcular 
-iterativamente la distancia entre cada nuevo grupo y los anteriores. Ésta es la regla interna del algoritmo y nosotros debemos elegir el 
+iterativamente la distancia entre cada nuevo grupo y los anteriores. Esta es la regla interna del algoritmo y nosotros debemos elegir el 
 método de vinculación (vinculación completa, única, media o centroide, o vinculación de Ward). La vinculación de Ward es una buena opción 
 por defecto: minimiza la varianza de los grupos que se fusionan. Al hacerlo, tiende a producir grupos de tamaño más o menos uniforme y 
 es menos sensible al ruido y a los valores atípicos que algunos de los otros métodos. En el Ejemplo [-@exm-hc] utilizaremos la función 
-'hcut' del paquete 'factoextra' en R y la función 'AgglomerativeClustering' de 'scikit-learn' en Python, para calcular la agrupación 
+'hcut' del paquete 'factoextra' en R y la función 'AgglomerativeClustering' de 'scikit-learn' en Python para calcular la agrupación 
 jerárquica.
 
 Una gran ventaja de la agrupación jerárquica es que, una vez estimada, puedes elegir libremente el número de grupos en los que agrupar 
@@ -1182,7 +1180,7 @@ summary(hc.res)
 :::
 
 A continuación, podemos trazar el dendograma con la función base de R 'plot' y la función 'dendograma' de 'scipy' (módulo 
-'cluster.hierarchy') en Python. El resumen del modelo inicial sugiere dos grupos (tamaño=2), pero, observando el dendograma, podemos 
+'cluster.hierarchy') en Python. El resumen del modelo inicial sugiere dos grupos (tamaño=2) pero, observando el dendograma, podemos 
 elegir el número de grupos con el que queremos trabajar eligiendo una altura (por ejemplo, cuatro para obtener tres grupos).
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -1332,12 +1330,12 @@ pca$rotation
 
 El objeto generado con el PCA contiene diferentes elementos (en R: `sdev`, `rotation`, `center`, `scale` y `x`) o atributos 
 (en Python: `components_`, `explained_variance_`, `explained_variance_ratio`, `singular_values_`, `mean_`, `n_components_`, `n_features_`, 
-`n_samples_`, y `noise_variance_`). En el objeto resultante podemos ver los valores de cuatro componentes principales de cada país, y 
-los valores de las cargas, técnicamente llamados “autovalores”, para las variables en cada componente principal. En nuestro ejemplo 
+`n_samples_`, y `noise_variance_`). En el objeto resultante, podemos ver los valores de cuatro componentes principales de cada país y 
+los valores de las cargas, técnicamente llamados “autovalores”, para las variables en cada componente principal. En nuestro ejemplo, 
 podemos ver que el apoyo a los refugiados y a los inmigrantes está más representado en el PC1, mientras que la edad y el nivel 
 educativo lo están en el PC2. Si trazamos los dos primeros componentes principales utilizando la función base 'biplot' en R y la 
 biblioteca 'bioinfokit' en Python (Ejemplo [-@exm-plot_pca]), podemos ver claramente cómo se asocian las variables con PC1 o con PC2 
-(¡También podríamos representar cualquier otra pareja de los cuatro componentes!). Pero también podemos hacernos una idea de cómo se 
+(¡también podríamos representar cualquier otra pareja de los cuatro componentes!). Pero también podemos hacernos una idea de cómo se 
 agrupan los países basándonos únicamente en estas dos nuevas variables.
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -1371,7 +1369,7 @@ biplot(x = pca, scale = 0, cex = 0.6,
 :::
 
 De momento, no estamos seguros de cuántos componentes son suficientes para representar con precisión nuestros datos, por lo que 
-necesitamos saber cuánta varianza (que es el cuadrado de la desviación típica) se explica con cada componente. Podemos obtener los 
+necesitamos saber cuánta varianza (que es el cuadrado de la desviación típica) se explica con cada componente. Podemos calcular los 
 valores (ejemplo [-@exm-prop]) y representar gráficamente la proporción de varianza explicada (ejemplo 7.30). Así, obtenemos que 
 el primer componente explica el 57,85\% de la varianza, el segundo el 27,97\%, el tercero el 10,34\% y el cuarto solo el 3,83\%.
 
@@ -1428,7 +1426,7 @@ ggplot(prop_var, aes(x=pc, y=var)) +
 
 Cuando calculamos (ejemplo [-@exm-acum]) y dibujamos (ejemplo [-@exm-acum2]) la varianza explicada acumulada es fácil ver que con solo 
 los dos primeros componentes explicamos el 88,82\% de la varianza. Ahora podría parecer una buena idea reducir nuestro conjunto de datos 
-de cuatro a dos variables, o, en otras palabras, la mitad de los datos, pero conservando la mayor parte de la información original.
+de cuatro a dos variables o, en otras palabras, la mitad de los datos, pero conservando la mayor parte de la información original.
 
 ::: {.callout-note appearance="simple" icon=false}
 
@@ -1482,9 +1480,9 @@ ggplot(cvar, aes(x=pc, y=var)) +
 
 ¿Y si queremos utilizar este PCA y realizar un análisis de grupos (como se ha explicado anteriormente) con solo estas dos nuevas 
 variables en lugar de las cuatro originales? Basta con repetir el procedimiento $k$-medias, pero ahora utilizando un nuevo marco de 
-datos más pequeño seleccionando PC1 y PC2 del PCA. Después de estimar el número óptimo de grupos (¡Otra vez tres!) podemos calcular 
-y visualizar los grupos, y obtener una imagen muy similar a la obtenida en los ejemplos anteriores, con pequeñas diferencias como el 
-cambio de grupo de los Países Bajos (¡Ahora es más similar a los países nórdicos!). Este último ejercicio es un buen ejemplo de cómo 
+datos más pequeño seleccionando PC1 y PC2 del PCA. Después de estimar el número óptimo de grupos (¡otra vez tres!) podemos calcular 
+y visualizar los grupos, y obtener una imagen muy similar a la resultante en los ejemplos anteriores, con pequeñas diferencias como el 
+cambio de grupo de los Países Bajos (¡ahora es más similar a los países nórdicos!). Este último ejercicio es un buen ejemplo de cómo 
 combinar diferentes técnicas en EDA.
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -1571,7 +1569,7 @@ prácticos, la forma de utilizar e interpretar los resultados sigue siendo la mi
 
 [^2]: Consulta https://cssbook.net/datasets" para obtener más información.︎
 
-[^3]: También podemos utilizar: 'dropna(axis='columns')' si queremos eliminar columnas en lugar de filas.︎
+[^3]: También podemos utilizar 'dropna(axis='columns')' si queremos eliminar columnas en lugar de filas.︎
 
 [^4]: Disponible gratuitamente en [socviz.co/](https://socviz.co/)
 
