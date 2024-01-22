@@ -69,14 +69,14 @@ library(jsonlite)
 ## ¿Cuándo y por qué utilizamos marcos de datos? {#sec-dataframes}
 
 En la Sección [-@sec-datatypes], introdujimos los tipos de datos básicos: cadenas (que contienen texto), enteros 
-(que contienen números enteros, o números sin nada "detrás del punto"), *floats* (números de coma flotante; números 
+(que contienen números enteros o números sin nada "detrás del punto"), *floats* (números de coma flotante o números 
 con decimales) y *bools* (valores booleanos, Verdadero o Falso). También hemos aprendido que una serie de valores 
 múltiples (por ejemplo, múltiples enteros, múltiples cadenas) puede almacenarse en lo que llamamos un vector 
 (R) o una lista (Python).
 
 En la mayoría de las aplicaciones sociocientíficas, sin embargo, no tratamos con series aisladas de valores. Lo que 
 queremos es vincular varios valores entre sí. Una forma de conseguirlo es utilizar diccionarios (véase el apartado 
-[-@sec-datatypes]). Estas estructuras de datos son muy útiles para los datos anidados: Por ejemplo, si no solo queremos 
+[-@sec-datatypes]). Estas estructuras de datos son muy útiles para los datos anidados: por ejemplo, si no solo queremos 
 almacenar las edades de las personas, sino también sus direcciones, podríamos almacenar un diccionario dentro de otro diccionario.
 
 De hecho, como veremos más adelante en este capítulo, muchos de los datos utilizados por los científicos sociales 
@@ -89,7 +89,7 @@ a pensar en las observaciones (casos) como filas con columnas que contienen info
 muchos análisis estadísticos.
 
 Podríamos construir una lista de listas para conseguir ese formato de datos tabulares. Lo cierto es que esta técnica de lista de 
-listas se utiliza a menudo para almacenar datos tabulares o matrices, y es probable que la encuentres en algunos ejemplos de 
+listas se utiliza a menudo para almacenar datos tabulares o matrices y es probable que la encuentres en algunos ejemplos de 
 este libro o en otros lugares. Sin embargo, el enfoque de lista de listas es de muy bajo nivel: si quisiéramos, por ejemplo, 
 insertar una columna o una fila en un lugar específico, escribir el código podría resultar muy engorroso. Tampoco hay cabeceras 
 de columna ni controles de coherencia: nada nos avisaría si una fila contuviera más "columnas" que otra, lo que no debería 
@@ -159,7 +159,7 @@ En este libro utilizaremos mucho los marcos de datos, ya que son muy conveniente
 proporcionan muchas funcionalidades útiles, en lugar de requerir que reinventemos la rueda todo el tiempo. En la siguiente 
 sección, discutiremos algunas de ellas.
 
-Por supuesto, situaciones en las que los marcos de datos no son una buena opción para organizar sus datos: si los datos 
+Por supuesto, hay situaciones en las que los marcos de datos no son una buena opción para organizar datos: por ejemplo, si los datos 
 son unidimensionales. Piensa en recursos como una lista de palabras clave o una lista de textos sin ninguna metainformación: 
 esos datos no tienen una estructura tabular. O si tratamos con datos profundamente anidados, datos de red o datos muy desordenados: 
 son tan grandes que no puedes (o no quieres) cargarlos en memoria. Imagínate que quieres procesar el texto de todos los artículos 
@@ -170,7 +170,7 @@ Pero en la mayoría de los casos lo haremos, porque nos facilitan la vida: una v
 tenemos a nuestra disposición una serie de funciones muy prácticas que nos permiten seleccionar filas o columnas, añadir otras 
 nuevas, aplicarles funciones, etcétera. Hablaremos de ellas en el Capítulo [-@sec-chap-datawrangling].
 
-Pero, aparte de *toy examples* como los del ejemplo [-@exm-createdataframe], ¿Cómo introducimos y extraemos datos de los marcos de datos?
+Pero, aparte de *toy examples* como los del ejemplo [-@exm-createdataframe], ¿cómo introducimos y extraemos datos de los marcos de datos?
 
 ## Leer y guardar datos {#sec-reading}
 
@@ -194,18 +194,18 @@ tienen por qué ser idénticos. Podemos, por ejemplo, leer datos creados por otr
 en un marco de datos y guardarlos después en una tabla '.csv'.
 
 Aunque a veces no podemos elegir el formato en el que obtenemos nuestros datos de entrada, tenemos algunas opciones en cuanto a 
-nuestros datos de salida. Para ello solemos preferir formatos abiertos e interoperables, lo que garantiza que puedan ser utilizados 
+nuestros datos de salida. Para ello, solemos preferir formatos abiertos e interoperables, lo que garantiza que puedan ser utilizados 
 por el mayor número de personas posible y que no estén vinculados a ninguna herramienta de *software* específica (propietaria) que 
 podría no estar disponible para todo el mundo o dejar de fabricarse en el futuro.
 
 En la Tabla [-@tbl-fileformats] se enumeran los formatos de archivo más comunes que nos interesan. Los archivos 'txt' son especialmente 
 útiles para textos largos (piensa en un archivo que contenga un artículo de periódico o incluso un libro entero), pero no son 
-adecuados para almacenar metadatos asociados. Los archivos 'csv' son la opción por defecto para datos tabulares, y los archivos 
+adecuados para almacenar metadatos asociados. Los archivos 'csv' son la opción por defecto para datos tabulares y los archivos 
 'json' nos permiten almacenar datos anidados en un formato similar al de un diccionario.
 
 En aras de la exhaustividad, también enumeramos los formatos nativos de Python y R 'pickle', 'RDS' y 'RDA'. Debido a su falta de 
 interoperabilidad, no son muy adecuados para el almacenamiento a largo plazo o para compartir datos, pero pueden tener su lugar en 
-el flujo de trabajo como un paso intermedio, y que son los únicos formatos capaces de almacenar todas las propiedades de un marco 
+el flujo de trabajo como un paso intermedio, ya que son los únicos formatos capaces de almacenar todas las propiedades de un marco 
 de datos (por ejemplo, el archivo 'csv' no puede saber si una columna dada en un marco de datos R debe entenderse como que contiene 
 las cadenas "hombre", "mujer" y "no binario" o un factor con los tres niveles hombre, mujer y no binario). Si es importante almacenar 
 un objeto (como un marco de datos) exactamente como es, podemos utilizar estos formatos. Uno de los pocos casos en los que utilizamos 
@@ -232,16 +232,16 @@ Sublime pueden ser buenas opciones.
 
 Como podrás observar (Figura [-@fig-csv-in-editor]), internamente, un archivo csv solo parece un montón de texto en 
 el que cada línea representa una fila y en el que las columnas están separadas por una coma (de ahí el nombre de valores 
-separados por comas (csv)). Mirar los datos en un editor de texto es una muy buena forma de averiguar qué ocurre si la 
-lectura de tus archivos en un marco de datos no funciona como esperabas, lo que ocurre con más frecuencia de lo que 
-cabría esperar.
+separados por comas (comma-separated values o csv). Mirar los datos en un editor de texto es una muy buena forma de 
+averiguar qué ocurre si la lectura de tus archivos en un marco de datos no funciona como esperabas, lo que ocurre con 
+más frecuencia de lo que cabría esperar.
 
 Debido sobre todo a razones históricas, no todos los archivos basados en texto (que, como hemos visto, incluyen los 
 archivos csv) se almacenan internamente de la misma manera. Durante mucho tiempo, era habitual codificar de forma 
 que un carácter correspondiera a un byte. Esto era fácil desde el punto de vista de la programación (al fin y al cabo, 
 el carácter $n$ de un texto puede leerse y escribirse directamente en el byte $n$ de un archivo) y también era eficiente 
-desde el punto de vista del almacenamiento. Pero dado que un byte consta de 8 bits, solo hay 256 caracteres posibles. 
-Todas las letras del alfabeto en mayúsculas, otra vez en minúsculas, números, signos de puntuación, algunos caracteres 
+desde el punto de vista del almacenamiento. Pero dado que un byte consta de 8 bits, solo hay 256 caracteres posibles: todas 
+las letras del alfabeto en mayúsculas, otra vez en minúsculas, números, signos de puntuación, algunos caracteres 
 de control... Y ya no quedan caracteres. Debido a esta limitación, existían diferentes codificaciones y páginas de códigos 
 para los distintos idiomas que indicaban a un programa qué valor debía interpretarse como qué carácter.
 
@@ -265,19 +265,19 @@ solo permite 256 caracteres diferentes, no podrás recuperar esa información).
 Como mostraremos en los ejemplos prácticos a continuación, también puedes forzar a Python y R a utilizar una codificación 
 específica, lo que puede resultar útil si tus datos llegan en una codificación heredada.
 
-En relación con las diferentes codificaciones que puede tener un archivo, pero menos problemático, están las diferentes 
+En relación con las diferentes codificaciones que puede tener un archivo, pero menos problemáticas, están las diferentes 
 convenciones sobre cómo se indica un final de línea. Los programas basados en Windows utilizan un “Intro” (retorno de carro) 
-seguido de un “Salto de Línea” (indicado como '\r\n'); versiones muy antiguas de MacOS utilizaban solo un “Intro” ('\r'), 
+seguido de un “Salto de Línea” (indicado como '\r\n'); versiones muy antiguas de MacOS utilizaban solo un “Intro” ('\r') 
 y versiones más recientes de MacOS así como Linux utilizan solo un Salto de Línea ('\n'). En nuestro campo, los finales de 
 línea estilo Linux (o Unix) se han convertido en los más dominantes, y Python 3 convierte automáticamente los finales de 
 línea estilo Windows a finales de línea estilo Unix al leer un archivo, incluso en el propio Windows.
 
-Una tercera diferencia es el uso de los llamados “marcadores de orden de bytes” (BOM, por sus siglas en inglés). En esencia, 
-un BOM es un byte adicional que se añade al principio de un archivo de texto para indicar que se trata de un archivo codificado 
-en UTF y en qué orden deben leerse los bytes (el llamado *endianness* (extremidad)). Aunque resulta informativo, esto puede causar 
-problemas si el programa no se espera que ese byte esté ahí. En ese caso, es posible que desees eliminarlo o especificar 
-explícitamente la codificación como tal. Por ejemplo, puedes añadir un argumento como 'encoding="UTF-8"' o 'encoding="UTF-8bom"' 
-al comando 'open' (Python) o 'scan' (R).
+Una tercera diferencia es el uso de los llamados “marcadores de orden de bytes” (Byte Order Oark o BOM, por sus siglas en 
+inglés). En esencia, un BOM es un byte adicional que se añade al principio de un archivo de texto para indicar que se trata 
+de un archivo codificado en UTF y en qué orden deben leerse los bytes (el llamado *endianness* (extremidad)). Aunque resulta 
+informativo, esto puede causar problemas si el programa no se espera que ese byte esté ahí. En ese caso, es posible que desees 
+eliminarlo o especificar explícitamente la codificación como tal. Por ejemplo, puedes añadir un argumento como 'encoding="UTF-8"' 
+o 'encoding="UTF-8bom"' al comando 'open' (Python) o 'scan' (R).
 
 En resumen, la forma más estándar en la que codificar los datos es en UTF-8 con finales de línea al estilo Linux sin el uso de 
 un marcador de orden de bytes.
@@ -455,10 +455,10 @@ es arbitrario, lo llamaremos 'f'). Luego, podemos usar un bucle *for* para itera
 a una lista.
 
 El 'mode = 'r'' especifica que queremos leer el fichero. El 'mode = 'w'' abre el fichero para escribir sobre él, creándolo si 
-es necesario, y, si el fichero ya existiera, borraría todo el contenido que pudiera haber en él (¡!). Ten en cuenta que el 
+es necesario y, si el fichero ya existiera, borraría todo el contenido que pudiera haber en él (¡!). Ten en cuenta que el 
 '.strip()' es necesario para eliminar el propio final de línea, además de cualquier posible espacio en blanco al principio o al 
 final de la línea. Si queremos guardar las palabras vacías, podemos hacerlo de forma similar: primero abrimos el fichero (esta vez, 
-para escribir), y luego usamos los métodos del objeto del fichero para escribir en él. Tampoco estamos limitados a ficheros de 
+para escribir) y luego usamos los métodos del objeto del fichero para escribir en él. Tampoco estamos limitados a ficheros de 
 texto plano. Por ejemplo, podemos utilizar el mismo enfoque para leer archivos json en un diccionario de Python o para almacenar 
 un diccionario de Python en un archivo json.
 
@@ -494,12 +494,12 @@ De ahí que estos *toy datasets* se incluyan a menudo en paquetes de R y Python.
 pasajeros del Titanic; 'MNIST', para la clasificación de imágenes y 'MPG', sobre el consumo de combustible de los coches). Muchos 
 de ellos están incluidos en paquetes como 'scikit-learn', 'seaborn' o 'ggplot2' y puedes echar un vistazo a su documentación.
 
-Por ejemplo, la base de datos '20 Newsgroups' contiene $18.846$ grupos de noticias junto a los grupos en los que se publicaron 
-(Ejemplo [-@exm-20newsgroups]). Este puede ser un recurso interesante para practicar con el procesamiento del lenguaje natural, 
-el aprendizaje automático supervisado y el no supervisado. Otro recurso interesante son las colecciones de discursos políticos, 
-como los discursos sobre el estado de la nación de EE.UU., disponibles en múltiples paquetes (Ejemplo [-@exm-sotudata]). Otros 
-ejemplos interesantes que contienen grandes colecciones de datos textuales pueden ser: 'Financial News' compilado por @Chen2017 
-o la base de datos de noticias políticas compilado por @Horne2018.
+Por ejemplo, la base de datos '20 Newsgroups' contiene $18.846$ publicaciones de grupos de noticias junto a los grupos en los 
+que se publicaron (Ejemplo [-@exm-20newsgroups]). Este puede ser un recurso interesante para practicar con el procesamiento 
+del lenguaje natural, el aprendizaje automático supervisado y el no supervisado. Otro recurso interesante son las colecciones 
+de discursos políticos, como los discursos sobre el estado de la nación de EE.UU., disponibles en múltiples paquetes (Ejemplo 
+[-@exm-sotudata]). Otros ejemplos interesantes que contienen grandes colecciones de datos textuales pueden ser: 'Financial News' 
+compilado por @Chen2017 o la base de datos de noticias políticas compilado por @Horne2018.
 
 ::: {.callout-note appearance="simple" icon=false}
 
