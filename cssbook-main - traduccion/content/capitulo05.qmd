@@ -272,7 +272,7 @@ y versiones más recientes de MacOS así como Linux utilizan solo un Salto de L�
 línea estilo Linux (o Unix) se han convertido en los más dominantes, y Python 3 convierte automáticamente los finales de 
 línea estilo Windows a finales de línea estilo Unix al leer un archivo, incluso en el propio Windows.
 
-Una tercera diferencia es el uso de los llamados “marcadores de orden de bytes” (Byte Order Oark o BOM, por sus siglas en 
+Una tercera diferencia es el uso de los llamados “marcadores de orden de bytes” (BOM, por sus siglas en 
 inglés). En esencia, un BOM es un byte adicional que se añade al principio de un archivo de texto para indicar que se trata 
 de un archivo codificado en UTF y en qué orden deben leerse los bytes (el llamado *endianness* (extremidad)). Aunque resulta 
 informativo, esto puede causar problemas si el programa no se espera que ese byte esté ahí. En ese caso, es posible que desees 
