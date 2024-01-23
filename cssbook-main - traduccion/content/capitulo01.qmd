@@ -74,7 +74,7 @@ conciba como un proceso en cadena. Para probar, por ejemplo, una hipótesis
 teórica sobre la personalización en las noticias, podríamos imaginar un proceso 
 que empezara con el scraping de noticias en línea; siguiera con algunas técnicas 
 de procesamiento del lenguaje natural, como el Reconocimiento de Entidades Nombradas 
-(Named Entity Recognition o NER, por sus siglas en inglés); y, finalmente, comprobara si la mención de 
+(NER, por sus siglas en inglés); y, finalmente, comprobara si la mención de 
 personas influye en la ubicación de las noticias. Aquí podemos distinguir entre 
 las partes del proceso que son necesarias, pero no nos interesan intrínsecamente, 
 y las partes del proceso que sí responden a una pregunta realmente interesante. 
@@ -127,7 +127,7 @@ es el ofrecer conocimientos prácticos suficientes para aplicar estas técnicas 
 saber qué buscar. Aunque intentamos abarcar todo el campo sin sacrificar demasiada 
 profundidad al tratar cada técnica, nos hemos visto obligados a trazar algunos límites. 
 Por ejemplo, una técnica que algunos lectores pueden echar en falta es el modelado basado 
-en agentes (Agent-Based Modeling o ABM, por sus siglas en inglés). Es cierto que estas 
+en agentes (ABM, por sus siglas en inglés). Es cierto que estas 
 técnicas de simulación son importantes en las ciencias sociales computacionales en 
 general [@cioffi-revilla2014], y recientemente se han aplicado también al análisis de 
 la comunicación [@Waldherr2014;@Wettstein2020]. Sin embargo, al revisar los planes de 
@@ -287,16 +287,15 @@ ambos lenguajes (como Google Colab o RStudio Cloud), en general es mejor instala
 un intérprete en el ordenador.
 
 Después de instalar Python o R, ya puedes ejecutar código en estos lenguajes, pero 
-también te vendrá bien tener un buen `Entorno de Desarrollo Integrado ( Integrated 
-Development Environment o IDE, por sus siglas en inglés)` para desarrollar tus scripts 
-(secuencias de comandos) de análisis de datos. Para R, recomendamos RStudio, cuya 
-instalación es gratuita y que actualmente es el entorno más popular para trabajar 
-con R. Para Python, recomendamos empezar con JupyterLab o JupyterNotebook, que es un 
-entorno de navegador para escribir y ejecutar código Python. Todas estas herramientas 
-están disponibles y bien documentadas para Windows, MacOS y Linux. Una vez explicado 
-cómo instalar R y Python, hay una sección muy importante sobre la instalación de paquetes. 
-Si planeas usar solo R o Python (por ahora), siéntete libre de saltarte la parte sobre 
-el otro lenguaje.
+también te vendrá bien tener un buen `Entorno de Desarrollo Integrado (IDE, por sus 
+siglas en inglés)` para desarrollar tus scripts (secuencias de comandos) de análisis 
+de datos. Para R, recomendamos RStudio, cuya instalación es gratuita y que actualmente 
+es el entorno más popular para trabajar con R. Para Python, recomendamos empezar con 
+JupyterLab o JupyterNotebook, que es un entorno de navegador para escribir y ejecutar 
+código Python. Todas estas herramientas están disponibles y bien documentadas para Windows, 
+MacOS y Linux. Una vez explicado cómo instalar R y Python, hay una sección muy importante 
+sobre la instalación de paquetes. Si planeas usar solo R o Python (por ahora), siéntete 
+libre de saltarte la parte sobre el otro lenguaje.
 
 Si quieres escribir programas en Python más largos (a diferencia de, por ejemplo, 
 scripts cortos de análisis de datos) probablemente quieras instalar también un IDE 
