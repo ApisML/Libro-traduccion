@@ -22,7 +22,7 @@ funciones base en Python y (sobre todo) del paquete stringr en R.
 ::: {.callout-note icon=false collapse=true}
 ## Paquetes utilizados en este capítulo
 
-Este capítulo utiliza los paquetes para el tratamiento de datos textuales. Para R, se trata principalmente del paquete 'stringr' 
+Este capítulo utiliza paquetes para el tratamiento de datos textuales. Para R, se trata principalmente del paquete 'stringr' 
 (incluido en 'tidyverse'). En Python, la mayoría de las funciones están ya incorporadas, pero se mostrará cómo usar estas funciones en 
 'pandas' y también se introducirá el paquete 'regex', una alternativa a las expresiones regulares preinstaladas. Puedes instalar estos 
 paquetes con el código que se muestra a continuación si es necesario (consulta la [-@sec-installing] para obtener más detalles): 
@@ -60,7 +60,7 @@ library(tidyverse)
 Cuando trabajamos con datos textuales, normalizar los datos es un paso importante. Este preprocesamiento garantiza la eliminación del 
 ruido y reduce la cantidad de datos a tratar. En el apartado [-@sec-encodings] explicamos cómo leer datos de distintos formatos, como txt, csv o 
 json, que pueden contener datos textuales, y también mencionamos algunos de los retos que plantea la lectura de texto (por ejemplo, la 
-codificación/descodificación de/a Unicode). En esta sección cubrimos los pasos típicos de limpieza, como el uso de minúsculas y la 
+codificación/descodificación de/a Unicode). En esta sección, cubrimos los pasos típicos de la limpieza de texto, como el uso de minúsculas y la 
 eliminación de signos de puntuación, etiquetas HTML y texto repetitivo.
 
 Como científico computacional de la comunicación, te encontrarás con muchas fuentes de texto: desde versiones electrónicas de periódicos 
@@ -71,8 +71,8 @@ proceso analítico.
 
 Como la diferencia entre información útil y ruido viene determinada por la pregunta de investigación, no existe una lista fija de pasos a 
 seguir que pueda guiarte en esta fase de preprocesamiento. Es muy probable que tengas que probar distintas combinaciones de pasos y 
-evaluar cuáles son las mejores opciones. Por ejemplo, en algunos casos mantener las mayúsculas en una conversación de chat o en un 
-comentario de una noticia puede ser valioso para detectar el tono del mensaje, pero en discursos más formales transformar todo el texto a 
+evaluar cuáles son las mejores opciones. Por ejemplo, en algunos caso,s mantener las mayúsculas en una conversación de chat o en un 
+comentario de una noticia puede ser valioso para detectar el tono del mensaje, pero, en discursos más formales, transformar todo el texto a 
 minúsculas ayudaría a normalizar el contenido. Dicho esto, sí hay algunos retos habituales a la hora de reducir el ruido del texto.
 
 Este capítulo y el siguiente te mostrarán cómo limpiar y manipular texto para transformar las cadenas de letras en datos útiles. Este 
@@ -86,10 +86,10 @@ en un formato adecuado para su posterior análisis computacional.
 ## Importante: Unicode y codificaciones
 
 Técnicamente hablando, el texto se representa como *bytes* (números) en lugar de caracteres. El estándar Unicode determina cómo deben 
-interpretarse o "descodificarse" estos *bytes*. En este capítulo se asume que los *bytes* de un archivo están ya “descodificados" en 
-caracteres (o puntos de código Unicode), y que podemos limitarnos a trabajar con los caracteres. Especialmente si no estás trabajando con 
-texto en inglés, es muy importante que te asegures de que entiendes Unicode y sus codificaciones, y compruebes que los textos con los que 
-trabaja están decodificados correctamente. Consulta la sección [-@sec-encodings] para obtener más información sobre cómo funciona todo esto.
+interpretarse o "descodificarse" estos *bytes*. En este capítulo, se asume que los *bytes* de un archivo están ya “descodificados" en 
+caracteres (o puntos de código Unicode) y que podemos limitarnos a trabajar con los caracteres. Especialmente si no estás trabajando con 
+texto en inglés, es muy importante que te asegures de que entiendes Unicode y sus codificaciones, y que compruebes que los textos con los que 
+trabajas están decodificados correctamente. Consulta la sección [-@sec-encodings] para obtener más información sobre cómo funciona todo esto.
 
 :::
 
@@ -155,11 +155,11 @@ carácter chino). Estos caracteres se indexan empezando por el primero, con (com
 desde cero.
 
 En Python, los textos se representan como objetos 'str' (cadena), en los que podemos dirigirnos directamente a los caracteres 
-individuales por su posición: 'text[0]' es el primer carácter del texto ('text'), y así sucesivamente. En R, sin embargo, los textos 
+individuales por su posición: 'text[0]' es el primer carácter del texto ('text') y así sucesivamente. En R, sin embargo, los textos 
 (como todos los objetos) representan columnas (o vectores) en lugar de valores individuales. Así, 'text[1]' en R es el primer texto de 
 una serie de textos. Para acceder a caracteres individuales en un texto, hay que utilizar una función como 'str_length' o 'str_sub' que 
 se discutirán con más detalle más adelante. Esto también significa que, en Python, si tienes una columna (o lista) de cadenas a las que 
-necesitas aplicar una operación, tienes que usar uno de los métodos de pandas que se muestran a continuación, o usar un bucle *for* o una 
+necesitas aplicar una operación, tienes que usar uno de los métodos de pandas que se muestran a continuación o utilizar un bucle *for* o una 
 comprensión de lista para iterar sobre todas las cadenas (ver también la [-@sec-controlstructures]).
 
 ### Métodos para lidiar con el texto {#sec-textmethods}
@@ -168,19 +168,19 @@ comprensión de lista para iterar sobre todas las cadenas (ver también la [-@se
 ## Stringi, stringr y operaciones de cadena base en R
 
 Como ya hemos ido viendo, R tiene múltiples paquetes que replican parcialmente la funcionalidad para el manejo básico de texto. En este 
-libro utilizaremos principalmente el paquete 'stringr', que forma parte de 'tidyverse'. Esto no se debe a que ese paquete sea 
+libro, utilizaremos principalmente el paquete 'stringr', que forma parte de 'tidyverse'. Esto no se debe a que ese paquete sea 
 necesariamente mejor o más fácil que el paquete alternativo 'stringi' o los métodos preinstalados (base). Sin embargo, estos métodos 
 están bien documentados, tienen nombres claros y son coherentes con otras funciones de 'tidyverse', por lo que por ahora es más fácil 
-ceñirse a 'stringr'. En particular, stringr es muy similar a 'stringi' (y de hecho está parcialmente basada en ella). Así, por poner un 
+ceñirse a 'stringr'. En particular, stringr es muy similar a 'stringi' (y de hecho está parcialmente basada en ese paquete). Así, por poner un 
 ejemplo, la función 'str_detect' es más o menos lo mismo que 'stringi::str_detect' y 'base::grepl'.
 
 :::
 
 Lo primero que hay que tener en cuenta es que, una vez que cargas cualquier texto en R o Python, normalmente almacenas este contenido 
-como un objeto de caracter o cadena (también como listas o diccionarios, pero también tendrán cadenas dentro de ellos), lo que significa 
+como un objeto de caracter o cadena (también como listas o diccionarios, pero igualmente tendrán cadenas dentro de ellos), lo que significa 
 que se aplican las operaciones y condiciones básicas de este tipo de datos, como indexar o cortar para acceder a caracteres individuales 
 o subcadenas (ver [-@sec-datatypes]). De hecho, las operaciones con cadenas base son muy eficaces para limpiar el texto y eliminar una 
-gran cantidad de ruido. La Tabla [-@tbl-stringoperations] resume algunas operaciones útiles sobre cadenas en R y Python que le ayudarán 
+gran cantidad de ruido. La Tabla [-@tbl-stringoperations] resume algunas operaciones útiles sobre cadenas en R y Python que te ayudarán 
 en esta etapa.
 
 ```{r}
@@ -208,9 +208,9 @@ fnre = '<a href="#fnre" class="footnote-ref" role="doc-noteref" aria-expanded="f
 <hr />
 
 Vamos a aplicar algunas de estas funciones/métodos a un texto sencillo de Wikipedia que contenga etiquetas HTML, *boilerplate* (texto 
-repetitivo), y letras mayúsculas y minúsculas. Utilizando la función 'str_replace_all' de 'stringr' en R y 'replace' en Python, podemos 
+repetitivo) y letras mayúsculas y minúsculas. Utilizando la función 'str_replace_all' de 'stringr' en R y 'replace' en Python, podemos 
 hacer un “*buscar y reemplazar*” y sustituir las subcadenas por otras diferentes (en nuestro caso, sustituir '<b>' por un espacio, por 
-ejemplo). Para eliminar espacios dobles innecesarios aplicamos la función 'str_squish' proporcionada por 'stringr' en R. En Python, 
+ejemplo). Para eliminar espacios dobles innecesarios, aplicamos la función 'str_squish' proporcionada por 'stringr' en R. En Python, 
 primero troceamos nuestra cadena en una lista de palabras utilizando el método 'split string', tras lo cual utilizamos el método 'join' 
 para unirlas de nuevo con un único espacio. Para convertir letras de mayúsculas a minúsculas, utilizamos la función base de R 'tolower' y 
 el método de cadena 'lower' en Python. Por último, la función base R 'trimws' y el método 'string strip' de Python eliminan los espacios 
@@ -280,13 +280,13 @@ text, siempre que no contengan signos de puntuación, y uniéndolos directamente
 ## Expresiones regulares {#sec-regular}
 
 Una expresión regular o *regex* es un lenguaje utilizado para localizar cadenas que se ajustan a un patrón determinado. Por ejemplo, 
-podemos extraer nombres de usuario o direcciones de correo electrónico de un texto, o normalizar variaciones ortográficas y mejorar los 
+podemos extraer nombres de usuario o direcciones de correo electrónico de un texto o normalizar variaciones ortográficas y mejorar los 
 métodos de limpieza descritos en la sección anterior. En concreto, las expresiones regulares son una secuencia de caracteres que podemos 
 utilizar para diseñar un patrón y, a continuación, utilizar este patrón para encontrar cadenas (identificar o extraer) y también 
 sustituir esas cadenas por otras nuevas.
 
 Las expresiones regulares parecen complicadas y, de hecho, al principio cuesta acostumbrarse a ellas. Por ejemplo, una expresión 
-relativamente sencilla (aunque no del todo correcta) para emparejar una dirección de correo electrónico es '[\w\.-]+@[\w\.-]+\.\w\w+', 
+relativamente sencilla (aunque no del todo correcta) para localizar una dirección de correo electrónico es '[\w\.-]+@[\w\.-]+\.\w\w+', 
 que no se parece a nada a no ser que sepas lo que estás buscando. La buena noticia es que la sintaxis de las expresiones regulares es la 
 misma en R y en Python (y en muchos otros lenguajes), así que una vez que aprendas algunas de ellas, habrás adquirido una herramienta 
 potente y versátil para el procesamiento de textos.
@@ -296,17 +296,17 @@ Posteriormente, veremos cómo podemos aplicar estas expresiones para inspecciona
 
 ### Sintaxis de expresiones regulares {#sec-regex}
 
-En esencia, las expresiones regulares son patrones que emparejan secuencias de caracteres. En el caso más sencillo, una “letra regular” 
+En esencia, las expresiones regulares son patrones que identifican secuencias de caracteres. En el caso más sencillo, una “letra regular” 
 solo coincide con esa letra, por lo que el patrón "*cat*" coincide con el texto "*cat*". Pero también existen comodines, o formas de 
 hacer coincidir letras diferentes. Por ejemplo, el punto ('.') coincide con cualquier carácter, por lo que 'c.t' coincide tanto con 
 "*cat*" como con "*cot*". También puedes colocar varias letras entre corchetes para crear una clase de caracteres que coincida con todas 
 las letras especificadas, por lo que 'c[au]t' coincide con "*cat*" y "*cut*", pero no con "*cot*". También hay una serie de clases 
 predefinidas, como '\w', que coincide con "caracteres de palabra" (letras, dígitos y, curiosamente, guiones bajos).
 
-Por último, puedes especificar la frecuencia con la que debe aparecer cada carácter o grupo de caracteres. Por ejemplo, 'a+' significa 
+También puedes especificar la frecuencia con la que debe aparecer cada carácter o grupo de caracteres. Por ejemplo, 'a+' significa 
 una o más “a”, mientras que 'a?' significa cero o una “a”. Así, 'lo+l' coincide con “lol”, “lool”… etc. Mientras que 'lo?l' coincide con 
 “lol” y “ll”. Esto plantea la cuestión, por supuesto, de cómo buscar las apariciones reales de un signo más, un signo de interrogación o 
-un punto. La solución es anular la función estos símbolos especiales anteponiéndoles una barra invertida ('\'): 'a\+' coincide con el 
+un punto. La solución es anular la función de estos símbolos especiales anteponiéndoles una barra invertida ('\'): 'a\+' coincide con el 
 texto literal "'a+'", y '\\w' (con doble barra invertida) coincide con el texto literal "'\w'".
 
 Teniendo esto en cuenta, podemos echar otro vistazo al patrón de dirección de correo electrónico de antes. La primera parte '[\w\.-]' 
@@ -330,7 +330,7 @@ fnuni = '<a href="#fninv" class="footnote-ref" role="doc-noteref" aria-expanded=
 
 |Function| Sintaxis | Ejemplo | Coincidencias|
 |-----|-|-|-|-|
-|**Especificador: Qué es lo que se busca**||||
+|**Especificador: qué es lo que se busca**||||
 |Todos los caracteres excepto nuevas líneas | `.` | `d.g` | <code>d**i**g</code>,<code>d**!**g</code>|
 |Caracteres de palabra*(letras, cifras,_) | `\w` | `d\wg` | `dig`,`dog`|
 |Dígitos*(0 a 9) | `\d` | `202\d` | `2020`,`2021`|
@@ -366,7 +366,7 @@ fnuni = '<a href="#fninv" class="footnote-ref" role="doc-noteref" aria-expanded=
 
 #### Notas: {.unnumbered}
 
-\* <span id="fninv">Estos selectores pueden invertirse cambiándolos a mayúsculas. Así, '\W' coincide con todo excepto los caracteres de palabra, y '\P\{PUNCTUATION\}' coincide con todo excepto la puntuación.</span>
+\* <span id="fninv">Estos selectores pueden invertirse cambiándolos a mayúsculas. Así, '\W' coincide con todo excepto los caracteres de palabra y '\P\{PUNCTUATION\}' coincide con todo excepto la puntuación.</span>
 
 † <span id="fnuni">Consulta [www.unicode.org/reports/tr44/\#Property\_Index](https://www.unicode.org/reports/tr44/\#Property\_Index)  para obtener una lista completa de las propiedades Unicode. Ten en cuenta que cuando se utiliza Python, estos solo están disponibles si se utiliza 'regex', que es un sustituto del más común 're'.</span>
  
@@ -428,7 +428,7 @@ para los números de teléfono locales. Para indicar esto en nuestro código, ut
 el signo de interrogación se aplique a todo ese grupo. En el siguiente ejemplo, vemos que los códigos postales neerlandeses son cuatro 
 números seguidos de dos letras, con un espacio opcional entre ellos. Igualmente sencillas, las fechas en formato ISO son tres grupos de 
 números separados por guiones. Las fechas alemanas siguen un orden diferente, utilizan puntos como separador y permiten números de día y 
-mes de un solo dígito. Ten en cuenta que estos patrones no comprueban la validez de las fechas, pero una adición sencilla sería 
+mes de un solo dígito. Ten en cuenta que estos patrones no comprueban la validez de las fechas, pero un añadido sencillo sería 
 restringir los meses a 01-12, por ejemplo, utilizando '(0[1-9]|1[0-2])'. Sin embargo, recomendamos dejar la validación a bibliotecas 
 especializadas, ya que validar correctamente el número del día requeriría tener en cuenta el mes (y los años bisiestos).
 
@@ -454,8 +454,8 @@ documento más largo, suele ser útil rodearlos con marcadores de límite de pal
 
 No olvides que muchos de esos patrones no son necesariamente completos y correctos, especialmente los patrones finales para las 
 anotaciones en línea. Por ejemplo, las direcciones de correo electrónico pueden contener signos “+” en la primera parte, pero no en el 
-nombre de dominio, mientras que a los nombres de dominio no se les permite empezar con un guion ¡Una expresión regular completamente 
-correcta que coincida con direcciones de correo electrónico tiene más de 400 caracteres! Peor aún, probablemente ni siquiera sea posible 
+nombre de dominio, mientras que a los nombres de dominio no se les permite empezar con un guion. ¡Una expresión regular completamente 
+correcta que coincida con direcciones de correo electrónico puede tener más de 400 caracteres! Peor aún, probablemente ni siquiera sea posible 
 describir etiquetas HTML completas mediante expresiones regulares, porque estas etiquetas suelen contener comentarios y anulaciones 
 anidados dentro de los atributos. Para conocer una mejor forma de analizar HTML, consulta el capítulo 12. Al final, los patrones de este 
 tipo están bien para un análisis (algo) ruidoso de textos fuente (a menudo también algo ruidosos), siempre que se comprendan sus 
@@ -498,14 +498,14 @@ en vez de dobles. Por lo tanto, para crear el patrón '"(cat|dog)"' (es decir, g
 'r"{"(cat|dog)"}"' o 'r'("(cat|dog)")'' (o incluso más legible: 'r'{"(cat|dog)"}'').
 
 Desafortunadamente, en versiones anteriores de R (y en cualquier caso si no utilizas cadenas sin procesar), es necesario anular los 
-caracteres especiales dos veces: primero para la expresión regular, y luego para R. Así, el patrón '\d' se convierte en '"\\\d"'. Para 
+caracteres especiales dos veces: primero para la expresión regular y luego para R. Así, el patrón '\d' se convierte en '"\\\d"'. Para 
 que coincida con una barra invertida literal tendrías que utilizar el patrón '\\', que se representaría en R como '"\\\\"'.
 
 El Ejemplo [-@exm-reclean] limpia el mismo texto que el Ejemplo [-@exm-clean] anterior, esta vez utilizando expresiones regulares. En 
 primer lugar, utiliza '<[^>+]>' para encontrar todas las etiquetas HTML: un corchete de apertura, seguido de cualquier cosa excepto un 
 corchete de cierre ('[^>]'), repetido una o más veces ('+'), seguido finalmente de un corchete de cierre. A continuación, sustituye uno o 
 varios caracteres de espacio en blanco ('\s+') por un solo espacio. Por último, utiliza una barra vertical para seleccionar el espacio al 
-principio de la cadena ('^\s+'), o al final ('\s+$'), y lo elimina. Como puedes ver, utilizando expresiones regulares puedes expresar 
+principio de la cadena ('^\s+') o al final ('\s+$'), y lo elimina. Como puedes ver, utilizando expresiones regulares puedes expresar 
 muchos patrones, consiguiendo que el código de limpieza sea más genérico (pero a veces menos legible).
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -613,7 +613,7 @@ tweets
 Hasta ahora, todas las operaciones que hemos utilizado tomaban un único objeto de cadena y devolvían un único valor, ya fuera una 
 versión depurada de la cadena o, por ejemplo, un booleano que indicaba si había una coincidencia. Esto resulta práctico cuando se 
 utilizan marcos de datos, ya que se puede transformar una columna en otra. Sin embargo, hay tres operaciones comunes que complican las 
-cosas: se puede dividir una cadena en varias subcadenas, extraer varias coincidencias de una cadena, y se pueden unir varias 
+cosas: se puede dividir una cadena en varias subcadenas, se puede extraer varias coincidencias de una cadena y se pueden unir varias 
 coincidencias.
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -675,7 +675,7 @@ operaciones regulares de marcos de datos, por ejemplo, para unir y resumir los d
 
 Una última cosa a tener en cuenta es que, aunque normalmente se utiliza una función como 'mean' para resumir los valores de un grupo, 
 también se pueden unir cadenas como resumen. El único requisito para una función de resumen es que devuelva un único valor para un grupo 
-de valores, que por supuesto es exactamente lo que hace la unión de varias cadenas. Esto se muestra en la última línea del ejemplo, 
+de valores, que, por supuesto es exactamente lo que hace la unión de varias cadenas. Esto se muestra en la última línea del ejemplo, 
 donde dividimos un tuit en palabras y luego lo reconstruimos a partir de las palabras individuales.
 
 ::: {.callout-note appearance="simple" icon=false}
@@ -734,6 +734,6 @@ words_long %>%
 
 [^1]: Ten en cuenta que esto no es una revisión completa de todo lo que es posible hacer con expresiones regulares, solo incluimos las 
 opciones más utilizadas, lo que debería ser suficiente para la mayoría de los casos. Además, si te adentras en los aspectos más 
-especializados de las expresiones regulares (con nombres tan bonitos como "'negative lookbehind assertions'") te acabarás encontrando con 
+especializados de las expresiones regulares (con nombres tan bonitos como "'negative lookbehind assertions'"), te acabarás encontrando con 
 diferencias entre Python, R y otros lenguajes, mientras que las características usadas en este capítulo deberían funcionar en la mayoría 
 de las implementaciones con las que te encuentres (a menos que se indique lo contrario).
