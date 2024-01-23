@@ -213,21 +213,20 @@ textplot_wordcloud(dtm_tags, max_words=100)
 
 **Topic model o modelado de temas** Mientras que una nube de palabras (o nube de etiquetas) muestra 
 qué palabras aparecen con más frecuencia, un `topic model` muestra qué palabras coinciden en los 
-mismos documentos. El Ejemplo [-@exm-funlda] utiliza la Asignación Latente de Dirichlet (Latent 
-Dirichlet Allocation o LDA, por sus siglas en inglés), el algoritmo de análisis de *topic modeling* 
-más común. Con este algoritmo, se exploran los tuits agrupando automáticamente los *hashtags* 
-anteriormente identificados en 10 *topics* (temas). Esta técnica no es determinista: si lo ejecutas 
-de nuevo, puede que obtengas temas ligeramente diferentes. Además, estos temas se intercambian 
-aleatoriamente, ya que su numeración no tiene ningún significado en especial. Introduciendo una 
-*random seed*, es posible asegurarse de que, al ejecutarse de nuevo, se obtendrán los mismos resultados. 
-Como puedes ver, algunos temas son fáciles de interpretar (como el tema 2 sobre distanciamiento social 
-y el tema 8 sobre asistencia sanitaria), pero siempre se recomienda examinar los documentos agrupados 
-y los casos extremos, además de las palabras (o etiquetas) principales, como se muestra aquí. Puedes 
-jugar con este ejemplo utilizando una selección diferente de palabras (modificando el código del 
-Ejemplo [-@exm-funcloud]) o cambiando el número de temas. También puedes cambiar (o eliminar) la 
-*random seed* y ver cómo al ejecutar el mismo modelo varias veces se obtienen resultados diferentes. 
-Consulta la @sec-unsupervised para obtener más información sobre el ajuste, la interpretación y la 
-validación del modelado de temas.
+mismos documentos. El Ejemplo [-@exm-funlda] utiliza la Asignación Latente de Dirichlet (LDA, por sus 
+siglas en inglés), el algoritmo de análisis de *topic modeling* más común. Con este algoritmo, se 
+exploran los tuits agrupando automáticamente los *hashtags* anteriormente identificados en 10 *topics* 
+(temas). Esta técnica no es determinista: si lo ejecutas de nuevo, puede que obtengas temas ligeramente 
+diferentes. Además, estos temas se intercambian aleatoriamente, ya que su numeración no tiene ningún 
+significado en especial. Introduciendo una *random seed*, es posible asegurarse de que, al ejecutarse 
+de nuevo, se obtendrán los mismos resultados. Como puedes ver, algunos temas son fáciles de interpretar 
+(como el tema 2 sobre distanciamiento social y el tema 8 sobre asistencia sanitaria), pero siempre se 
+recomienda examinar los documentos agrupados y los casos extremos, además de las palabras (o etiquetas) 
+principales, como se muestra aquí. Puedes jugar con este ejemplo utilizando una selección diferente de 
+palabras (modificando el código del Ejemplo [-@exm-funcloud]) o cambiando el número de temas. También 
+puedes cambiar (o eliminar) la *random seed* y ver cómo al ejecutar el mismo modelo varias veces se 
+obtienen resultados diferentes. Consulta la @sec-unsupervised para obtener más información sobre el 
+ajuste, la interpretación y la validación del modelado de temas.
 
 
 ::: {.callout-note appearance="simple" icon=false}
