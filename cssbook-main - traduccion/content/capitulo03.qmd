@@ -183,8 +183,8 @@ que forzarlo a hacer lo contrario, mientras que para Python es al revés (Ejempl
 También podemos convertir entre tipos más adelante, aunque convertir un 'float' a un 'int' puede 
 no ser muy buena idea, ya que truncas los datos.
 
-Entonces, ¿por qué no utilizamos siempre números de coma flotante? En primer lugar, las operaciones
- con *floats* suelen llevar más tiempo que las operaciones con números enteros. En segundo lugar, 
+Entonces, ¿por qué no utilizamos siempre números de coma flotante? En primer lugar, las operaciones 
+con *floats* suelen llevar más tiempo que las operaciones con números enteros. En segundo lugar, 
 estos números se almacenan como una combinación de un coeficiente y un exponente (en base 2), 
 por lo que muchas fracciones decimales solo pueden almacenarse aproximadamente al usarlos. Salvo 
 en ámbitos específicos (como las finanzas), estas imprecisiones no suelen tener mucha importancia 
@@ -305,7 +305,7 @@ barra invertida (`\'`). Ocurre lo mismo para las cadenas entre comillas dobles. 
 para incluir una barra invertida real en un texto, también anulas su función con una barra 
 invertida, de modo que se obtiene una barra invertida doble (`\\`).
 
-El ejemplo de Python también muestra un concepto introducido en Python 3.6: la cadena f (*f-string*). 
+El ejemplo de Python también muestra un concepto introducido en Python 3.6: la cadena f. 
 Se trata de cadenas prefijadas con la letra f que cuentan con un formato específico. Esto 
 significa que estas cadenas insertarán automáticamente un valor dónde las llaves indiquen 
 que es necesario. Con ello, se puede escribir: 'print(f "The value of i is {i}")' para 
