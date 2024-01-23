@@ -716,10 +716,9 @@ datos enumeran múltiples observaciones en columnas. Por ejemplo, los datos de e
 cada semana suelen tener una fila por encuestado y una columna para cada medición semanal. Sin embargo, para un análisis de series 
 temporales, cada fila debe ser una única medición, es decir, la unidad de análisis es un encuestado por semana.
 
-Generalmente, los datos con múltiples observaciones de la misma unidad se denominan datos anchos o *wide data* (ya que hay muchas 
-columnas), mientras que un conjunto de datos con una fila por cada observación se denomina datos largos o *long data* (ya que hay 
-muchas filas). En la mayoría de los casos, es más fácil trabajar con datos largos y, de hecho, en la jerga de 'tidyverse', estos 
-datos se denominan “*tidy data*” (datos ordenados).
+Generalmente, los datos con múltiples observaciones de la misma unidad se denominan datos anchos (ya que hay muchas columnas), mientras 
+que un conjunto de datos con una fila por cada observación se denomina datos largos o (ya que hay muchas filas). En la mayoría de los 
+casos, es más fácil trabajar con datos largos y, de hecho, en la jerga de 'tidyverse', estos datos se denominan “*tidy data*” (datos ordenados).
 
 Vamos a imaginarnos un ejemplo relativamente sencillo: consideremos los conjuntos de datos que contienen capital público y privado. 
 Estos datos son "anchos" en el sentido de que las medidas de los distintos países están contenidas en las columnas. Para hacer estos 
