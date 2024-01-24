@@ -24,9 +24,9 @@ Edit history
 
 
 **Resumen.**
-En este capítulo analizaremos distintos enfoques del análisis automático de textos o análisis de contenido automatizado. Combinaremos 
+En este capítulo, analizaremos distintos enfoques del análisis automático de textos o análisis de contenido automatizado. Combinaremos 
 técnicas de capítulos anteriores, como la transformación de textos en una matriz de frecuencias de términos y el aprendizaje automático. 
-Trataremos en profundidad tres enfoques diferentes: análisis basados en diccionarios, aprendizaje automático supervisado, y aprendizaje 
+Trataremos en profundidad tres enfoques diferentes: análisis basados en diccionarios, aprendizaje automático supervisado y aprendizaje 
 automático no supervisado. El capítulo ofrece orientaciones sobre cómo llevar a cabo estos análisis y sobre cómo decidir cuál de los 
 enfoques es el más adecuado para cada tipo de pregunta. 
 
@@ -35,7 +35,7 @@ enfoques es el más adecuado para cada tipo de pregunta.
 **Objetivos:**
 
 -  Comprender los distintos enfoques del análisis automático de textos
- -  Decidir si utilizar un diccionario, el aprendizaje automático supervisado o el aprendizaje automático no supervisado.
+ -  Decidir si utilizar un diccionario, el aprendizaje automático supervisado o el aprendizaje automático no supervisado
  -  Ser capaz de utilizar estas técnicas
 
 ::: {.callout-note icon=false collapse=true}
@@ -158,7 +158,7 @@ existen en un conjunto de datos de noticias o qué palabras son positivas o nega
 basadas en estos supuestos. El ordenador solo tiene que ejecutar esas reglas. En el extremo inductivo del espectro, en cambio, se sitúan 
 enfoques como el modelado de temas ([@sec-unsupervised]), en los que se hacen pocas o ninguna suposición a priori y se buscan patrones en 
 los datos. En este caso, no solemos saber de antemano qué temas existen. Los enfoques supervisados ([@sec-supervised]) pueden situarse en 
-un punto intermedio: en ellos sí definimos categorías a priori (sabemos qué temas existen y, dado un artículo, sabemos a qué tema 
+un punto intermedio: en ellos, sí definimos categorías a priori (sabemos qué temas existen y, dado un artículo, sabemos a qué tema 
 pertenece), pero no tenemos ningún conjunto de reglas: no sabemos qué palabras buscar ni qué reglas exactas seguir. Esas reglas las tiene 
 que "aprender" el ordenador a partir de los datos.
 
@@ -167,11 +167,11 @@ computacional de texto: enfoques de diccionario (o basados en reglas), aprendiza
 supervisado.
 
 Los enfoques basados en diccionarios son excelentes mientras se cumplan tres condiciones. La primera es que la variable que queremos 
-codificar sea manifiesta y concreta en lugar de latente y abstracta: nombres de actores, objetos físicos específicos, frases concretas, 
+codificar sea manifiesta y concreta en lugar de latente y abstracta: nombres de personas, objetos físicos específicos, frases concretas, 
 etc., Y no sentimientos, marcos o temas. La segunda es que hay que conocer de antemano todos los sinónimos que se van a incluir. Y, la 
 tercera, que las entradas del diccionario no tengan múltiples significados. Por ejemplo, la codificación de la frecuencia con la que se 
 menciona el control de armas en los discursos políticos se ajusta a estos criterios. Solo hay un número limitado de formas de hablar de 
-ello, y es bastante improbable que los discursos sobre otros temas contengan una frase como "control de armas" que confunda al proceso. 
+ello y es bastante improbable que los discursos sobre otros temas contengan una expresión como "control de armas" que confunda al proceso. 
 Del mismo modo, si queremos encontrar referencias a Angela Merkel, Donald Trump o cualquier otro político conocido, podemos buscar 
 directamente sus nombres, aunque surgen problemas cuando las personas tienen apellidos muy comunes y se hace referencia a ellas solo por 
 sus apellidos (por ejemplo, intentar encontrar a Pedro Sánchez nos dará muchos problemas).
@@ -181,48 +181,48 @@ distinguir si una noticia trata de economía o no. Para los humanos es realmente
 general, la gente rara vez necesita más de unos segundos para comprender si un artículo trata de economía y no de deportes, cultura, 
 etc. Sin embargo, muchos de estos artículos no indican directamente de qué tratan utilizando explícitamente la palabra "economía".
 
-Podemos pensar en ampliar nuestro diccionario utilizando 'econom.+' (una expresión regular que incluye economistas, económico, etc.), y 
-con otras palabras como "bolsa", "mercado", "empresa"... Desgraciadamente, nos encontraremos rápidamente con un problema al que ya nos 
+Podemos pensar en ampliar nuestro diccionario utilizando 'econom.+' (una expresión regular que incluye economistas, económico, etc.) y 
+con otras palabras como "bolsa", "mercado", "empresa"... Por desgracia, nos encontraremos rápidamente con un problema al que ya nos 
 enfrentamos cuando hablamos de la compensación precisión-exhaustividad en la [@sec-validation]: cuantos más términos añadamos a nuestro 
 diccionario, más falsos positivos obtendremos: artículos sobre condiciones laborales en las “empresas”, la importancia cultural del 
 “mercado” artesanal, las ventajas de tener una “bolsa” de tela…
 
-A partir de este ejemplo, podemos concluir que a menudo (1) es fácil para los humanos decidir a qué clase pertenece un texto, pero (2), 
+A partir de este ejemplo, podemos concluir que, a menudo (1), es fácil para los humanos decidir a qué clase pertenece un texto, pero (2), 
 a la vez, es muy difícil para los humanos elaborar una lista de palabras (o reglas) en las que se base su juicio. Una situación así es 
 perfecta para aplicar el aprendizaje automático supervisado: al fin y al cabo, no nos llevará mucho tiempo clasificar, digamos, 1.000 
 artículos en función de si tratan de economía o no (probablemente nos lleve menos tiempo que perfeccionar una lista de palabras a incluir 
 o excluir). Además, la parte más difícil, decidir las reglas exactas en las que se basa la decisión de clasificar un artículo como 
-económico, lo hace el ordenador en cuestión de segundos. El aprendizaje automático supervisado, por tanto, ha sustituido a los enfoques 
+económico, la hace el ordenador en cuestión de segundos. El aprendizaje automático supervisado, por tanto, ha sustituido a los enfoques 
 basados en diccionarios en muchos ámbitos.
 
 Tanto los enfoques basados en diccionarios (o en reglas) como el aprendizaje automático supervisado presuponen que se sabe de antemano 
-qué categorías existen (positivas frente a negativas; deportes frente a economía frente a política; &hellip;). La gran ventaja de los 
+qué categorías existen (positivas frente a negativas, deportes frente a economía o política &hellip;). La gran ventaja de los 
 enfoques no supervisados, como el modelado de temas es que también se pueden aplicar sin este conocimiento. Por lo tanto, permiten 
 encontrar patrones en los datos que no se esperaban y pueden generar nuevos conocimientos. Esto los hace especialmente adecuados para 
 cuestiones de investigación exploratoria. En cambio, su uso para pruebas de confirmación es menos defendible: al fin y al cabo, si nos 
 interesa saber si, por ejemplo, el sitio de noticias A publica más sobre economía que el sitio de noticias B, sería un poco raro fingir 
-no saber que el tema "economía" existe. Además, en la práctica, la asignación de los temas resultantes del modelo temático a las 
-categorías existentes a priori puede suponer un reto.
+no saber que el tema "economía" existe. Además, en la práctica, la asignación  a priori de los temas resultantes del modelo temático a las 
+categorías existentespuede suponer un reto.
 
 A pesar de las diferencias, todos los enfoques comparten un requisito: hay que "Validar. Validar. Validar" ([@Grimmer2013]). Aunque se ha 
 hecho en el pasado, aplicar un diccionario sin comparar el rendimiento con la codificación manual de los mismos conceptos no es 
 aceptable; tampoco lo es utilizar un clasificador de aprendizaje automático supervisado sin hacer lo mismo; o confiar ciegamente en un 
-modelo temático sin comprobar al menos manualmente que las puntuaciones que el modelo asigna a los documentos captan realmente de qué 
+modelo temático sin comprobar, al menos manualmente, que las puntuaciones que el modelo asigna a los documentos captan realmente de qué 
 tratan.
 
 ## Obtener un conjunto de datos de revisión {#sec-reviewdataset}
 
-Para las secciones sobre diccionarios y enfoques supervisados utilizaremos un conjunto de datos de críticas de películas de la base de 
+Para las secciones sobre diccionarios y enfoques supervisados, utilizaremos un conjunto de datos de críticas de películas de la base de 
 datos IMDB [@aclimdb]. Este conjunto de datos se publica como un conjunto comprimido de carpetas, con carpetas separadas para los 
 conjuntos de datos de entrenamiento y prueba y subcarpetas para las críticas positivas y negativas. Hay muchos otros conjuntos de datos 
 de reseñas disponibles en línea, por ejemplo, datos de reseñas de Amazon ([jmcauley.ucsd.edu/data/amazon/](https://jmcauley.ucsd.edu/data/amazon/)).
 
 El conjunto de datos IMDB que utilizaremos es un archivo relativamente grande y requiere un poco de procesamiento, por lo que 
 recomendamos almacenar los datos en caché en lugar de descargarlos y procesarlos cada vez que los necesites. Esto se hace en el 
-[@exm-reviewdata], que también sirve como un buen ejemplo de cómo descargar y procesar archivos. Tanto R como Python siguen el mismo 
-patrón básico. En primer lugar, comprobamos si el archivo almacenado en caché existe, y si es así leemos los datos de ese archivo. Para 
-R, utilizamos el formato estándar 'RDS', mientras que para Python utilizamos un archivo 'pickle' comprimido. El formato de los datos 
-también es ligeramente diferente, siguiendo la convención de cada lenguaje: En R utilizamos el marco de datos de 'readtext', que puede 
+[@exm-reviewdata], que también sirve para mostrar cómo descargar y procesar archivos. Tanto R como Python siguen el mismo 
+patrón básico. En primer lugar, comprobamos si el archivo almacenado en caché existe y, si es así, leemos los datos de ese archivo. Para 
+R, utilizamos el formato estándar 'RDS', mientras que, para Python, utilizamos un archivo 'pickle' comprimido. El formato de los datos 
+también es ligeramente diferente, siguiendo la convención de cada lenguaje: en R, utilizamos el marco de datos de 'readtext', que puede 
 leer ficheros de una carpeta o archivo zip y crear un marco de datos que contiene un texto por fila; en Python, tenemos listas 
 separadas para los conjuntos de datos de entrenamiento y de prueba y para los textos completos y las etiquetas ('text_train' son los 
 textos de entrenamiento e 'y_train' son las etiquetas correspondientes).
@@ -296,8 +296,8 @@ if (file.exists(filename)) {
 
 Si el archivo de datos en caché aún no existe, el archivo se descarga de Internet. En R, extraemos el archivo y ejecutamos 'readtext' en 
 la carpeta resultante. Esto crea automáticamente columnas para las subcarpetas, en este caso para el conjunto de datos y las etiquetas. 
-Después de esto, eliminamos el archivo de descarga y la carpeta extraída, limpiamos el 'reviewdata', y lo guardamos en el archivo 
-'reviewdata.rds'. En Python, podemos conseguir los archivos del archivo descargado directamente, por lo que no necesitamos extraerlo. 
+Después de esto, eliminamos el archivo de descarga y la carpeta extraída, limpiamos el 'reviewdata' y lo guardamos en el archivo 
+'reviewdata.rds'. En Python, podemos conseguir los archivos del material descargado directamente, por lo que no necesitamos extraerlo. 
 Hacemos un bucle sobre todos los archivos del archivo y utilizamos una expresión regular para seleccionar solo los archivos de texto y 
 extraer la etiqueta y el nombre del conjunto de datos (consulta la [@sec-regular] para obtener más información sobre expresiones 
 regulares). A continuación, extraemos el texto del archivo y añadimos el texto y la etiqueta a la lista correspondiente. Por último, los 
@@ -367,20 +367,20 @@ head(scores)
 :::
 
 Como ya habrás notado, este enfoque tiene muchas desventajas. La más notable es que nuestro enfoque de bolsa de palabras no nos permite 
-tener en cuenta la negación: "no es bueno" se contará como positivo. Tampoco podemos tratar modificadores como "muy bueno". Además, todas 
+tener en cuenta la negación: "no es bueno" se contará como positivo. Tampoco podemos tener en cuenta modificadores como "muy bueno". Además, todas 
 las palabras son positivas o negativas, aunque "estupendo" debería ser más positivo que "bueno". Los paquetes más avanzados de análisis 
 de sentimientos basados en diccionarios, como Vader (@Hutto2014) o SentiStrength (@Thelwall2012), incluyen estas funciones. Sin embargo, 
 como veremos en la sección [-@sec-supervised], estos paquetes comerciales tienen un rendimiento muy pobre en muchas tareas de análisis de 
 sentimientos, especialmente fuera de los dominios para los que fueron desarrollados. Se ha demostrado que el análisis de sentimientos 
-basado en diccionarios es deficiente cuando se analizan contenidos de noticias (por ejemplo, @Gonzalez-Bailon2015;@Boukes2019]). Dan 
+basado en diccionarios es deficiente cuando se analizan contenidos de noticias (por ejemplo, @Gonzalez-Bailon2015; @Boukes2019]). Dan 
 problemas cuando la exactitud a nivel de frase es importante, pero pueden ser satisfactorios con textos largos para tareas sencillas, 
-como la clasificación de reseñas de películas ([@Reagan2017]), donde hay verdaderos y claros datos de base, la convención de una reseña 
+como la clasificación de reseñas de películas ([@Reagan2017]), donde hay verdaderos y claros datos de base: la convención de una reseña 
 es que todo el texto es evaluativo y, por lo tanto, evalúa un objeto (la película).
 
 Aun así, hay muchos casos en los que los diccionarios funcionan muy bien. Dado que la lista de palabras puede contener cualquier cosa, no 
 solo palabras positivas o negativas, los enfoques de diccionario se han utilizado, por ejemplo, para medir el uso de palabras racistas o 
 dañinas en foros en línea (p. ej., [@Tulkens2016]). Los enfoques de diccionario son fáciles de entender y directos, lo que puede ser 
-un buen argumento para utilizarlos cuando es importante que el método no sea una caja negra, sino totalmente transparente incluso sin 
+un buen argumento para utilizarlos cuando es importante que el método no sea difícil de entender, sino totalmente transparente incluso sin 
 conocimientos técnicos. Además, cuando el diccionario ya existe o es fácil de crear, también es un método muy barato. Sin embargo, como 
 ya hemos mencionado, el precio a pagar es su limitación de medir solo conceptos fáciles de operacionalizar. Por decirlo sin rodeos: es 
 estupendo para medir la visibilidad de partidos u organizaciones en las noticias, pero es menos eficaz para medir conceptos como 
@@ -400,13 +400,13 @@ Si quieres utilizar un enfoque basado en diccionarios, te aconsejamos el siguien
 Los diccionarios muy extensos tendrán una exhaustividad elevada (siendo menos probable que se "pierda" un documento relevante), pero a 
 menudo sufrirán de baja precisión (muchos documentos contendrán una de las palabras aunque no sean relevantes). A la inversa, un 
 diccionario muy corto suele ser muy preciso, pero omite muchos documentos. Cuál es el equilibrio adecuado depende de la pregunta de 
-investigación que se plantee, pero para interpretar los resultados de forma sustancial, es necesario poder cuantificar el rendimiento del 
+investigación que se plantee pero, para interpretar los resultados de forma sustancial, es necesario poder cuantificar el rendimiento del 
 enfoque basado en diccionarios.
 
 ::: {.callout-note icon=false collapse=true}
 ## ¿Cuántos documentos necesitas para calcular el acuerdo con los codificadores humanos?
 
-Para determinar el número de documentos que se necesitan para determinar el acuerdo entre un humano y una máquina, se pueden seguir las 
+Para determinar el número de documentos que se necesitan para calcular el acuerdo entre un humano y una máquina, se pueden seguir las 
 mismas normas que se recomiendan para el análisis de contenido manual tradicional.
 
 Por ejemplo, @Krippendorff2004 proporciona una tabla de conveniencia para buscar los tamaños de muestra necesarios para determinar el 
@@ -415,12 +415,12 @@ depende del nivel de significación estadística que el investigador considere a
 caso extremo, si solo 5 de cada 100 ítems deben ser codificados como $x$, puede pasar que, en una muestra de 20 ítems, $x$ no aparezca. Para 
 determinar el acuerdo entre el método automatizado y un humano, sugerimos que se utilicen tamaños de muestra que también se utilizarían 
 para el cálculo de la concordancia entre codificadores humanos. Para cálculos específicos, nos remitimos a libros de análisis de 
-contenido como los dos aquí citados. Para dar una cifra aproximada (¡Que no debería sustituir a un cálculo cuidadoso!), aproximadamente 
+contenido como los dos aquí citados. Para dar una cifra aproximada (¡que no debería sustituir a un cálculo cuidadoso!), aproximadamente 
 entre 100 y 200 elementos cubrirán muchos escenarios (suponiendo una pequeña cantidad de clases razonablemente equilibradas).
 
 :::
 
-## Análisis de texto supervisado: Clasificación automática y análisis de sentimientos {#sec-supervised}
+## Análisis de texto supervisado: clasificación automática y análisis de sentimientos {#sec-supervised}
 
 En muchas ocasiones, encontramos muy buenas razones para utilizar el enfoque de diccionarios presentado en la sección anterior. En primer 
 lugar, es comprensible de una manera bastante intuitiva y los resultados pueden (a veces) incluso verificarse a mano, lo que es una 
@@ -430,7 +430,7 @@ complejo es un concepto. En la siguiente sección, argumentaremos que los temas,
 complejos que a menudo son difíciles de capturar con diccionarios (o que, por lo menos, elaborar un diccionario adecuado sería difícil). 
 Por ejemplo, mientras que "positivo" y "negativo" parecen categorías sencillas a primera vista, cuanto más pensamos en ello, más evidente 
 se hace que dependen completamente del contexto: en un conjunto de datos sobre la economía y los rendimientos del mercado de valores, 
-"incremento" puede indicar algo positivo pero en un conjunto de datos sobre las tasas de desempleo la misma palabra sería algo negativo. 
+"incremento" puede indicar algo positivo, pero en un conjunto de datos sobre las tasas de desempleo, la misma palabra sería algo negativo. 
 Por eso, el aprendizaje automático puede ser una técnica más adecuada para este tipo de tareas.
 
 ### Organizar el flujo de trabajo {#sec-workflow}
@@ -438,7 +438,7 @@ Por eso, el aprendizaje automático puede ser una técnica más adecuada para es
 Con los conocimientos adquiridos en los capítulos anteriores, no es difícil configurar un clasificador de aprendizaje automático 
 supervisado para determinar automáticamente, por ejemplo, el tema de un artículo de noticias.
 
-Recapitulemos los elementos básicos que necesitamos. En el capítulo 8 aprendimos a utilizar distintos clasificadores, a evaluarlos y a 
+Recapitulemos los elementos básicos que necesitamos. En el capítulo 8, aprendimos a utilizar distintos clasificadores, a evaluarlos y a 
 elegir la mejor configuración. Sin embargo, en estos ejemplos, utilizamos datos numéricos como características, no texto. Por suerte, 
 en el [@sec-chap-dtm], aprendiste a convertir texto en características numéricas: vamos a empezar con eso.
 
