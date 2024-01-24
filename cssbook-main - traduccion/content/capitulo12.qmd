@@ -501,8 +501,8 @@ page %>%
 Podemos fingir ser un navegador especifico. Cuando lxml, rvest o tu navegador descargan una página HTML, envían una petición HTTP. Esta 
 petición contiene la URL, pero también algunos metadatos, como la llamada cadena de agente de usuario. Esta cadena especifica el nombre y 
 la versión del navegador. Algunos sitios pueden bloquear determinados agentes de usuario (como, por ejemplo, los que utilizan lxml o 
-rvest); y a veces, ofrecen contenidos diferentes para distintos navegadores. Si utilizas un módulo más potente para descargar el código 
-HTML (como requests o httr) antes de analizarlo, puede especificar su propia cadena de agente de usuario y simular así ser un navegador 
+rvest) y, a veces, ofrecen contenidos diferentes para distintos navegadores. Si utilizas un módulo más potente para descargar el código 
+HTML (como requests o httr) antes de analizarlo, puedes especificar su propia cadena de agente de usuario y simular así ser un navegador 
 concreto. Si haces una búsqueda en la web, encontrarás rápidamente largas listas con las cadenas más populares. En el código de abajo, 
 reescribimos el [@exm-htmlparse1] para que se pueda especificar un user-agent personalizado:
 
@@ -588,7 +588,7 @@ de la [@sec-apis]).
 Sin embargo, a menudo las cosas no son tan sencillas y tenemos que encontrar los enlaces correctos en una página que hemos analizado: por 
 eso rastreamos el sitio web.
 
-Escribir un buen rastreador puede llevar algún tiempo, y tendrá un aspecto muy diferente para las distintas páginas. El mejor consejo que 
+Escribir un buen rastreador puede llevar algún tiempo y tendrá un aspecto muy diferente para las distintas páginas. El mejor consejo que 
 te podemos dar es construirlos paso a paso. Inspecciona detenidamente el sitio web que te interesa. Coge una hoja de papel, dibuja su 
 estructura e intenta averiguar qué páginas necesitas analizar y cómo puedes ir de una página a otra. Piensa también en cómo deben estar 
 organizados los datos que quieres extraer.
@@ -604,8 +604,8 @@ reseñas más antiguas"...
 Si combinas lo que acabas de aprender sobre la extracción de texto y enlaces de páginas HTML con tus conocimientos sobre estructuras de 
 control como bucles y sentencias condicionales (Sección [-@sec-controlstructures]), ya puedes escribir tu propio rastreador.
 
-Escribir un *scraper* es arte, y, no hay una única manera de alcanzar tu objetivo. Deberás desarrollar tu rastreador por pasos: primero 
-escribe una función para analizar la página de resumen, luego una función para analizar las páginas de reseñas, y después intenta 
+Escribir un *scraper* es arte y no hay una única manera de alcanzar tu objetivo. Deberás desarrollar tu rastreador por pasos: primero 
+escribe una función para analizar la página de resumen, luego una función para analizar las páginas de reseñas y después intenta 
 combinar todos los elementos en un solo *script*. Antes de seguir leyendo, intenta escribir un *scraper* de este tipo.
 
 Para mostrarte una posible solución, hemos implementado un scraper en Python que rastrea y analiza todas las reseñas de todos los 
@@ -685,7 +685,7 @@ ejemplo, debido a un tiempo de espera, un bloqueo o un error de programación), 
 momento.
 
 Hacemos un bucle sobre los enlaces a los restaurantes (línea 36) y activamos la función 'get_reviews' (línea 38). Cada reseña que se 
-devuelve (la reseña es un diccionario.) recibe el nombre del restaurante como clave adicional, y luego se escribe en un archivo que 
+devuelve (la reseña es un diccionario) recibe el nombre del restaurante como clave adicional y luego se escribe en un archivo que 
 contiene un objeto JSON por línea (también conocido como archivo jsonlines).
 
 La función 'get_reviews' toma un enlace a una página de reseñas como entrada y devuelve las reseñas. Si conociéramos todas las páginas con 
@@ -744,7 +744,7 @@ siguiente lista de comprobación para encontrarlos.
 
 Si nada de esto ayuda, o si ya sabes con certeza que el contenido que te interesa se obtiene dinámicamente a través de JavaScript o 
 similar, puedes utilizar 'Selenium' para iniciar un navegador y extraer de allí el contenido que te interesa. Selenium ha sido diseñado 
-para probar sitios web y permite automatizar clics en una ventana del navegador, y también soporta selectores CSS y Xpaths para 
+para probar sitios web y permite automatizar clics en una ventana del navegador y también soporta selectores CSS y Xpaths para 
 especificar partes de la página web.
 
 El uso de Selenium puede requerir configuración adicional en el ordenador, lo que puede depender de tu sistema operativo y las versiones 
@@ -752,7 +752,7 @@ de software que estás utilizando. Consulta las fuentes habituales en línea par
 utilizar Selenium a través de R utilizando 'Rselenium'. Sin embargo, hacerlo puede ser bastante complicado y requiere ejecutar un servidor 
 Selenium independiente, por ejemplo, utilizando 'Docker'. Si optas por utilizar Selenium para *web scraping*, lo más sencillo es seguir un 
 tutorial online y/o sumergirte en la documentación. Para darte una primera impresión del funcionamiento general, el Ejemplo 
-[-@exm-selenium] te muestra cómo (en el momento de escribir este libro) abrir Firefox, navegar hasta Google, buscar Tintín introduciendo 
+[-@exm-selenium] te muestra cómo (en el momento de escribir este libro) abrir Firefox, navegar hasta Google, buscar "Tintín" introduciendo 
 esa cadena y pulsando la tecla de retorno, hacer clic en el primer enlace que contenga esa cadena y hacer una captura de pantalla del 
 resultado.
 
@@ -783,13 +783,13 @@ finally:
 :::
 
 ::: {.callout-note icon=false collapse=true}
-## Volverte loco
+## Vuélvete loco
 
 Si quieres ejecutar procesos de *scraping* de larga duración utilizando Selenium en segundo plano (o en un servidor sin interfaz gráfica 
 de usuario), deberías echar un vistazo a lo que se denomina un navegador "*headless*". Por ejemplo, Selenium puede iniciar Firefox en 
 modo "*headless*", lo que significa que se ejecutará sin establecer ninguna conexión con una interfaz gráfica. Por supuesto, eso también 
 significa que no se puede ver a Selenium hacer el *scraping*, lo que puede hacer que la depuración sea más difícil. Podrías optar por 
-desarrollar tu *scraper* primero usando un navegador normal, y luego cambiarlo para usar un navegador "*headless*" una vez que todo 
+desarrollar tu *scraper* primero usando un navegador normal y luego cambiarlo para usar un navegador "*headless*" una vez que todo 
 funcione.
 :::
 
@@ -837,7 +837,7 @@ cat(content(r, "text"))
 :::
 :::
 
-Como puedes ver, utilizar una API que requiera autenticación pasando una clave como cabecera HTTP es casi tan sencillo como utilizar API 
+Como puedes ver, utilizar una API que requiera autenticación pasando una clave como cabecera HTTP es casi tan sencillo como utilizar una API 
 que no requieran autenticación (como las descritas en la Sección [-@sec-apis]). Sin embargo, muchas API utilizan protocolos más complejos.
 
 El más popular se llama OAuth, y es utilizado por muchas API proporcionadas por los principales actores como Google, Facebook, Twitter, 
@@ -848,20 +848,20 @@ API. Aunque es posible trabajar directamente con peticiones HTTP OAuth utilizand
 probabilidades de que tengas que hacerlo son relativamente bajas, a menos que planees desarrollar tu propia app o incluso tu propia API: 
 para todas las API populares, los llamados “*wrappers*”, paquetes que proporcionan una interfaz más simple a la API, están disponibles en 
 pypi y CRAN. Aun así, todos ellos requieren tener al menos una clave de consumidor y un secreto de consumidor. El token de acceso a veces 
-se genera a través de una interfaz web en la que gestionas tu cuenta (por ejemplo, en el caso de Twitter), o puede ser adquirido por tu 
+se genera a través de una interfaz web en la que gestionas tu cuenta (por ejemplo, en el caso de Twitter) o puede ser adquirido por tu 
 propio *script*, que luego redirigirá al usuario a un sitio web en el que se le pedirá que autentique la aplicación. Lo bueno de esto es 
 que solo tiene que ocurrir una vez: una vez autenticada tu app, puede seguir haciendo peticiones.
 
 ### Autentificación y páginas web {#sec-authweb}
 
 En esta sección, discutiremos brevemente diferentes enfoques para tratar con sitios web en los que es necesario iniciar sesión, aceptar 
-algo (por ejemplo, el llamado muro de *cookies*), o tener que autenticarse de alguna otra forma. Un enfoque puede ser el uso de un 
+algo (por ejemplo, el llamado muro de *cookies*) o tener que autenticarse de alguna otra forma. Un enfoque puede ser el uso de un 
 *framework* de pruebas web como Selenium (ver Sección [-@sec-selenium]): dejas que tu *script* abra un navegador y, por ejemplo, rellene 
 tu información de acceso.
 
 Sin embargo, a veces esto no es necesario y podemos utilizar un *web scraping* más simple y eficiente sin invocar a un navegador. Como ya 
 hemos visto en la Sección [-@sec-parsehtml], al realizar una petición HTTP, podemos transmitir información adicional, como la cadena de 
-agente de usuario. De forma similar, podemos pasar otra información, como las *cookies*.
+agente de usuario. De forma similar, podemos introducir otra información, como las *cookies*.
 
 En las herramientas para desarrolladores de tu navegador (que ya utilizamos para determinar XPATHs y selectores CSS), puedes consultar 
 qué *cookies* ha colocado un sitio web específico. Por ejemplo, podrías inspeccionar todas las *cookies* antes de iniciar sesión (o pasar 
@@ -873,7 +873,7 @@ las *cookies* en Firefox, descubrimos que hacer clic en "Aceptar" en el muro de 
 que se estableciera una cookie con el nombre 'cpc' y el valor '10'. Para establecer esas cookies en nuestro *scraper*, lo más fácil es 
 recuperar primero esa página y almacenar las cookies enviadas por el servidor. En el Ejemplo [-@exm-cookiewall], por tanto, iniciamos una 
 sesión e intentamos descargar la página. Sabemos que esto no solo nos mostrará el muro de *cookies*, sino que también generará las 
-*cookies* necesarias. Cuando esto ocurra, almacenamos las *cookies*, y añadimos la *cookie* que queremos que se establezca ('cpc=10') a 
+*cookies* necesarias. Cuando esto ocurra, almacenamos las *cookies* y añadimos la *cookie* que queremos que se establezca ('cpc=10') a 
 nuestro contenedor de *cookies*. Ahora, tenemos todas las *cookies* que necesitamos para futuras peticiones. Permanecerán allí durante 
 toda la sesión.
 
@@ -971,7 +971,7 @@ exactas de material protegido por derechos de autor, hay una gran zona gris en l
 
 Existe tensión entre los intereses legítimos de los operadores de sitios web y los productores de contenidos, por un lado, y el interés 
 social de estudiar la comunicación en línea, por otro. Qué interés es el que prevalece puede variar en cada caso. Por ejemplo, al 
-utilizar API como se describe en la sección [-@sec-apis], en la mayoría de los casos, tienes que dar tu consentimiento a las condiciones 
+utilizar una API como se describe en la sección [-@sec-apis], en la mayoría de los casos, tienes que dar tu consentimiento a las condiciones 
 de servicio (TOS) del proveedor de la API.
 
 Por ejemplo, las condiciones de servicio de Twitter permiten redistribuir los identificadores numéricos de los tuits, pero no los propios 
@@ -993,7 +993,7 @@ gustaría ofrecer algunas estrategias para minimizar posibles problemas.
 
 **Sé amable.** Por poder, puedes enviar cientos de peticiones por minuto (o segundo) a un sitio web e intentar descargar todo lo que han 
 publicado. Sin embargo, esto provoca una carga innecesaria en sus servidores (y probablemente te bloquearán). Si, por el contrario, 
-piensas cuidadosamente en lo que realmente necesitas descargar, e incluyes muchos tiempos de espera (por ejemplo, usando 'sys.sleep' (R) o 
+piensas cuidadosamente en lo que realmente necesitas descargar e incluyes muchos tiempos de espera (por ejemplo, usando 'sys.sleep' (R) o 
 'time.sleep' (Python) (para que tu *script* haga esencialmente lo mismo que podrían hacer un par de ayudantes copiando y pegando los 
 datos manualmente) es mucho menos probable que surjan problemas.
 
@@ -1012,13 +1012,13 @@ ejemplo, los nombres de usuario de los autores de las reseñas que vas a obtener
 Una vez resueltas todas las cuestiones éticas y legales, tras de asegurarte de que has escrito un *scrape*r de forma que no cause tráfico 
 y carga innecesarios en los servidores, y después de hacer algunas pruebas, es hora de pensar en cómo ejecutarlo realmente a mayor 
 escala. Puede que ya hayas pensado que no quieres ejecutar tu *scraper* desde un Jupyter Notebook que tenga que estar constantemente 
-abierto en el navegador de tu portátil personal. También en esto, nos gustaría ofrecer algunas sugerencias.
+abierto en el navegador de tu portátil personal. También sobre esto nos gustaría ofrecer algunas sugerencias.
 
 **Considera utilizar bases de datos.** Imagina el siguiente escenario: tu *scraper* visita cientos de sitios web, recoge sus resultados 
-en una lista o en un marco de datos, y después de horas de funcionamiento de repente se bloquea. Tal vez algún elemento que estabas 
-seguro de que existía en cada página, solo existe en 999 de cada 1000 páginas, una conexión expiró, o cualquier otro error. Tus datos se 
+en una lista o en un marco de datos y, después de horas de funcionamiento, de repente se bloquea. Tal vez algún elemento que estabas 
+seguro de que existía en cada página, solo existe en 999 de cada 1000 páginas, una conexión expiró o cualquier otro error. Tus datos se 
 pierden, tienes que empezar de nuevo (no solo es molesto, sino también indeseable desde el punto de vista de la minimización del tráfico). 
-Una mejor estrategia podría ser escribir inmediatamente los datos de cada página en un archivo. Pero para eso, necesitarías manejar un 
+Una mejor estrategia podría ser escribir inmediatamente los datos de cada página en un archivo. Pero, para eso, necesitarías manejar un 
 número potencialmente enorme de archivos más adelante. Un enfoque mucho mejor, especialmente si planeas ejecutar el scraper repetidamente 
 durante un largo periodo de tiempo, es considerar el uso de una base de datos en la que volcar los resultados inmediatamente después de 
 que una página haya sido procesada (ver Sección [-@sec-databases]).
