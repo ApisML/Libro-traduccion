@@ -1,7 +1,7 @@
 ::: {.callout-note icon=false collapse=true}
 ## ¿Te importan los niños?
 
-Independientemente de si utiliza XPATHS o selectores CSS para especificar qué parte de la página le interesa, a menudo ocurre que hay 
+Independientemente de si utilizas XPATHS o selectores CSS para especificar qué parte de la página te interesa, a menudo ocurre que hay 
 otros elementos dentro de ella. Dependiendo de si deseas recuperar también el texto de estos elementos o no, tendrás que utilizar 
 diferentes enfoques. Los siguientes ejemplos de código muestran algunas de estas diferencias.
 
