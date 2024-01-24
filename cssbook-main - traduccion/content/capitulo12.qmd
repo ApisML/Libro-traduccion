@@ -12,7 +12,7 @@ Edit history
 **Resumen.**
 En este capítulo aprenderás a recuperar datos de fuentes en línea. En primer lugar, trataremos el uso de las interfaces de programación 
 de aplicaciones, más conocidas como “API”, que permiten recuperar datos de plataformas de redes sociales, sitios web gubernamentales u 
-otras formas de datos abiertos, en un formato legible por y para máquina. A continuación, se explicará cómo hacer *web scraping*, en un 
+otras formas de datos abiertos, en un formato legible por y para máquinas. A continuación, se explicará cómo hacer *web scraping*, en un 
 sentido más estricto, para recuperar datos de sitios web que no ofrecen una API. También se abordan los mecanismos de autenticación, las 
 *cookies* y otros aspectos similares, así como consideraciones éticas, jurídicas y prácticas.
 
@@ -20,7 +20,7 @@ sentido más estricto, para recuperar datos de sitios web que no ofrecen una API
 
 **Objetivos:**
 
--  Ser capaz de utilizar las API para la recuperación de datos.
+-  Ser capaz de utilizar las API para la recuperación de datos
  -  Ser capaz de escribir tu propio web scraper
  -  Evaluar los fundamentos de las limitaciones legales, éticas y prácticas
 
@@ -101,11 +101,11 @@ library("data.table")
 :::
 :::
 
-## Uso de las API web: De los recursos en abierto a Twitter {#sec-apis}
+## Uso de las API web: de los recursos en abierto a Twitter {#sec-apis}
 
 Supongamos que queremos recuperar datos de algún servicio en línea. Podría tratarse de una plataforma de redes sociales, un sitio web 
 gubernamental, una plataforma o iniciativa de datos abiertos o, a veces, de una organización comercial que presta algún servicio en 
-línea. Por supuesto, podríamos navegar hasta su sitio web, introducir una consulta de búsqueda y guardar de algún modo el resultado, pero 
+internet. Por supuesto, podríamos navegar hasta su sitio web, introducir una consulta de búsqueda y guardar de algún modo el resultado, pero 
 esto resultaría poco práctico. Sobre todo, porque las páginas web están diseñadas para que sean perfectamente legibles y comprensibles 
 para los humanos, pero las indicaciones que se utilizan a menudo no tienen "significado" para un programa informático. Nosotros, como 
 humanos, no tenemos problema en entender qué partes de una página web se refieren al autor de la misma, qué significan los números 
@@ -119,14 +119,14 @@ ofrecen otra posibilidad de acceder a los datos que proporcionan: una API (por s
 Interfaz de Programación de Aplicaciones). La gran mayoría de las API web actuales funcionan de la siguiente manera: se envía una 
 solicitud a una URL y se recibe un objeto JSON. Como aprendiste en la Sección [-@sec-reading], JSON es una estructura de datos anidada, 
 muy parecida a un diccionario de Python o a una lista con nombre de R (y, de hecho, los datos JSON se representan típicamente como tales 
-en Python y R). Dicho de otro modo: Las API nos proporcionan directamente datos legibles (para una máquina) con los que podemos trabajar 
+en Python y R). Dicho de otro modo: las API nos proporcionan directamente datos legibles (para una máquina) con los que podemos trabajar 
 sin necesidad de desarrollar un analizador sintáctico personalizado.
 
 Hablar de API específicas en un libro puede ser un poco complicado, ya que existe la posibilidad de que acaben desactualizadas: al fin y 
 al cabo, el proveedor de la API puede cambiarla en cualquier momento. Por ello, hemos decidido no incluir un capítulo sobre aplicaciones 
-específicas, como "Cómo utilizar la API de Twitter" o similares: dada la popularidad de este tipo de API, una rápida búsqueda en Internet 
-te dará acceso a suficientes tutoriales actualizados (y desactualizados) sobre ellas. En su lugar, tratamos los principios genéricos de 
-las API, que deberían traducirse fácilmente a otros ejemplos distintos del nuestro.
+específicas, como, por ejemplo, "Cómo utilizar la API de Twitter" o similares: dada la popularidad de este tipo de API, una rápida búsqueda 
+en Internet te dará acceso a suficientes tutoriales actualizados (y desactualizados) sobre ellas. En su lugar, tratamos los principios 
+genéricos de las API, que deberían traducirse fácilmente a otros ejemplos distintos del nuestro.
 
 En su forma más sencilla, utilizar una API no es más que visitar una URL específica. La primera parte de la URL nos indica el llamado 
 punto final (*endpoint*) de la API: la dirección de la API específica que quieres utilizar. Esta dirección va seguida de un '?' y de uno 
@@ -140,12 +140,12 @@ sistemática son 'httr' en combinación con 'jsonlite' (R) y 'requests' (Python)
 
 Pero, ¿cómo sabemos qué parámetros (es decir, qué pares clave-valor) podemos utilizar? Tenemos que buscarlo en la documentación de la API 
 que nos interesa (en este ejemplo [developers.google.com/books/docs/v1/using](https://developers.google.com/books/docs/v1/using)). No hay 
-otra forma de saber que la clave para enviar una consulta se llama 'q', y qué otros parámetros se pueden especificar.
+otra forma de saber que la clave para enviar una consulta se llama 'q' y qué otros parámetros se pueden especificar.
 
 ::: {.callout-note icon=false collapse=true}
 
 En nuestro ejemplo, hemos utilizado un valor simple para incluir en la petición: la cadena "python". Pero, ¿qué ocurre si queremos 
-enviar una cadena que contenga, digamos, un espacio, o un carácter como '&' o '?' (que, como hemos visto, tienen un significado especial 
+enviar una cadena que contenga, digamos, un espacio o un carácter como '&' o '?' (que, como hemos visto, tienen un significado especial 
 en la petición)? En estos casos, es necesario "codificar" la URL mediante un mecanismo llamado codificación de URL o codificación 
 porcentual. Puede que lo hayas visto antes: un espacio, por ejemplo, se representa mediante `\%20`.
 
@@ -209,12 +209,12 @@ head(d)
 :::
 
 Te habrás dado cuenta de que no hemos obtenido todos los resultados posibles. Esto no es un error: te protege de descargar 
-accidentalmente un enorme conjunto de datos (puede que hayas subestimado el número de libros de Python disponibles en el mercado), y 
+accidentalmente un enorme conjunto de datos (puede que hayas subestimado el número de libros de Python disponibles en el mercado) y 
 ahorra al proveedor de la API mucho ancho de banda. Esto no significa que no puedas obtener más datos. De hecho, muchas API funcionan 
-con paginación: primero se obtiene la primera "página" de resultados, luego la siguiente, y así sucesivamente. A veces, la respuesta de 
+con paginación: primero se obtiene la primera "página" de resultados, luego la siguiente y así sucesivamente. A veces, la respuesta de 
 la API contiene un par clave-valor específico (a veces denominado "clave de continuación") que se puede utilizar para obtener los 
 resultados siguientes; otras veces, basta con decir en qué resultado se quiere empezar (por ejemplo, el resultado número 11) para obtener 
-la siguiente "página". También puedes escribir un bucle para recuperar tantos resultados como necesites (Ejemplo [-@exm-googleapi3]); 
+la siguiente "página". También puedes escribir un bucle para recuperar tantos resultados como necesites (ejemplo [-@exm-googleapi3]); 
 solo tienes que asegurarte de no quedarte atascado en un bucle eterno. Cuando empieces a jugar con las API, asegúrate de no provocar 
 tráfico innecesario, limitando el número de llamadas realizadas (véase también el apartado [-@sec-ethicallegalpractical]).
 
@@ -276,11 +276,11 @@ Sin embargo, muchas API tienen restricciones en cuanto a quién puede utilizarla
 ejemplo, puede que tengas que limitar el número de peticiones por minuto utilizando una función 'sleep' dentro del bucle para retrasar la 
 ejecución de la siguiente llamada. O puede que necesites autenticarte. En el ejemplo de la API de Google Books, esto te permitirá 
 solicitar más datos (como si posees una copia (electrónica) de los libros que has recuperado). En este caso, la documentación indica que 
-basta con pasar un token de autenticación como parámetro con la URL. Sin embargo, muchas API utilizan métodos de autenticación más 
+basta con introducir un token de autenticación como parámetro con la URL. Sin embargo, muchas API utilizan métodos de autenticación más 
 avanzados, como OAuth (véase la sección [-@sec-authentication]).
 
 Por último, para muchas API populares entre los científicos sociales, existen empaquetadores (*wrappers*) específicos (como 'tweepy' 
-(Python) o 'rtweet' (R) para descargar mensajes de Twitter) que son un poco más fáciles de usar y ya manejan cosas como la autenticación, 
+(Python) o 'rtweet' (R) para descargar mensajes de Twitter) que son un poco más fáciles de usar y ya manejan elementos como la autenticación, 
 la paginación, el respeto de los límites de velocidad, etc., para ti.
 
 ## Recuperación y análisis de páginas web {#sec-webpages}
@@ -296,18 +296,18 @@ también la sección [-@sec-ethicallegalpractical]).
 El *web scraping* (a veces también denominado *harvesting*, “cosechar” o “raspado web”) se reduce, en esencia, a descargar 
 automáticamente páginas web dirigidas a un público humano y extraer de ellas información significativa. También podría decirse que se 
 trata de aplicar ingeniería inversa a la forma en que se publicó la información en la web. Por ejemplo, puede que un sitio de noticias 
-utilice siempre un formato específico para indicar el título de un artículo, y nosotros lo utilizaremos para extraer el título. Este 
+utilice siempre un formato específico para indicar el título de un artículo y nosotros lo utilizaremos para extraer el título. Este 
 proceso se denomina "análisis sintáctico" (*parsing*, en inglés), que en este contexto no es más que un término elegante para "extraer 
 información significativa".
 
 Al extraer datos de la web, podemos distinguir dos tareas diferentes: (1) descargar un número (posiblemente grande) de páginas web, y 
 (2) analizar el contenido de las páginas web. A menudo, ambas van de la mano. Por ejemplo, es posible que la URL de la siguiente página a 
-descargar se analice a partir del contenido de la página actual, o que una página general contenga los enlaces y, por tanto, deba 
+descargar se analice a partir del contenido de la página actual o que una página general contenga los enlaces y, por tanto, deba 
 analizarse primero para descargar las páginas siguientes.
 
-Primero vamos a ver cómo analizar una sola página HTML (por ejemplo, la página que contiene la reseña de un producto específico, o un 
+Primero, vamos a ver cómo analizar una sola página HTML (por ejemplo, la página que contiene la reseña de un producto específico, o un 
 artículo de noticias específico), y luego describiremos cómo "escalar" y repetir el proceso en un bucle (para extraer, digamos, todas las 
-reseñas del producto; o todos los artículos en un período de tiempo específico).
+reseñas del producto o todos los artículos en un período de tiempo específico).
 
 ### Recuperación y análisis de una página HTML {#sec-parsehtml}
 
@@ -347,7 +347,7 @@ simplificado:
 De momento, no es necesario entender la función de cada etiqueta específica (aunque podría ayudar, por ejemplo, darse cuenta de que 'a' 
 denota un enlace, 'h1' un encabezado de primer nivel, 'p' un párrafo y 'div' algún tipo de sección).
 
-Lo que sí es importante, es darse cuenta de que cada etiqueta se abre y se cierra (por ejemplo, '<p>' se cierra con '</p>'). Como las 
+Lo que sí es importante es darse cuenta de que cada etiqueta se abre y se cierra (por ejemplo, '<p>' se cierra con '</p>'). Como las 
 etiquetas pueden anidarse, podemos dibujar el código como un árbol. En nuestro ejemplo, esto se vería así:
 
 <ul style='list-style-type: "↪"'><li>html</li><ul style='list-style-type: "↪"'><li>body</li><ul style='list-style-type: "↪"'><li>h1</li><li>div\#main</li><ul style='list-style-type: "↪"'><li>p</li><ul style='list-style-type: "↪"'><li>a</li></ul><li>img</li></ul><li>div</li><ul style='list-style-type: "↪"'><li>p.lead</li><li>p</li><li>p</li></ul></ul></ul></ul>
@@ -412,8 +412,8 @@ utilizarse con el patrón general '[@attribute='value']'. Por lo tanto, para obt
 
 La ventaja de XPath es que es una herramienta muy potente. Todo lo que se puede describir con un selector CSS también se puede describir 
 con un patrón XPath, pero hay algunas cosas que los selectores CSS no pueden describir, como los padres. Por otro lado, los patrones 
-XPath pueden ser un poco más difíciles de escribir, leer y depurar. Puedes elegir usar cualquiera de las dos herramientas, e incluso 
-puedes mezclarlas y combinarlas en un mismo *script*, pero nuestra recomendación general es usar Selectores CSS a menos que necesites usar 
+XPath pueden ser un poco más difíciles de escribir, leer y depurar. Puedes elegir utilizar cualquiera de las dos herramientas, e incluso 
+puedes mezclarlas y combinarlas en un mismo *script*, pero nuestra recomendación general es usar Selectores CSS, a menos que necesites  
 las habilidades específicas de XPath.
 
 El ejemplo [-@exm-htmlparse1] muestra cómo utilizar XPATH y selectores CSS para analizar una página HTML. Para entenderlo bien, abre 
