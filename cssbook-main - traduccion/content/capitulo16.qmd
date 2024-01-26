@@ -1,7 +1,7 @@
 # ¿Cómo seguimos? {#sec-chap-wherenext}
 
 **Resumen.**
-En este capítulo se resumen los principales objetivos de aprendizaje del libro y se esbozan los posibles pasos siguientes. Se presta 
+En este capítulo, se resumen los principales objetivos de aprendizaje del libro y se esbozan los posibles pasos siguientes. Se presta 
 especial atención a la aplicación ética de los métodos computacionales, así como a la importancia de la ciencia abierta y transparente.
 
 **Palabras clave.** Resumen, ciencia abierta, ética
@@ -22,7 +22,7 @@ profundo. También se abordan consideraciones sobre ética y ciencia abierta.
 
 ## ¿Qué hemos conseguido? {#sec-howfarcome}
 En este libro te hemos introducido en el análisis computacional de la comunicación. En el capítulo [-@sec-chap-introduction], intentamos 
-convencerte de que todo esto merece la pena, y también dejamos claro que el tema es mucho más amplio de lo que este libro puede abarcar. 
+convencerte de que todo esto merece la pena y también dejamos claro que el tema es mucho más amplio de lo que este libro puede abarcar. 
 Así que aquí estamos. Tal vez te hayas saltado algunos capítulos, tal vez hayas hecho alguna lectura adicional o seguido algunos 
 tutoriales en línea, y tal vez hayas completado tu primer pequeño proyecto utilizando algunas de las técnicas que hemos cubierto. Pero 
 vamos a recapitular.
@@ -37,15 +37,15 @@ Eres capaz de aplicar marcos de aprendizaje automático. Conoces los enfoques su
 utilizarlos para encontrar respuestas a tus preguntas de investigación.
 
 Finalmente, has obtenido al menos una primera impresión de algunas técnicas interesantes como las redes neuronales, así como de servicios 
-como bases de datos, contenedores y computación en la nube. Esperamos que conocerlos te ayude a tomar una decisión informada sobre si 
+como bases de datos, contenedores y computación en la nube. Esperamos que conocerlos te ayude a tomar decisiones informadas sobre si 
 serán buenas herramientas en las que sumergirte en tus próximos proyectos.
 
-## ¿Y ahora, qué? {#sec-wheretogo}
+## Y ahora, ¿qué? {#sec-wheretogo}
 Pero, ¿qué deberías aprender a continuación?
 
 Lo más importante es insistir en que la pregunta de investigación debe ser la guía, no el método. No se debe utilizar el módulo de red 
 neuronal más novedoso solo porque está de moda, cuando basta con contar las ocurrencias de una simple expresión regular. Pero esto 
-también se aplica a la inversa: si un método nuevo funciona mucho mejor que uno antiguo, ¡Hay que aprenderlo! Durante demasiado tiempo, 
+también se aplica a la inversa: si un método nuevo funciona mucho mejor que uno antiguo, ¡hay que aprenderlo! Durante demasiado tiempo, 
 por ejemplo, se ha confiado en simples análisis de sentimientos con diccionarios estándar, solo porque eran fáciles de usar, a pesar de 
 que existían alternativas mejores.
 
@@ -67,7 +67,7 @@ mejor si también pudieran utilizar tu código para ejecutar análisis utilizand
 de calcular un estadístico, ¿por qué no facilitar a los demás que hagan lo mismo? Considera la posibilidad de escribir (¡y de documentar!) 
 tu código de forma general y publicarlo en CRAN o pypi para que otros puedan instalarlo y utilizarlo fácilmente.
 
-**Busca inspiración para diseñar nuevos tipos de estudios.** Intenta pensar un poco fuera de la caja y más allá de las encuestas clásicas, 
+**Busca inspiración para diseñar nuevos tipos de estudios.** Intenta pensar un poco fuera de lo convencional y más allá de las encuestas clásicas, 
 los experimentos y los análisis de contenido para diseñar nuevos estudios. Libros como *Bit by Bit*, de @Salganik2019, pueden ayudarte 
 con ello. También puedes echar un vistazo a otras disciplinas científicas como la biología computacional, la cual ha reinventado sus 
 métodos, preguntas e hipótesis. Ten en cuenta que los métodos computacionales repercuten en los debates teóricos y empíricos sobre los 
@@ -78,7 +78,7 @@ pueden desarrollarse de la mano.
 **Profundiza en el conocimiento del aprendizaje profundo.** Para muchas tareas del análisis computacional de la comunicación, los métodos 
 clásicos de aprendizaje automático (como la regresión o las máquinas de vectores soporte) funcionan perfectamente. De hecho, como ya 
 hemos dicho, no es necesario subirse siempre al carro de la técnica más novedosa. Si una simple regresión logística obtiene una puntuación 
-F1 de 88,1 y la red neuronal más sofisticada obtiene 88,5, ¿merece la pena el esfuerzo adicional y la pérdida de explicaciones? Depende 
+F1 de 88,1 y la red neuronal más sofisticada, 88,5, ¿merece la pena el esfuerzo adicional y la pérdida de explicaciones? Depende 
 del caso, pero probablemente no. Sin embargo, a estas alturas, podemos estar bastante seguros de que las redes neuronales y el aprendizaje 
 profundo han llegado para quedarse. En este libro solo hemos podido hacer una introducción limitada, pero el análisis de vanguardia de 
 texto y, especialmente, de material visual ya no puede prescindir de ellas. Aunque es probable que no siempre entrenes tú mismo los 
@@ -102,7 +102,7 @@ de mediación y moderación, o incluso el modelado de ecuaciones estructurales) 
 interese familiarizarte con la estadística bayesiana, un marco muy diferente del llamado enfoque frecuentista que probablemente conozcas 
 de tus cursos de estadística.
 
-Y, por último, pero no por ello menos importante: ¡Diviértete! Al menos para nosotros, esa es una de las partes más importantes: ¡No te 
+Y, por último, pero no por ello menos importante: ¡diviértete! Al menos para nosotros, esa es una de las partes más importantes: ¡no te 
 olvides de disfrutar de los conocimientos adquiridos y de crear proyectos que te gusten!
 
 ## Ciencia computacional abierta, transparente y ética {#sec-ethics}
@@ -111,7 +111,7 @@ Empezamos este libro reflexionando sobre lo que hacemos realmente cuando realiza
 las cosas que destacamos en el Capítulo [-@sec-chap-introduction] fue nuestro uso de herramientas de código abierto, en particular Python 
 y R y la gran cantidad de bibliotecas de código abierto que las amplían. Con suerte, también te habrás dado cuenta, no solo de lo mucho 
 que tu trabajo podía por tanto basarse en el trabajo de otros, sino también de cuántos de los recursos que utilizaste fueron creados como 
-un esfuerzo de la comunidad.
+resultado del esfuerzo de la comunidad.
 
 Ahora que has adquirido los conocimientos necesarios para llevar a cabo una investigación computacional sobre la comunicación, es el 
 momento de reflexionar sobre cómo devolver algo a la comunidad y cómo contribuir a un entorno de investigación abierto. Al mismo tiempo, 
@@ -132,10 +132,10 @@ encontrar una plantilla para organizar tu código y tus datos de modo que tu inv
 
 **El compromiso entre privacidad y transparencia.** Aunque compartir código no es especialmente controvertido, compartir datos a veces sí 
 lo es. Es posible que trabajes con datos que contengan información personal identificable. Por un lado, debes compartir tus datos para 
-asegurarte de que tu trabajo puede reproducirse; por otro, sería éticamente (y dependiendo de tu jurisdicción, potencialmente también 
+asegurarte de que tu trabajo puede reproducirse; por otro, sería éticamente (y dependiendo de tu jurisdicción, puede que también 
 legalmente) incorrecto compartir datos personales sobre individuos. Como escriben @boyd2012: "Que sea accesible no lo convierte en ético". 
 Por lo tanto, la situación no siempre es blanca o negra, y existen algunas técnicas para encontrar un equilibrio entre ambas: puedes 
-eliminar (o picar) información como los nombres de usuario, puedes agregar tus datos, puedes añadir ruido artificial… Lo ideal sería 
+eliminar información como los nombres de usuario, puedes agregar tus datos, puedes añadir ruido artificial… Lo ideal sería 
 integrar consideraciones legales, éticas y técnicas para tomar una decisión informada sobre cómo encontrar un equilibrio que maximice la 
 transparencia y minimice los riesgos para la privacidad. Cada vez hay más bibliografía que explora distintas posibilidades, como @Breuer2020.
 
