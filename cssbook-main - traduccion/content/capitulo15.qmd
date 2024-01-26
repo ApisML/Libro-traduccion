@@ -35,16 +35,16 @@ Docker
 ### Cuándo utilizar una base de datos {#sec-whendb}
 
 En este libro, hasta ahora hemos almacenado nuestros datos en ficheros. Por ello, antes de cubrir la amplia gama de métodos para el 
-análisis computacional, discutimos algunos aspectos básicos del manejo de archivos (Capítulo [-@sec-chap-filetodata]). Lo más probable es 
-que aún no hayas experimentado ningún problema importante (aparte de problemas ocasionales con codificaciones no estándar, o confusión 
-sobre los delimitadores en un archivo csv). Pero no olvides que los ejemplos que utilizamos eran de tamaño bastante modesto: normalmente, 
+análisis computacional, hemos discutido algunos aspectos básicos del manejo de archivos (Capítulo [-@sec-chap-filetodata]). Lo más probable es 
+que aún no hayas experimentado ningún problema importante (aparte de problemas ocasionales con codificaciones no estándar o confusión 
+sobre los delimitadores en un archivo csv). Pero no olvides que los ejemplos que hemos utilizado eran de tamaño bastante modesto: normalmente, 
 se trataba de un puñado de archivos csv. A excepción del caso de los enormes conjuntos de datos de clasificación de imágenes, lo máximo 
 con lo que hemos tenido que lidiar son los 50.000 archivos de texto del conjunto de datos de reseñas de películas IMDB.
 
 En particular, al cargar tus datos en un marco de datos, lo que has hecho es copiar todos los datos del disco a la memoria[^1]. Pero, 
 ¿qué ocurre si queremos ampliar un poco nuestros análisis (@Trilling2018b?)? Tal vez queramos crear una colección de datos más grande, 
 tal vez incluso compartirla con múltiples miembros del equipo, buscar y filtrar nuestros datos, o recopilarlos durante un período de 
-tiempo más largo. En cualquiera de estos casos, un ejemplo puede ilustrar los problemas que pueden surgir:
+tiempo más largo. En cualquiera de estos casos, un ejemplo puede ilustrar los problemas que pueden surgir.
 
 Imagina que haces algo de *web scraping* (Capítulo [-@sec-chap-scraping]) que va más allá de unos pocos miles de textos. Tal vez quieras 
 visitar sitios de noticias relevantes de forma regular (digamos, una vez por hora) y recuperar todo lo que sea nuevo. ¿Cómo se almacenan 
@@ -55,7 +55,7 @@ forma de organizar los datos. En realidad, idear un método para buscar y encont
 
 Por suerte, puedes externalizar todos estos problemas a una base de datos instalada en tu propio ordenador o en un servidor (en ese caso, 
 asegúrate de que está bien protegido). En el ejemplo, el *scraper*, que se ejecuta una vez por hora, enviaría los datos extraídos a la base 
-de datos en lugar de a un archivo, y la base de datos se encargaría de almacenarlos. Cuando quisieras recuperar un subconjunto de tus 
+de datos en lugar de a un archivo y la base de datos se encargaría de almacenarlos. Cuando quisieras recuperar un subconjunto de tus 
 artículos para analizarlos, podrías enviar una consulta a la base de datos y leerlos desde ella. Tanto Python como R ofrecen integración 
 para múltiples bases de datos de uso común. Incluso es posible obtener directamente los resultados de dicha consulta a la base de datos 
 en forma de marco de datos.
@@ -74,7 +74,7 @@ que no solo es más eficiente en términos de almacenamiento, sino que también 
 A diferencia de las bases de datos SQL, las bases de datos noSQL no se basan en tablas, sino que utilizan conceptos como "documentos" o 
 pares clave-valor, muy parecidos a los diccionarios de Python o los archivos JSON. Este tipo de bases de datos son especialmente 
 interesantes cuando los datos están menos estructurados. Si no todos tus casos tienen las mismas variables, o si el contenido no está 
-bien definido (digamos que no sabes exactamente en qué formato se escribirá la fecha de publicación en un sitio de noticias), o si la 
+bien definido (digamos que no sabes exactamente en qué formato se escribirá la fecha de publicación en un sitio de noticias) o si la 
 estructura de los datos puede cambiar con el tiempo, entonces es difícil o imposible dar con una buena estructura de tablas para una base 
 de datos SQL. Por eso, en muchos contextos de "*big data*" se utilizan bases de datos noSQL, ya que (dependiendo de su configuración) 
 aceptarán de buen grado casi cualquier tipo de contenido que se vuelque en ellas. Por supuesto, esto se consigue a costa de renunciar a 
@@ -91,8 +91,8 @@ datos cambian continuamente, como cuando se añaden nuevos datos durante el *scr
 
 ### Elegir la base de datos adecuada {#sec-rightdb}
 
-Elegir la base de datos adecuada no siempre es fácil, y tiene muchas consecuencias en la forma en que podrás llevar a cabo tus análisis. 
-Como explican @Gunther2018, no se trata de una elección puramente técnica, sino que afecta a su flujo de trabajo científico-social. 
+Elegir la base de datos adecuada no siempre es fácil y tiene muchas consecuencias en la forma en que podrás llevar a cabo tus análisis. 
+Como explican @Gunther2018, no se trata de una elección puramente técnica, sino que afecta al flujo de trabajo científico-social. 
 ¿Deseas imponer una estructura específica desde el principio o prefieres recopilarlo todo y limpiarlo después? ¿Dónde está el equilibrio 
 entre evitar cualquier incoherencia y arriesgarte a desechar demasiada información?
 
@@ -100,11 +100,11 @@ Siendo conscientes de que a menudo hay muchas opciones válidas, y a riesgo de s
 sobre qué bases de datos elegir a través de algunas preguntas orientativas.
 
 **¿Cómo están estructurados tus datos?**
-Pregúntate: ¿Puedo organizar mis datos en un conjunto de tablas relacionales? Por ejemplo, piensa en los datos de visionado de televisión: 
+Pregúntate: ¿puedo organizar mis datos en un conjunto de tablas relacionales? Por ejemplo, piensa en los datos de visionado de televisión: 
 puede haber una tabla que dé información sobre cuándo se encendió el televisor y qué canal se vio y por qué id de usuario. Una segunda 
 tabla puede servir para asociar características personales como la edad y el sexo al identificador de usuario. Y una tercera tabla puede 
 servir para asociar las marcas de tiempo a detalles sobre un programa concreto emitido en ese momento. Si tus datos tienen este aspecto, 
-pregúntate: ¿Puedo determinar de antemano las columnas y los tipos de datos de cada columna? Si es así, una base de datos SQL como 'MySQL', 
+pregúntate: ¿puedo determinar de antemano las columnas y los tipos de datos de cada columna? Si es así, una base de datos SQL como 'MySQL', 
 'PostgreSQL' o 'MariaDB' es, probablemente, lo que estás buscando. Si, por el contrario, no puedes determinar dicha estructura a priori, 
 si crees que la estructura de tu información cambiará con el tiempo o si está muy desordenada, entonces puede que necesites un enfoque 
 noSQL más flexible, como 'MongoDB' o 'ElasticSearch'.
@@ -128,7 +128,7 @@ plazo para su reutilización, incluso por varios equipos, la flexibilidad de una
 Instalar un servidor de base de datos como 'mysql', 'mariadb' (una bifurcación de código abierto de 'mysql'), 'MongoDB', o 'Elasticsearch' 
 no es realmente difícil (de hecho, puede que ya venga incluido en tu sistema operativo), pero la configuración exacta puede variar mucho 
 dependiendo de tu ordenador y tus necesidades. Y lo que es más importante, especialmente si almacenas datos confidenciales en tu base de 
-datos, tendrás que pensar en la autenticación, los roles, etc., aunque todo ello más allá del alcance de este libro.
+datos, tendrás que pensar en la autenticación, los roles, etc., aunque todo ello queda más allá del alcance de este libro.
 
 Por suerte, existe una solución intermedia entre almacenar los datos en archivos que debes gestionar tú mismo y configurar un servidor de 
 bases de datos, local o remotamente. La biblioteca 'SQlite' ofrece un motor de base de datos autónomo: básicamente, permite almacenar 
@@ -196,28 +196,28 @@ dbDisconnect(mydb)
 
 Por supuesto, 'SQlite' no puede ofrecerte el mismo rendimiento que una instalación "real" de 'mysql' (o similar). Por lo tanto, si tu 
 proyecto crece, o si tienes muchas operaciones de lectura o escritura por segundo, puede que tengas que cambiar de método en algún 
-momento. Pero como puedes ver en el Ejemplo [-@exm-sqlite], Python y R no se preocupan realmente por el servidor: todo lo que necesitas 
+momento. Pero, como puedes ver en el Ejemplo [-@exm-sqlite], Python y R no se preocupan realmente por el servidor: todo lo que necesitas 
 hacer es cambiar la conexión conn para que se dirija a tu nueva base de datos en lugar de al archivo 'sqlite'.
 
 ## Utilización de servicios en la nube {#sec-cloudcomputing}
 
 A lo largo de este libro, hemos asumido que todas las tareas pueden realizarse en tu propio ordenador. Y a menudo, es la mejor opción: 
-mes recomendable mantener una copia local de los datos, y puede ser la apuesta más segura por razones éticas y legales (cuando se trabaja 
+es recomendable mantener una copia local de los datos, y puede ser la apuesta más segura por razones éticas y legales (cuando se trabaja 
 con datos sensibles, tienes que tener claro lo que estás haciendo antes de transferirlos a otro lugar).
 
 Aun así, una vez que se amplía el proyecto, pueden surgir problemas (véase @Trilling2018b): 
 
- -  Múltiples personas necesitan trabajar en los mismos datos
- -  Su conjunto de datos es demasiado grande para caber en el disco
- -  No tienes suficiente RAM o potencia de procesamiento
+ -  Múltiples personas necesitan trabajar en los mismos datos.
+ -  Su conjunto de datos es demasiado grande para caber en el disco.
+ -  No tienes suficiente RAM o potencia de procesamiento.
  -  Ejecutar un proceso lleva demasiado tiempo (por ejemplo, entrenar un modelo durante varios días), el programa necesita ejecutarse en intervalos continuos (por ejemplo, recuperar artículos de noticias una vez por hora) o, sencillamente, necesitas tu ordenador para otras cosas.
 
 Llegados a este punto, necesitas empezar a mover tu proyecto a algún servidor remoto. En términos generales, podemos considerar cuatro 
 escenarios.
 
 1. Primero, un servicio en la nube que solo te permite ejecutar código: en este caso, basta con enviar el código para que se ejecute. No tienes control total, no puedes configurar tu propio sistema, pero tampoco tienes que hacer ninguna administración. 
-2. La segunda opción es un servidor dedicado: Tú mismo (o tu universidad) puedes comprar un servidor físico dedicado para realizar análisis computacionales de ciencias sociales. Por el lado bueno, esto te da un control total, pero tampoco es muy flexible: haces una gran inversión una vez, y si resulta que necesitas más (o menos) recursos, probablemente no puedas cambiarlo. 
-3. Si estas opciones no te sirven, puedes recurrir a una máquina virtual (VM) en una plataforma de computación en la nube. A efectos prácticos, puedes hacer lo mismo que en la opción anterior, con la diferencia crucial de que los recursos están alquilados. Si necesitas más, simplemente alquilas más; y, cuando hayas terminado, paras la máquina. 
+2. La segunda opción es un servidor dedicado: tú mismo (o tu universidad) puedes comprar un servidor físico dedicado para realizar análisis computacionales de ciencias sociales. Por el lado bueno, esto te da un control total, pero tampoco es muy flexible: haces una gran inversión una vez, y si resulta que necesitas más (o menos) recursos, probablemente no puedas cambiarlo. 
+3. Si estas opciones no te sirven, puedes recurrir a una máquina virtual (VM) en una plataforma de computación en la nube. A efectos prácticos, puedes hacer lo mismo que en la opción anterior, con la diferencia crucial de que los recursos están alquilados. Si necesitas más, simplemente alquilas más y, cuando hayas terminado, paras la máquina. 
 4. Por último, un conjunto de máquinas para ejecutar tareas complejas mediante computación paralela puede ser una buena opción. Si quieres procesar grandes cantidades de información (piensa en datos de imagen o vídeo) y un modelado sofisticado (como el aprendizaje profundo) puede que necesites distribuir el cómputo entre varios ordenadores diferentes al mismo tiempo.
 
 Un ejemplo de la primera opción es 'Google Colab'. Aunque facilita el uso compartido y la ejecución de cuadernos Jupyter, el nivel 
@@ -228,7 +228,7 @@ neuronales que consuman muchos recursos) que de otro modo no serían posibles.
 
 Sin embargo, a menudo esto no es suficiente. Por ejemplo, puede que quieras ejecutar una base de datos (Sección [-@sec-databases]) o 
 definir lo que se conoce como 'cron job', que ejecuta un *script* específico (por ejemplo, un *web scraper*) a intervalos definidos. Aquí, 
-las opciones 2 y 3 entran en juego: aunque la más realista para la mayoría de los principiantes, es la opción 3.
+las opciones 2 y 3 entran en juego: aunque la más realista para la mayoría de los principiantes es la opción 3.
 
 Existen diferentes proveedores para instalar máquinas virtuales en la nube, siendo probablemente los más conocidos 'Amazon Web Services' 
 (AWS) y 'Microsoft Azure'. Algunas universidades o proveedores (nacionales) de infraestructuras de investigación también ofrecen 
@@ -270,7 +270,7 @@ posibilidad de configurar estas arquitecturas de forma remota. Por ejemplo, en u
 máquinas virtuales, donde una actuará como principal (*main*) y las demás como trabajadoras (*workers*). Con esta lógica, el ordenador 
 principal puede distribuir el almacenamiento y el análisis de datos entre los trabajadores y luego reunir los resultados: véanse, por 
 ejemplo, los enfoques 'MapReduce' o 'Resilient Distributed Dataset' (RDD) utilizados por el software de código abierto Apache Hadoop y 
-Apache Spark, respectivamente. Para un ejemplo concreto de computación paralela en el análisis computacional de la comunicación se puede 
+Apache Spark, respectivamente. Para un ejemplo concreto de computación paralela en el análisis computacional de la comunicación, se puede 
 echar un vistazo a la implementación del análisis supervisado distribuido de sentimientos, en el que uno de los autores de este libro 
 desplegó la clasificación supervisada de textos en Apache Spark y conectó esta infraestructura con el análisis en tiempo real de tuits, 
 utilizando para ello Apache Kafka, con el fin de realizar análisis de datos en directo @calderon2019distributed.
@@ -304,7 +304,7 @@ pertenece a un artículo específico, sugerimos que organices tu repositorio com
 código como los datos. @compendium proporcionan una plantilla y herramientas para crear uno fácilmente[^2].
 
 En casi todos los casos, tu código dependerá de bibliotecas escritas por otros, que están disponibles gratuitamente. Por lo tanto, es 
-justo ser igual de generosos y asegurarnos de que cualquier código que hayamos escrito y que pueda ser útil para otros, también esté 
+justo ser igual de generosos y asegurarnos de que cualquier código que hayamos escrito y que pueda ser útil para otros también esté 
 disponible.
 
 Al igual que en el caso de un compendio de investigación para un artículo específico, la publicación de código fuente para una 
@@ -316,7 +316,7 @@ seguir instrucciones específicas sobre cómo nombrar los archivos, cómo estruc
 Independientemente de estas instrucciones técnicas específicas, puedes asegurarte desde el principio de que tu código es fácilmente 
 reutilizable. La siguiente lista de comprobación puede ayudarte a ello:
 
--  No sobre-codifiques valores. En lugar de utilizar "myoutputfile.csv" o 50 en el script, crea constantes como OUTPUTFILE="myoutputfile" y NUMBER_OF_TOPICS=50 al principio del script, y utiliza estas variables en lugar de los valores más adelante. O, mejor aún, deja que el usuario proporcione estos argumentos como argumentos de línea de comandos o a través de un archivo de configuración.
+-  No sobre-codifiques valores. En lugar de utilizar "myoutputfile.csv" o 50 en el script, crea constantes como OUTPUTFILE="myoutputfile" y NUMBER_OF_TOPICS=50 al principio del script y utiliza estas variables en lugar de los valores más adelante. O, mejor aún, deja que el usuario proporcione estos argumentos como argumentos de línea de comandos o a través de un archivo de configuración.
 -  Utiliza funciones. En lugar de escribir largos scripts que se ejecuten desde la primera línea hasta la última en ese orden, estructura el código en diferentes funciones que cumplan una tarea específica cada una y, por tanto, puedan reutilizarse. Si te encuentras copiando y pegando código, lo más probable es que puedas escribir una función en su lugar.
 -  Documenta tu código. Utiliza docstrings (Python) o comentarios (R) para dejar claro qué hace cada función.
 
@@ -352,9 +352,9 @@ a = randint(0,10)
 print(f"exp({a}) = {np.exp(a)}")
 ```
 
-Estás convencido que es un programa impresionante (después de todo, ¡Calcula $e$ a la potencia de un entero aleatorio), y que otros serán 
-capaces de usarlo. Y no quieres molestarlos configurando Python, instalando numpy, y luego ejecutando el *script*. De hecho, ni siquiera 
-necesitan saber que es un programa Python. Podrías haberlo escrito también en R, o en cualquier otro lenguaje (de cara al usuario no 
+Estás convencido que es un programa impresionante (después de todo, ¡calcula $e$ a la potencia de un entero aleatorio) y que otros serán 
+capaces de usarlo. Y no quieres molestarlos configurando Python, instalando numpy y luego ejecutando el *script*. De hecho, ni siquiera 
+necesitan saber que es un programa Python. Podrías haberlo escrito también en R o en cualquier otro lenguaje (de cara al usuario no 
 habría ninguna diferencia).
 
 ¿Qué tendría que contener una imagen Docker que ejecute este código? No mucho: algún sistema operativo básico (normalmente, una pequeña 
@@ -370,7 +370,7 @@ CMD [ "python", "./myscript.py" ]
 ```
 
 La primera línea le dice a Docker que construya una nueva imagen, partiendo de una imagen ya existente que contiene un sistema operativo 
-y Python3. Podrías empezar desde cero, pero esto simplifica el proceso. La siguiente línea añade tu *script* a la imagen, y luego 
+y Python3. Podrías empezar desde cero, pero esto simplifica el proceso. La siguiente línea añade tu *script* a la imagen y luego 
 ejecutamos 'pip install numpy' dentro de la imagen. La última línea solo especifica qué comando con qué parámetros necesita ser ejecutado 
 cuando se ejecuta la imagen (en nuestro caso 'python ./myscript.py').
 
@@ -386,7 +386,7 @@ bytes, ahora se ha hinchado a cientos de megabytes. Pero hay muchos escenarios e
 
 -  Para garantizar que los usuarios obtengan los mismos resultados. Aunque no constituye un gran problema en el día a día de la mayoría de los científicos computacionales, las diferentes versiones de diferentes bibliotecas en diferentes sistemas pueden ocasionalmente producir resultados ligeramente diferentes. El contenedor garantiza que el código se ejecute utilizando la misma configuración de software.
 
--  Para evitar interferir con las instalaciones existentes. Nuestro *toy example* ya tenía una dependencia ('numpy'), pero, a menudo, las dependencias son más complejas, se pueden necesitar librerías muy específicas, o incluso algún otro software más allá de las librerías Python o R. Distribuir solo el código fuente significa obligar al usuario a instalarlas también; y hay muchas razones por las que la gente puede ser reacia a hacerlo. Puede ser incompatible con otro software de su ordenador, puede haber problemas de seguridad, o simplemente es demasiado trabajo. Pero si se ejecuta dentro del contenedor Docker, muchos de estos problemas desaparecen.
+-  Para evitar interferir con las instalaciones existentes. Nuestro *toy example* ya tenía una dependencia ('numpy'), pero, a menudo, las dependencias son más complejas, se pueden necesitar librerías muy específicas, o incluso algún otro software más allá de las librerías Python o R. Distribuir solo el código fuente significa obligar al usuario a instalarlas también, y hay muchas razones por las que la gente puede ser reacia a hacerlo. Puede ser incompatible con otro software de su ordenador, puede haber problemas de seguridad o simplemente es demasiado trabajo. Pero si se ejecuta dentro del contenedor Docker, muchos de estos problemas desaparecen.
 
 En resumen, la imagen Docker nunca es la única forma de distribuir tu código fuente. Pero añadir un Dockerfile a tu repositorio de GitHub 
 para que los usuarios puedan construir un contenedor Docker puede ofrecer otra forma, quizá mejor, de hacer tu software accesible a tu 
